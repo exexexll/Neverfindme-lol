@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import { getSession } from '@/lib/session';
-import { getPendingReviews, getAllReports, reviewBan, getReportStats } from '@/lib/api';
+import { getPendingReviews, getAllReports, reviewBan, getReportStats, getAdminEventSettings, updateEventSettings, getAdminEventAttendance } from '@/lib/api';
 import { API_BASE } from '@/lib/config';
 
 interface Report {
@@ -52,10 +52,20 @@ export default function AdminPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [selectedUser, setSelectedUser] = useState<BanRecord | null>(null);
   const [reviewing, setReviewing] = useState(false);
-  const [activeTab, setActiveTab] = useState<'pending' | 'reports' | 'qrcodes'>('pending');
+  const [activeTab, setActiveTab] = useState<'pending' | 'reports' | 'qrcodes' | 'event'>('pending');
   const [qrCodes, setQrCodes] = useState<any[]>([]);
   const [generatingQR, setGeneratingQR] = useState(false);
   const [qrLabel, setQrLabel] = useState('');
+  
+  // Event mode state
+  const [eventSettings, setEventSettings] = useState<any>(null);
+  const [eventModeEnabled, setEventModeEnabled] = useState(false);
+  const [eventStartTime, setEventStartTime] = useState('15:00:00');
+  const [eventEndTime, setEventEndTime] = useState('18:00:00');
+  const [eventTimezone, setEventTimezone] = useState('America/Los_Angeles');
+  const [eventDays, setEventDays] = useState<number[]>([]);
+  const [savingEvent, setSavingEvent] = useState(false);
+  const [todayAttendance, setTodayAttendance] = useState<any>(null);
 
   useEffect(() => {
     // Check for admin authentication
@@ -89,24 +99,50 @@ export default function AdminPage() {
   }, [router]);
 
   const loadData = async () => {
+    // FIXED: Use admin token for admin API calls
+    const adminToken = localStorage.getItem('napalmsky_admin_token');
     const session = getSession();
-    if (!session) return;
+    
+    if (!adminToken) return;
 
     try {
       setLoading(true);
-      const [pending, reports, statsData, codes] = await Promise.all([
-        getPendingReviews(session.sessionToken),
-        getAllReports(session.sessionToken),
-        getReportStats(session.sessionToken),
+      const [pending, reports, statsData, codes, evtSettings] = await Promise.all([
+        // These endpoints use regular session token (user-based auth)
+        session ? getPendingReviews(session.sessionToken).catch(() => ({ pending: [] })) : Promise.resolve({ pending: [] }),
+        session ? getAllReports(session.sessionToken).catch(() => ({ reports: [] })) : Promise.resolve({ reports: [] }),
+        session ? getReportStats(session.sessionToken).catch(() => null) : Promise.resolve(null),
         fetch(`${API_BASE}/payment/admin/codes`, {
-          headers: { 'Authorization': `Bearer ${session.sessionToken}` },
+          headers: { 'Authorization': `Bearer ${adminToken}` }, // FIXED: Use admin token
         }).then(r => r.json()).catch(() => ({ codes: [] })),
+        // FIXED: Use admin token for event settings
+        getAdminEventSettings(adminToken).catch(() => null),
       ]);
 
       setPendingReviews(pending.pending || []);
       setAllReports(reports.reports || []);
       setStats(statsData);
       setQrCodes(codes.codes || []);
+      
+      // Load event settings
+      if (evtSettings) {
+        setEventSettings(evtSettings);
+        setEventModeEnabled(evtSettings.eventModeEnabled || false);
+        setEventStartTime(evtSettings.eventStartTime || '15:00:00');
+        setEventEndTime(evtSettings.eventEndTime || '18:00:00');
+        setEventTimezone(evtSettings.timezone || 'America/Los_Angeles');
+        setEventDays(evtSettings.eventDays || []);
+        
+        // Load today's attendance
+        const today = new Date().toISOString().split('T')[0];
+        try {
+          // FIXED: Use admin token
+          const attendance = await getAdminEventAttendance(adminToken, today);
+          setTodayAttendance(attendance);
+        } catch (err) {
+          console.log('[Admin] No attendance data for today');
+        }
+      }
     } catch (error) {
       console.error('[Admin] Failed to load data:', error);
     } finally {
@@ -191,6 +227,40 @@ export default function AdminPage() {
     }
   };
 
+  const handleSaveEventSettings = async () => {
+    // FIXED: Use admin token for admin API calls
+    const adminToken = localStorage.getItem('napalmsky_admin_token');
+    if (!adminToken) return;
+
+    try {
+      setSavingEvent(true);
+      // FIXED: Use admin token instead of session token
+      await updateEventSettings(adminToken, {
+        eventModeEnabled,
+        eventStartTime,
+        eventEndTime,
+        timezone: eventTimezone,
+        eventDays,
+      });
+      
+      alert('Event settings saved successfully!');
+      await loadData();
+    } catch (error: any) {
+      console.error('[Admin] Failed to save event settings:', error);
+      alert(error.message || 'Failed to save event settings');
+    } finally {
+      setSavingEvent(false);
+    }
+  };
+
+  const toggleEventDay = (day: number) => {
+    setEventDays(prev => 
+      prev.includes(day) 
+        ? prev.filter(d => d !== day)
+        : [...prev, day].sort()
+    );
+  };
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#0a0a0c]">
@@ -255,10 +325,10 @@ export default function AdminPage() {
       )}
 
       {/* Tabs */}
-      <div className="mb-6 flex gap-2 border-b border-white/10">
+      <div className="mb-6 flex gap-2 border-b border-white/10 overflow-x-auto">
         <button
           onClick={() => setActiveTab('pending')}
-          className={`px-4 py-3 text-sm font-medium transition-colors ${
+          className={`px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap ${
             activeTab === 'pending'
               ? 'border-b-2 border-[#ff9b6b] text-[#ff9b6b]'
               : 'text-[#eaeaf0]/50 hover:text-[#eaeaf0]/70'
@@ -268,7 +338,7 @@ export default function AdminPage() {
         </button>
         <button
           onClick={() => setActiveTab('reports')}
-          className={`px-4 py-3 text-sm font-medium transition-colors ${
+          className={`px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap ${
             activeTab === 'reports'
               ? 'border-b-2 border-[#ff9b6b] text-[#ff9b6b]'
               : 'text-[#eaeaf0]/50 hover:text-[#eaeaf0]/70'
@@ -278,13 +348,23 @@ export default function AdminPage() {
         </button>
         <button
           onClick={() => setActiveTab('qrcodes')}
-          className={`px-4 py-3 text-sm font-medium transition-colors ${
+          className={`px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap ${
             activeTab === 'qrcodes'
               ? 'border-b-2 border-[#ff9b6b] text-[#ff9b6b]'
               : 'text-[#eaeaf0]/50 hover:text-[#eaeaf0]/70'
           }`}
         >
           QR Codes ({qrCodes.filter(c => c.type === 'admin').length})
+        </button>
+        <button
+          onClick={() => setActiveTab('event')}
+          className={`px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap ${
+            activeTab === 'event'
+              ? 'border-b-2 border-[#ff9b6b] text-[#ff9b6b]'
+              : 'text-[#eaeaf0]/50 hover:text-[#eaeaf0]/70'
+          }`}
+        >
+          Event Settings {eventModeEnabled && '🎉'}
         </button>
       </div>
 
@@ -520,6 +600,159 @@ export default function AdminPage() {
                 </div>
               ))
             )}
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'event' && (
+        <div className="space-y-6">
+          {/* Event Mode Toggle */}
+          <div className="rounded-xl bg-gradient-to-r from-[#ff9b6b]/10 to-[#ff7a45]/10 border border-[#ff9b6b]/30 p-6">
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="text-xl font-bold text-[#ff9b6b] mb-2">
+                  Event Mode {eventModeEnabled ? 'ON' : 'OFF'}
+                </h3>
+                <p className="text-sm text-[#eaeaf0]/70 mb-4">
+                  {eventModeEnabled 
+                    ? 'Matchmaking is restricted to scheduled event hours'
+                    : 'Users can access matchmaking 24/7 (normal operation)'}
+                </p>
+              </div>
+              <button
+                onClick={() => setEventModeEnabled(!eventModeEnabled)}
+                className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors ${
+                  eventModeEnabled ? 'bg-[#ff9b6b]' : 'bg-white/20'
+                }`}
+              >
+                <span
+                  className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${
+                    eventModeEnabled ? 'translate-x-7' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+          </div>
+
+          {/* Event Window Settings */}
+          <div className="rounded-xl bg-white/5 border border-white/10 p-6">
+            <h3 className="text-lg font-bold text-[#eaeaf0] mb-4">Event Window</h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              {/* Start Time */}
+              <div>
+                <label className="block text-sm font-medium text-[#eaeaf0] mb-2">
+                  Start Time
+                </label>
+                <input
+                  type="time"
+                  value={eventStartTime.substring(0, 5)}
+                  onChange={(e) => setEventStartTime(`${e.target.value}:00`)}
+                  step="1800"
+                  className="w-full rounded-lg bg-white/10 border border-white/20 px-4 py-2.5 text-[#eaeaf0] focus:outline-none focus:ring-2 focus:ring-[#ff9b6b]"
+                />
+              </div>
+
+              {/* End Time */}
+              <div>
+                <label className="block text-sm font-medium text-[#eaeaf0] mb-2">
+                  End Time
+                </label>
+                <input
+                  type="time"
+                  value={eventEndTime.substring(0, 5)}
+                  onChange={(e) => setEventEndTime(`${e.target.value}:00`)}
+                  step="1800"
+                  className="w-full rounded-lg bg-white/10 border border-white/20 px-4 py-2.5 text-[#eaeaf0] focus:outline-none focus:ring-2 focus:ring-[#ff9b6b]"
+                />
+              </div>
+            </div>
+
+            {/* Timezone */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-[#eaeaf0] mb-2">
+                Timezone
+              </label>
+              <select
+                value={eventTimezone}
+                onChange={(e) => setEventTimezone(e.target.value)}
+                className="w-full rounded-lg bg-white/10 border border-white/20 px-4 py-2.5 text-[#eaeaf0] focus:outline-none focus:ring-2 focus:ring-[#ff9b6b]"
+              >
+                <option value="America/Los_Angeles">Pacific (PST/PDT)</option>
+                <option value="America/Denver">Mountain (MST/MDT)</option>
+                <option value="America/Chicago">Central (CST/CDT)</option>
+                <option value="America/New_York">Eastern (EST/EDT)</option>
+              </select>
+            </div>
+
+            {/* Active Days */}
+            <div>
+              <label className="block text-sm font-medium text-[#eaeaf0] mb-3">
+                Active Days (leave empty for all days)
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { day: 0, label: 'Sun' },
+                  { day: 1, label: 'Mon' },
+                  { day: 2, label: 'Tue' },
+                  { day: 3, label: 'Wed' },
+                  { day: 4, label: 'Thu' },
+                  { day: 5, label: 'Fri' },
+                  { day: 6, label: 'Sat' },
+                ].map(({ day, label }) => (
+                  <button
+                    key={day}
+                    onClick={() => toggleEventDay(day)}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      eventDays.includes(day)
+                        ? 'bg-[#ff9b6b] text-[#0a0a0c]'
+                        : 'bg-white/10 text-[#eaeaf0] hover:bg-white/20'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-2 text-xs text-[#eaeaf0]/50">
+                {eventDays.length === 0 
+                  ? 'Event active every day' 
+                  : `Event active on: ${eventDays.map(d => ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d]).join(', ')}`}
+              </p>
+            </div>
+          </div>
+
+          {/* Today's Attendance */}
+          {todayAttendance && todayAttendance.totalRSVPs > 0 && (
+            <div className="rounded-xl bg-white/5 border border-white/10 p-6">
+              <h3 className="text-lg font-bold text-[#eaeaf0] mb-3">
+                Today&apos;s RSVPs
+              </h3>
+              <p className="text-3xl font-bold text-[#ff9b6b] mb-2">
+                {todayAttendance.totalRSVPs}
+              </p>
+              <p className="text-sm text-[#eaeaf0]/70">
+                {todayAttendance.totalRSVPs === 1 ? 'person has' : 'people have'} indicated when they&apos;ll join today
+              </p>
+            </div>
+          )}
+
+          {/* Save Button */}
+          <div className="flex justify-end">
+            <button
+              onClick={handleSaveEventSettings}
+              disabled={savingEvent}
+              className="rounded-xl bg-[#ff9b6b] px-8 py-3 font-medium text-[#0a0a0c] hover:opacity-90 transition-opacity disabled:opacity-50"
+            >
+              {savingEvent ? 'Saving...' : 'Save Event Settings'}
+            </button>
+          </div>
+
+          {/* Info Box */}
+          <div className="rounded-xl bg-blue-500/10 border border-blue-500/30 p-4">
+            <p className="text-sm text-blue-300">
+              <strong>How it works:</strong> When Event Mode is ON, users will be redirected to a wait page outside of event hours. 
+              They can RSVP for specific time slots and see expected attendance. When the event window opens, they&apos;ll automatically get access to matchmaking.
+            </p>
           </div>
         </div>
       )}

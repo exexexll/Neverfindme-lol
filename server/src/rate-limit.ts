@@ -144,3 +144,55 @@ export const reportLimiter = rateLimit({
   }
 });
 
+/**
+ * RSVP endpoints: 5 submissions per minute per IP
+ * Prevents RSVP spam and attendance inflation
+ * SECURITY: Critical for event system integrity
+ */
+export const rsvpLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 5, // 5 RSVP submissions per minute
+  message: {
+    error: 'Too many RSVP submissions',
+    message: 'Please wait before submitting another RSVP',
+    retryAfter: 60
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  validate: { trustProxy: false },
+  handler: (req, res) => {
+    console.warn(`[RateLimit] RSVP limit exceeded for IP ${req.ip}`);
+    res.status(429).json({
+      error: 'Too many RSVP submissions',
+      message: 'Slow down! Please wait a minute before submitting another RSVP.',
+      retryAfter: 60
+    });
+  }
+});
+
+/**
+ * Public event endpoints: 20 requests per minute per IP
+ * Prevents data scraping of attendance and settings
+ * SECURITY: Protects user privacy from profiling
+ */
+export const eventPublicLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 20, // 20 requests per minute per IP
+  message: {
+    error: 'Too many requests',
+    message: 'Rate limit exceeded. Please wait a minute.',
+    retryAfter: 60
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  validate: { trustProxy: false },
+  handler: (req, res) => {
+    console.warn(`[RateLimit] Event public limit exceeded for IP ${req.ip} on ${req.path}`);
+    res.status(429).json({
+      error: 'Too many requests',
+      message: 'Rate limit exceeded. Please wait a minute.',
+      retryAfter: 60
+    });
+  }
+});
+

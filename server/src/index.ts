@@ -21,7 +21,10 @@ import reportRoutes from './report';
 import paymentRoutes from './payment';
 import turnRoutes from './turn';
 import adminAuthRoutes from './admin-auth';
-import { authLimiter, apiLimiter, turnLimiter, paymentLimiter, reportLimiter } from './rate-limit';
+import eventRoutes from './event';
+import { createEventAdminRoutes } from './event-admin';
+import { requireEventAccess } from './event-guard';
+import { authLimiter, apiLimiter, turnLimiter, paymentLimiter, reportLimiter, rsvpLimiter, eventPublicLimiter } from './rate-limit';
 import { securityHeaders, httpsRedirect } from './security-headers';
 import { memoryManager } from './memory-manager';
 import { 
@@ -188,7 +191,8 @@ const activeRooms = new Map<string, { user1: string; user2: string; messages: an
 // Routes with rate limiting and dependency injection
 app.use('/auth', authLimiter, createAuthRoutes(io, activeSockets));
 app.use('/media', apiLimiter, mediaRoutes);
-app.use('/room', apiLimiter, roomRoutes);
+// EVENT MODE: Apply event guard to matchmaking routes
+app.use('/room', apiLimiter, requireEventAccess, roomRoutes);
 app.use('/user', apiLimiter, userRoutes);
 app.use('/referral', apiLimiter, referralRoutes);
 app.use('/report', reportLimiter, reportRoutes);
@@ -196,6 +200,16 @@ app.use('/report', reportLimiter, reportRoutes);
 app.use('/payment', paymentRoutes);
 app.use('/turn', turnLimiter, turnRoutes);
 app.use('/admin', authLimiter, adminAuthRoutes);
+// EVENT MODE: RSVP endpoint with strict rate limiting (SECURITY: prevent spam)
+app.use('/event/rsvp', rsvpLimiter);
+// EVENT MODE: Public event endpoints with rate limiting (SECURITY: prevent scraping)
+app.use('/event/attendance', eventPublicLimiter);
+app.use('/event/settings', eventPublicLimiter);
+app.use('/event/status', eventPublicLimiter);
+// EVENT MODE: Event routes for users
+app.use('/event', apiLimiter, eventRoutes);
+// EVENT MODE: Admin event routes (integrated with admin auth)
+app.use('/admin', authLimiter, createEventAdminRoutes(io));
 
 // Root endpoint - API information
 app.get('/', (req, res) => {

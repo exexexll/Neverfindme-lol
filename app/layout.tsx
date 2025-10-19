@@ -6,6 +6,7 @@ import { AuthGuard } from '@/components/AuthGuard';
 import { LegalFooter } from '@/components/LegalFooter';
 import { CookieConsent } from '@/components/CookieConsent';
 import { SessionInvalidatedModal } from '@/components/SessionInvalidatedModal';
+import { EventModeBanner } from '@/components/EventModeBanner';
 
 const playfair = Playfair_Display({
   weight: '700',
@@ -83,6 +84,7 @@ export default function RootLayout({
         <a href="#main" className="skip-link">
           Skip to main content
         </a>
+        <EventModeBanner />
         <Header />
         <AuthGuard>
           {children}

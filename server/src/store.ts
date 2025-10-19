@@ -1,4 +1,4 @@
-import { User, Session, ReferralNotification, Report, BanRecord, IPBan, InviteCode, RateLimitRecord } from './types';
+import { User, Session, ReferralNotification, Report, BanRecord, IPBan, InviteCode, RateLimitRecord, EventSettings, EventRSVP } from './types';
 import { query } from './database';
 import { userCache, sessionCache } from './lru-cache';
 import { queryCache, generateCacheKey } from './query-cache';
@@ -1412,6 +1412,277 @@ class DataStore {
     
     // Default to true if isActive not set (backward compatibility)
     return session.isActive !== false;
+  }
+
+  // ===== EVENT MODE METHODS =====
+
+  /**
+   * Get current event settings (singleton pattern - always 1 row)
+   */
+  async getEventSettings(): Promise<EventSettings> {
+    if (this.useDatabase) {
+      try {
+        const result = await query('SELECT * FROM event_settings LIMIT 1');
+        
+        if (result.rows.length > 0) {
+          const row = result.rows[0];
+          return {
+            id: row.id,
+            eventModeEnabled: row.event_mode_enabled,
+            eventStartTime: row.event_start_time,
+            eventEndTime: row.event_end_time,
+            timezone: row.timezone,
+            eventDays: row.event_days || [],
+            createdAt: new Date(row.created_at).getTime(),
+            updatedAt: new Date(row.updated_at).getTime(),
+          };
+        }
+      } catch (error) {
+        console.error('[Store] Failed to get event settings:', error);
+      }
+    }
+    
+    // Return default settings if database unavailable or no row exists
+    return {
+      eventModeEnabled: false,
+      eventStartTime: '15:00:00',
+      eventEndTime: '18:00:00',
+      timezone: 'America/Los_Angeles',
+      eventDays: [],
+    };
+  }
+
+  /**
+   * Update event settings (admin only)
+   */
+  async updateEventSettings(settings: Partial<EventSettings>): Promise<void> {
+    if (this.useDatabase) {
+      try {
+        // Build dynamic UPDATE query
+        const setClauses: string[] = [];
+        const values: any[] = [];
+        let paramIndex = 1;
+        
+        if (settings.eventModeEnabled !== undefined) {
+          setClauses.push(`event_mode_enabled = $${paramIndex++}`);
+          values.push(settings.eventModeEnabled);
+        }
+        if (settings.eventStartTime !== undefined) {
+          setClauses.push(`event_start_time = $${paramIndex++}`);
+          values.push(settings.eventStartTime);
+        }
+        if (settings.eventEndTime !== undefined) {
+          setClauses.push(`event_end_time = $${paramIndex++}`);
+          values.push(settings.eventEndTime);
+        }
+        if (settings.timezone !== undefined) {
+          setClauses.push(`timezone = $${paramIndex++}`);
+          values.push(settings.timezone);
+        }
+        if (settings.eventDays !== undefined) {
+          setClauses.push(`event_days = $${paramIndex++}`);
+          values.push(JSON.stringify(settings.eventDays));
+        }
+        
+        if (setClauses.length > 0) {
+          setClauses.push(`updated_at = NOW()`);
+          
+          await query(
+            `UPDATE event_settings SET ${setClauses.join(', ')} WHERE id = 1`,
+            values
+          );
+          
+          console.log('[Store] Event settings updated:', settings);
+        }
+      } catch (error) {
+        console.error('[Store] Failed to update event settings:', error);
+        throw error;
+      }
+    } else {
+      console.warn('[Store] Cannot update event settings - database not available');
+      throw new Error('Database not available');
+    }
+  }
+
+  /**
+   * Save or update user's RSVP for an event date
+   * Auto-resets to default time (3pm) if date changes
+   */
+  async saveEventRSVP(userId: string, preferredTime: string, eventDate: string): Promise<void> {
+    if (this.useDatabase) {
+      try {
+        // Check if RSVP for this date already exists
+        const existingResult = await query(
+          'SELECT preferred_time, event_date FROM event_rsvps WHERE user_id = $1 AND event_date = $2',
+          [userId, eventDate]
+        );
+        
+        // If RSVP exists for same date, update it
+        // If date changed or no RSVP, insert/update with new time
+        await query(
+          `INSERT INTO event_rsvps (user_id, preferred_time, event_date, created_at, updated_at)
+           VALUES ($1, $2, $3, NOW(), NOW())
+           ON CONFLICT (user_id, event_date) DO UPDATE SET
+             preferred_time = EXCLUDED.preferred_time,
+             updated_at = NOW()`,
+          [userId, preferredTime, eventDate]
+        );
+        
+        console.log(`[Store] RSVP saved: User ${userId.substring(0, 8)} for ${eventDate} at ${preferredTime}`);
+      } catch (error) {
+        console.error('[Store] Failed to save RSVP:', error);
+        throw error;
+      }
+    } else {
+      console.warn('[Store] Cannot save RSVP - database not available');
+      throw new Error('Database not available');
+    }
+  }
+
+  /**
+   * Get user's RSVP for a specific date
+   */
+  async getUserRSVP(userId: string, eventDate: string): Promise<EventRSVP | null> {
+    if (this.useDatabase) {
+      try {
+        const result = await query(
+          'SELECT * FROM event_rsvps WHERE user_id = $1 AND event_date = $2',
+          [userId, eventDate]
+        );
+        
+        if (result.rows.length > 0) {
+          const row = result.rows[0];
+          return {
+            id: row.id,
+            userId: row.user_id,
+            preferredTime: row.preferred_time,
+            eventDate: row.event_date,
+            createdAt: new Date(row.created_at).getTime(),
+            updatedAt: new Date(row.updated_at).getTime(),
+          };
+        }
+      } catch (error) {
+        console.error('[Store] Failed to get user RSVP:', error);
+      }
+    }
+    
+    return null;
+  }
+
+  /**
+   * Get attendance data for a specific date
+   * Returns count of users per time slot
+   */
+  async getEventAttendance(eventDate: string): Promise<Record<string, number>> {
+    if (this.useDatabase) {
+      try {
+        // Get all RSVPs for this date, grouped by time
+        const result = await query(
+          `SELECT preferred_time, COUNT(*) as count
+           FROM event_rsvps
+           WHERE event_date = $1
+           GROUP BY preferred_time
+           ORDER BY preferred_time ASC`,
+          [eventDate]
+        );
+        
+        const attendance: Record<string, number> = {};
+        result.rows.forEach(row => {
+          // Format time as HH:MM (remove seconds)
+          const time = row.preferred_time.substring(0, 5);
+          attendance[time] = parseInt(row.count);
+        });
+        
+        return attendance;
+      } catch (error) {
+        console.error('[Store] Failed to get event attendance:', error);
+        return {};
+      }
+    }
+    
+    return {};
+  }
+
+  /**
+   * Clean up old RSVPs (older than 7 days)
+   * Should be called periodically
+   */
+  async cleanupOldRSVPs(): Promise<number> {
+    if (this.useDatabase) {
+      try {
+        const result = await query(
+          `DELETE FROM event_rsvps WHERE event_date < CURRENT_DATE - INTERVAL '7 days' RETURNING id`
+        );
+        const deletedCount = result.rows.length;
+        
+        if (deletedCount > 0) {
+          console.log(`[Store] Cleaned up ${deletedCount} old RSVPs`);
+        }
+        
+        return deletedCount;
+      } catch (error) {
+        console.error('[Store] Failed to cleanup old RSVPs:', error);
+        return 0;
+      }
+    }
+    
+    return 0;
+  }
+
+  /**
+   * Check if current time is within event window
+   * Returns true if event is active now
+   * FIXED: Proper timezone handling for both time and day
+   */
+  async isEventActive(): Promise<boolean> {
+    const settings = await this.getEventSettings();
+    
+    if (!settings.eventModeEnabled) {
+      return false; // Event mode is off
+    }
+    
+    // Get current time in event timezone
+    const now = new Date();
+    
+    // Format time with explicit timezone (returns "15:45:12" format)
+    const timeFormatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: settings.timezone,
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    });
+    
+    const currentTime = timeFormatter.format(now);
+    
+    // FIXED: Get day of week IN THE EVENT TIMEZONE (not server timezone)
+    const dayFormatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: settings.timezone,
+      weekday: 'short', // Returns 'Sun', 'Mon', etc.
+    });
+    
+    const dayString = dayFormatter.format(now);
+    const dayMap: Record<string, number> = {
+      'Sun': 0, 'Mon': 1, 'Tue': 2, 'Wed': 3, 'Thu': 4, 'Fri': 5, 'Sat': 6
+    };
+    const dayOfWeek = dayMap[dayString];
+    
+    // Check if current time is within event window
+    const isWithinWindow = currentTime >= settings.eventStartTime && 
+                          currentTime <= settings.eventEndTime;
+    
+    // Check if today is an event day (if eventDays is configured)
+    if (settings.eventDays.length > 0) {
+      const isEventDay = settings.eventDays.includes(dayOfWeek);
+      
+      console.log(`[Store] Event active check: time=${currentTime}, window=${settings.eventStartTime}-${settings.eventEndTime}, day=${dayString}(${dayOfWeek}), isDay=${isEventDay}, isTime=${isWithinWindow}`);
+      
+      return isWithinWindow && isEventDay;
+    }
+    
+    console.log(`[Store] Event active check: time=${currentTime}, window=${settings.eventStartTime}-${settings.eventEndTime}, isWithin=${isWithinWindow}`);
+    
+    return isWithinWindow;
   }
 }
 

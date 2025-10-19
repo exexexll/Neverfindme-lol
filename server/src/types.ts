@@ -44,6 +44,8 @@ export interface User {
   qrUnlocked?: boolean; // QR code unlocked after 4 sessions
   successfulSessions?: number; // Count of completed video calls
   qrUnlockedAt?: number; // When QR was unlocked
+  // Event mode VIP access
+  canAccessOutsideEvents?: boolean; // VIP users can bypass event restrictions
 }
 
 export interface Report {
@@ -130,5 +132,31 @@ export interface RateLimitRecord {
   attempts: number;
   firstAttemptAt: number;
   lastAttemptAt: number;
+}
+
+// ===== Event Mode Types =====
+
+export interface EventSettings {
+  id?: number;
+  eventModeEnabled: boolean;
+  eventStartTime: string; // TIME format '15:00:00'
+  eventEndTime: string;   // TIME format '18:00:00'
+  timezone: string;       // e.g., 'America/Los_Angeles'
+  eventDays: number[];    // Array of day indices [0-6] where 0=Sunday
+  createdAt?: number;
+  updatedAt?: number;
+}
+
+export interface EventRSVP {
+  id?: number;
+  userId: string;
+  preferredTime: string; // TIME format '15:00:00'
+  eventDate: string;     // DATE format 'YYYY-MM-DD'
+  createdAt?: number;
+  updatedAt?: number;
+}
+
+export interface EventAttendance {
+  [timeSlot: string]: number; // e.g., { '15:00': 12, '15:30': 18 }
 }
 

@@ -358,3 +358,163 @@ export async function getReportStats(sessionToken: string) {
   return res.json();
 }
 
+// ===== Event Mode System =====
+
+/**
+ * Get current event status (public endpoint)
+ */
+export async function getEventStatus(sessionToken?: string) {
+  const headers: Record<string, string> = {};
+  if (sessionToken) {
+    headers['Authorization'] = `Bearer ${sessionToken}`;
+  }
+
+  const res = await fetch(`${API_BASE}/event/status`, { headers });
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.error || 'Failed to get event status');
+  }
+
+  return res.json();
+}
+
+/**
+ * Get event settings (public, read-only)
+ */
+export async function getEventSettings() {
+  const res = await fetch(`${API_BASE}/event/settings`);
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.error || 'Failed to get event settings');
+  }
+
+  return res.json();
+}
+
+/**
+ * Submit or update user's RSVP
+ */
+export async function submitEventRSVP(
+  sessionToken: string,
+  preferredTime: string,
+  eventDate: string
+) {
+  const res = await fetch(`${API_BASE}/event/rsvp`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${sessionToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ preferredTime, eventDate }),
+  });
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.error || 'Failed to submit RSVP');
+  }
+
+  return res.json();
+}
+
+/**
+ * Get user's RSVP for a specific date
+ */
+export async function getUserRSVP(sessionToken: string, date: string) {
+  const res = await fetch(`${API_BASE}/event/rsvp/${date}`, {
+    headers: {
+      'Authorization': `Bearer ${sessionToken}`,
+    },
+  });
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.error || 'Failed to get RSVP');
+  }
+
+  return res.json();
+}
+
+/**
+ * Get attendance data for a specific date
+ */
+export async function getEventAttendance(date: string) {
+  const res = await fetch(`${API_BASE}/event/attendance/${date}`);
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.error || 'Failed to get attendance data');
+  }
+
+  return res.json();
+}
+
+// ===== Admin Event APIs =====
+
+/**
+ * Get event settings (admin)
+ */
+export async function getAdminEventSettings(sessionToken: string) {
+  const res = await fetch(`${API_BASE}/admin/event/settings`, {
+    headers: {
+      'Authorization': `Bearer ${sessionToken}`,
+    },
+  });
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.error || 'Failed to get event settings');
+  }
+
+  return res.json();
+}
+
+/**
+ * Update event settings (admin only)
+ */
+export async function updateEventSettings(
+  sessionToken: string,
+  settings: {
+    eventModeEnabled?: boolean;
+    eventStartTime?: string;
+    eventEndTime?: string;
+    timezone?: string;
+    eventDays?: number[];
+  }
+) {
+  const res = await fetch(`${API_BASE}/admin/event/settings`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${sessionToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(settings),
+  });
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.error || 'Failed to update event settings');
+  }
+
+  return res.json();
+}
+
+/**
+ * Get attendance for a specific date (admin)
+ */
+export async function getAdminEventAttendance(sessionToken: string, date: string) {
+  const res = await fetch(`${API_BASE}/admin/event/attendance/${date}`, {
+    headers: {
+      'Authorization': `Bearer ${sessionToken}`,
+    },
+  });
+
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.error || 'Failed to get attendance data');
+  }
+
+  return res.json();
+}
+
