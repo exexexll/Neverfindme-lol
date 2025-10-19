@@ -127,22 +127,25 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
 
   // Auto-play/pause video based on active state (respects manual pause)
   useEffect(() => {
-    if (videoRef.current) {
-      if (isActive && !isVideoPaused) {
-        // Unmute and play when card becomes active
-        videoRef.current.muted = false;
-        videoRef.current.volume = 1.0;
-        videoRef.current.play().catch((err) => {
-          console.log('[UserCard] Video autoplay blocked, trying muted:', err);
-          // Fallback: play muted if autoplay blocked
-          videoRef.current!.muted = true;
-          videoRef.current!.play().catch(() => {});
-        });
-      } else {
-        // Pause and mute when card becomes inactive or manually paused
-        videoRef.current.pause();
-        videoRef.current.muted = true;
-      }
+    const video = videoRef.current;
+    if (!video) return; // Guard against null ref
+    
+    if (isActive && !isVideoPaused) {
+      // Unmute and play when card becomes active
+      video.muted = false;
+      video.volume = 1.0;
+      video.play().catch((err) => {
+        console.log('[UserCard] Video autoplay blocked, trying muted:', err);
+        // Fallback: play muted if autoplay blocked
+        if (video) {
+          video.muted = true;
+          video.play().catch(() => {});
+        }
+      });
+    } else {
+      // Pause and mute when card becomes inactive or manually paused
+      video.pause();
+      video.muted = true;
     }
   }, [isActive, isVideoPaused]);
 
