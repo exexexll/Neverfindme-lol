@@ -3,6 +3,7 @@ import Stripe from 'stripe';
 import crypto from 'crypto';
 import { store } from './store';
 import { InviteCode } from './types';
+import { requireAdmin } from './admin-auth';
 
 const router = express.Router();
 
@@ -40,14 +41,7 @@ async function requireAuth(req: any, res: any, next: any) {
   next();
 }
 
-/**
- * Middleware for admin-only routes
- */
-function requireAdmin(req: any, res: any, next: any) {
-  // For demo: any authenticated user can access
-  // In production: check admin role
-  next();
-}
+// Admin middleware imported from admin-auth.ts (line 6)
 
 /**
  * POST /payment/create-checkout
