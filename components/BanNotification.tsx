@@ -40,11 +40,15 @@ export default function BanNotification() {
         }
       } catch (error: any) {
         // Handle different error cases
-        if (error.message?.includes('Invalid or expired session')) {
+        if (error.message?.includes('Session invalidated')) {
+          // Session was invalidated by new login - clear and stay silent
+          console.log('[Ban] Session invalidated (logged in elsewhere) - clearing silently');
+          localStorage.removeItem('napalmsky_session');
+          // SessionInvalidatedModal will handle the notification
+        } else if (error.message?.includes('Invalid or expired session')) {
           // Session expired - clear it and let user re-login
           console.log('[Ban] Session expired, clearing...');
           localStorage.removeItem('napalmsky_session');
-          // Don't show error - user will be redirected to onboarding
         } else if (error.message?.includes('suspended') || error.message?.includes('banned')) {
           // User is actually banned
           setIsBanned(true);
