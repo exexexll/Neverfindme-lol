@@ -342,7 +342,9 @@ export default function RefilmPage() {
                   )}
                   <div>
                     <span className="text-sm text-[#eaeaf0]/60">Total Call Time:</span>
-                    <p className="font-bold">{Math.floor((currentUser.timerTotalSeconds || 0) / 60)} minutes</p>
+                    <p className="font-bold">
+                      {Math.floor((currentUser.timerTotalSeconds || 0) / 60)}m {(currentUser.timerTotalSeconds || 0) % 60}s
+                    </p>
                   </div>
                   <div>
                     <span className="text-sm text-[#eaeaf0]/60">Total Sessions:</span>
