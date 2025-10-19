@@ -2,6 +2,7 @@ import express from 'express';
 import { store } from './store';
 import { v4 as uuidv4 } from 'uuid';
 import { requirePayment } from './paywall-guard';
+import { requireEventAccess } from './event-guard';
 
 const router = express.Router();
 
@@ -64,9 +65,10 @@ router.get('/me', requireAuth, async (req: any, res) => {
 /**
  * GET /room/queue
  * Get list of online & available users (algorithm-free)
- * PROTECTED: Requires payment or valid invite code
+ * PROTECTED: Requires payment + event access
+ * EVENT MODE: This endpoint is event-restricted (queue access only during events)
  */
-router.get('/queue', requirePayment, async (req: any, res) => {
+router.get('/queue', requireAuth, requirePayment, requireEventAccess, async (req: any, res) => {
   const onlineUsers = store.getAllOnlineAvailable(req.userId);
   const totalAvailable = onlineUsers.length; // Total before any filtering
   

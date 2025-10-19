@@ -191,8 +191,10 @@ const activeRooms = new Map<string, { user1: string; user2: string; messages: an
 // Routes with rate limiting and dependency injection
 app.use('/auth', authLimiter, createAuthRoutes(io, activeSockets));
 app.use('/media', apiLimiter, mediaRoutes);
-// EVENT MODE: Event guard checks access during event windows
-app.use('/room', apiLimiter, requireEventAccess, roomRoutes);
+// IMPORTANT: Do NOT apply event guard to /room routes
+// Video chat rooms must always work (only block queue/matchmaking)
+// Event guard is selectively applied in room.ts to specific routes
+app.use('/room', apiLimiter, roomRoutes);
 app.use('/user', apiLimiter, userRoutes);
 app.use('/referral', apiLimiter, referralRoutes);
 app.use('/report', reportLimiter, reportRoutes);
