@@ -135,7 +135,7 @@ export function EventModeBanner() {
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
-                    <span className="font-bold text-sm">Event Mode</span>
+                    <span className="font-bold text-sm">{eventStatus.eventBannerText || 'Event Mode'}</span>
                   </div>
                   <button
                     onClick={() => setMinimized(true)}

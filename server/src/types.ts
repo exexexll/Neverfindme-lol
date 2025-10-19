@@ -143,6 +143,8 @@ export interface EventSettings {
   eventEndTime: string;   // TIME format '18:00:00'
   timezone: string;       // e.g., 'America/Los_Angeles'
   eventDays: number[];    // Array of day indices [0-6] where 0=Sunday
+  eventTitle?: string;    // Custom title for event-wait page (default: "Event Mode Active")
+  eventBannerText?: string; // Custom text for banner notification (default: "Event Mode")
   createdAt?: number;
   updatedAt?: number;
 }

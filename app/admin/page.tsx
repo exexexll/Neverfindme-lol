@@ -65,6 +65,8 @@ export default function AdminPage() {
   const [eventEndTime, setEventEndTime] = useState('18:00:00');
   const [eventTimezone, setEventTimezone] = useState('America/Los_Angeles');
   const [eventDays, setEventDays] = useState<number[]>([]);
+  const [eventTitle, setEventTitle] = useState('Event Mode Active');
+  const [eventBannerText, setEventBannerText] = useState('Event Mode');
   const [savingEvent, setSavingEvent] = useState(false);
   const [todayAttendance, setTodayAttendance] = useState<any>(null);
 
@@ -155,6 +157,8 @@ export default function AdminPage() {
         setEventEndTime(evtSettings.eventEndTime || '18:00:00');
         setEventTimezone(evtSettings.timezone || 'America/Los_Angeles');
         setEventDays(evtSettings.eventDays || []);
+        setEventTitle(evtSettings.eventTitle || 'Event Mode Active');
+        setEventBannerText(evtSettings.eventBannerText || 'Event Mode');
         
         // Load today's attendance
         const today = new Date().toISOString().split('T')[0];
@@ -277,6 +281,8 @@ export default function AdminPage() {
         eventEndTime,
         timezone: eventTimezone,
         eventDays,
+        eventTitle,
+        eventBannerText,
       });
       
       alert('Event settings saved successfully!');
@@ -772,6 +778,47 @@ export default function AdminPage() {
                 {eventDays.length === 0 
                   ? 'Event active every day' 
                   : `Event active on: ${eventDays.map(d => ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d]).join(', ')}`}
+              </p>
+            </div>
+          </div>
+
+          {/* Custom Text Settings */}
+          <div className="rounded-xl bg-white/5 border border-white/10 p-6">
+            <h3 className="text-lg font-bold text-[#eaeaf0] mb-4">Custom Event Text</h3>
+            
+            {/* Event Title */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-[#eaeaf0] mb-2">
+                Event Wait Page Title
+              </label>
+              <input
+                type="text"
+                value={eventTitle}
+                onChange={(e) => setEventTitle(e.target.value)}
+                placeholder="Event Mode Active"
+                maxLength={50}
+                className="w-full rounded-lg bg-white/10 border border-white/20 px-4 py-2.5 text-[#eaeaf0] placeholder-[#eaeaf0]/40 focus:outline-none focus:ring-2 focus:ring-[#ff9b6b]"
+              />
+              <p className="mt-1.5 text-xs text-[#eaeaf0]/50">
+                Main heading shown on the event wait page
+              </p>
+            </div>
+
+            {/* Banner Text */}
+            <div>
+              <label className="block text-sm font-medium text-[#eaeaf0] mb-2">
+                Banner Notification Text
+              </label>
+              <input
+                type="text"
+                value={eventBannerText}
+                onChange={(e) => setEventBannerText(e.target.value)}
+                placeholder="Event Mode"
+                maxLength={30}
+                className="w-full rounded-lg bg-white/10 border border-white/20 px-4 py-2.5 text-[#eaeaf0] placeholder-[#eaeaf0]/40 focus:outline-none focus:ring-2 focus:ring-[#ff9b6b]"
+              />
+              <p className="mt-1.5 text-xs text-[#eaeaf0]/50">
+                Text shown in the orange notification banner (top-right corner)
               </p>
             </div>
           </div>

@@ -1449,6 +1449,8 @@ class DataStore {
       eventEndTime: '18:00:00',
       timezone: 'America/Los_Angeles',
       eventDays: [],
+      eventTitle: 'Event Mode Active',
+      eventBannerText: 'Event Mode',
     };
   }
 
@@ -1482,6 +1484,14 @@ class DataStore {
         if (settings.eventDays !== undefined) {
           setClauses.push(`event_days = $${paramIndex++}`);
           values.push(JSON.stringify(settings.eventDays));
+        }
+        if (settings.eventTitle !== undefined) {
+          setClauses.push(`event_title = $${paramIndex++}`);
+          values.push(settings.eventTitle);
+        }
+        if (settings.eventBannerText !== undefined) {
+          setClauses.push(`event_banner_text = $${paramIndex++}`);
+          values.push(settings.eventBannerText);
         }
         
         if (setClauses.length > 0) {

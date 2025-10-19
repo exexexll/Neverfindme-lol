@@ -228,9 +228,9 @@ export default function EventWaitPage() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-8"
         >
-          <div className="mb-4 text-6xl"></div>
+          <div className="mb-4 text-6xl">⏰</div>
           <h1 className="font-playfair text-4xl font-bold text-[#eaeaf0] mb-3">
-            Event Mode Active
+            {settings.eventTitle || 'Event Mode Active'}
           </h1>
           <p className="text-[#eaeaf0]/70 text-lg">
             Matchmaking is only available during scheduled event hours

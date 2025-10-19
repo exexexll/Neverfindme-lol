@@ -185,6 +185,8 @@ router.get('/settings', async (req, res) => {
       eventEndTime: settings.eventEndTime,
       timezone: settings.timezone,
       eventDays: settings.eventDays,
+      eventTitle: settings.eventTitle || 'Event Mode Active',
+      eventBannerText: settings.eventBannerText || 'Event Mode',
     });
   } catch (error) {
     console.error('[Event] Failed to get settings:', error);

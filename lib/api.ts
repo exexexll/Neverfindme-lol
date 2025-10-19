@@ -481,6 +481,8 @@ export async function updateEventSettings(
     eventEndTime?: string;
     timezone?: string;
     eventDays?: number[];
+    eventTitle?: string;
+    eventBannerText?: string;
   }
 ) {
   const res = await fetch(`${API_BASE}/admin/event/settings`, {

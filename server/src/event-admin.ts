@@ -38,6 +38,8 @@ export function createEventAdminRoutes(io: SocketServer) {
         eventEndTime,
         timezone,
         eventDays,
+        eventTitle,
+        eventBannerText,
       } = req.body;
 
       // Validate input
@@ -102,6 +104,8 @@ export function createEventAdminRoutes(io: SocketServer) {
         eventEndTime,
         timezone,
         eventDays,
+        eventTitle,
+        eventBannerText,
       });
 
       // Get updated settings
