@@ -15,6 +15,7 @@ export function EventModeBanner() {
   const [eventStatus, setEventStatus] = useState<any>(null);
   const [timeUntilStart, setTimeUntilStart] = useState<string>('');
   const [show, setShow] = useState(false);
+  const [minimized, setMinimized] = useState(false);
 
   useEffect(() => {
     const session = getSession();
@@ -108,42 +109,66 @@ export function EventModeBanner() {
 
   return (
     <AnimatePresence>
-      <motion.div
-        initial={{ y: -100, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        exit={{ y: -100, opacity: 0 }}
-        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-          className="fixed top-0 left-0 right-0 z-40 bg-gradient-to-r from-[#ff9b6b] to-[#ff7a45] text-white shadow-lg"
+      {show && (
+        <motion.div
+          initial={{ x: 300, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          exit={{ x: 300, opacity: 0 }}
+          transition={{ type: 'spring', stiffness: 200, damping: 25 }}
+          className={`fixed right-4 top-20 z-40 rounded-xl overflow-hidden shadow-2xl ${
+            minimized ? 'w-12' : 'w-80'
+          }`}
         >
-          <div className="container mx-auto px-4 py-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
-              <div>
-                <span className="font-semibold">Event Mode Active</span>
-                <span className="mx-2 opacity-50">•</span>
-                <span className="text-sm text-white/90">
-                  {eventStatus.eventStartTime.substring(0, 5)} - {eventStatus.eventEndTime.substring(0, 5)} {eventStatus.timezone?.replace('America/', '')}
-                </span>
+          <div className="bg-gradient-to-br from-[#ff9b6b] to-[#ff7a45] text-white">
+            {/* Minimized State - Just Icon */}
+            {minimized ? (
+              <button
+                onClick={() => setMinimized(false)}
+                className="w-12 h-12 flex items-center justify-center hover:bg-white/10 transition-colors"
+                title="Expand event info"
+              >
+                <div className="w-3 h-3 bg-white rounded-full animate-pulse" />
+              </button>
+            ) : (
+              <div className="p-4">
+                {/* Header with minimize button */}
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+                    <span className="font-bold text-sm">Event Mode</span>
+                  </div>
+                  <button
+                    onClick={() => setMinimized(true)}
+                    className="text-white/80 hover:text-white text-xl leading-none"
+                    title="Minimize"
+                  >
+                    ×
+                  </button>
+                </div>
+                
+                {/* Event Window */}
+                <div className="mb-3">
+                  <p className="text-xs text-white/70 mb-1">Event Window</p>
+                  <p className="text-sm font-semibold">
+                    {eventStatus.eventStartTime.substring(0, 5)} - {eventStatus.eventEndTime.substring(0, 5)}
+                  </p>
+                  <p className="text-xs text-white/80">
+                    {eventStatus.timezone?.replace('America/', '')}
+                  </p>
+                </div>
+                
+                {/* Countdown */}
+                {timeUntilStart && (
+                  <div className="rounded-lg bg-white/10 backdrop-blur-sm px-3 py-2 text-center">
+                    <p className="text-xs text-white/70">Starts in</p>
+                    <p className="font-bold">{timeUntilStart}</p>
+                  </div>
+                )}
               </div>
-            </div>
-            
-            <div className="hidden sm:flex items-center gap-2">
-              <div className="rounded-lg bg-white/10 backdrop-blur-sm px-4 py-2 text-center">
-                <p className="text-xs text-white/80">Next Event</p>
-                <p className="font-bold text-lg">{timeUntilStart}</p>
-              </div>
-            </div>
+            )}
           </div>
-          
-          {/* Mobile countdown */}
-          <div className="mt-2 sm:hidden text-center">
-            <div className="inline-block rounded-lg bg-white/10 backdrop-blur-sm px-3 py-1.5">
-              <p className="text-xs text-white/80">Next Event: <span className="font-bold">{timeUntilStart}</span></p>
-            </div>
-          </div>
-        </div>
-      </motion.div>
+        </motion.div>
+      )}
     </AnimatePresence>
   );
 }
