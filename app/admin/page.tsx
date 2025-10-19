@@ -47,6 +47,7 @@ interface Stats {
 export default function AdminPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
+  const [sessionError, setSessionError] = useState(false);
   const [pendingReviews, setPendingReviews] = useState<BanRecord[]>([]);
   const [allReports, setAllReports] = useState<Report[]>([]);
   const [stats, setStats] = useState<Stats | null>(null);
@@ -73,28 +74,39 @@ export default function AdminPage() {
     
     if (!adminToken) {
       // No admin token, redirect to admin login
+      console.log('[Admin] No admin token found, redirecting to login');
       router.push('/admin-login');
       return;
     }
 
     // Verify admin token is valid
+    console.log('[Admin] Verifying admin session...');
     fetch(`${API_BASE}/admin/verify`, {
       headers: { 'Authorization': `Bearer ${adminToken}` },
     })
       .then(res => {
         if (!res.ok) {
+          console.warn('[Admin] Session verification failed with status:', res.status);
           throw new Error('Invalid admin session');
         }
         return res.json();
       })
-      .then(() => {
+      .then((data) => {
         // Admin authenticated, load data
+        console.log('[Admin] Session verified for:', data.username);
         loadData();
       })
-      .catch(() => {
-        // Invalid token, redirect to login
-        localStorage.removeItem('napalmsky_admin_token');
-        router.push('/admin-login');
+      .catch((error) => {
+        // Invalid token, show error and redirect
+        console.error('[Admin] Session validation error:', error);
+        setSessionError(true);
+        setLoading(false);
+        
+        // Wait 2 seconds then redirect to login
+        setTimeout(() => {
+          localStorage.removeItem('napalmsky_admin_token');
+          router.push('/admin-login');
+        }, 2000);
       });
   }, [router]);
 
@@ -284,6 +296,25 @@ export default function AdminPage() {
         : [...prev, day].sort()
     );
   };
+
+  if (sessionError) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#0a0a0c]">
+        <div className="text-center">
+          <div className="mb-4 text-6xl">🔒</div>
+          <h2 className="font-playfair text-2xl font-bold text-[#eaeaf0] mb-2">
+            Admin Session Expired
+          </h2>
+          <p className="text-[#eaeaf0]/70 mb-4">
+            Your admin session has been lost (backend restarted).
+          </p>
+          <p className="text-sm text-[#eaeaf0]/50">
+            Redirecting to login in 2 seconds...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
