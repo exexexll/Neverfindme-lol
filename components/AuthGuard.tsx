@@ -59,19 +59,16 @@ export function AuthGuard({ children }: AuthGuardProps) {
       const eventRestrictedRoutes = ['/main'];
       const isEventRestricted = eventRestrictedRoutes.some(route => pathname?.startsWith(route));
       
-      if (isEventRestricted) {
-        // Check event status
+      if (isEventRestricted && pathname !== '/event-wait') {
+        // Check event status ONCE per route change
         getEventStatus(session.sessionToken)
           .then(status => {
-            setEventCheckComplete(true);
-            
             // If event mode is ON and user doesn't have access
             if (status.eventModeEnabled && !status.canAccess) {
               console.log('[AuthGuard] Event mode active, user blocked - redirecting to wait page');
-              if (pathname !== '/event-wait') {
-                router.push('/event-wait');
-              }
+              router.push('/event-wait');
             }
+            setEventCheckComplete(true);
           })
           .catch(err => {
             console.error('[AuthGuard] Failed to check event status:', err);
