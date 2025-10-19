@@ -332,16 +332,10 @@ export default function EventWaitPage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-3">
             <button
-              onClick={() => router.push('/main?tab=settings')}
-              className="flex-1 rounded-xl bg-white/10 px-6 py-3 text-sm font-medium text-[#eaeaf0] hover:bg-white/20 transition-colors"
+              onClick={() => router.push('/refilm')}
+              className="flex-1 rounded-xl bg-[#ff9b6b] px-6 py-3 text-sm font-medium text-[#0a0a0c] hover:opacity-90 transition-opacity"
             >
-              Update Profile Photo
-            </button>
-            <button
-              onClick={() => router.push('/main?tab=settings')}
-              className="flex-1 rounded-xl bg-white/10 px-6 py-3 text-sm font-medium text-[#eaeaf0] hover:bg-white/20 transition-colors"
-            >
-              Update Intro Video
+              Update Photo & Video
             </button>
           </div>
         </motion.div>

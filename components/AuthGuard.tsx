@@ -49,7 +49,8 @@ export function AuthGuard({ children }: AuthGuardProps) {
         return;
       }
       
-      const eventRestrictedRoutes = ['/main', '/history', '/tracker', '/refilm', '/settings'];
+      const eventRestrictedRoutes = ['/main', '/history', '/tracker', '/settings'];
+      // /refilm is NOT restricted - users can update profile during event wait
       const isEventRestricted = eventRestrictedRoutes.some(route => pathname.startsWith(route));
       
       if (isEventRestricted) {
