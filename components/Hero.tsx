@@ -91,26 +91,28 @@ export function Hero() {
   return (
     <section
       ref={ref}
-      className="relative flex min-h-[620px] h-[100dvh] w-full items-center justify-center overflow-hidden"
+      className="relative flex min-h-[620px] h-[100dvh] w-full items-center justify-center overflow-visible"
     >
-      {/* Background Image with Parallax */}
-      <motion.div
-        style={{ y }}
-        className="absolute inset-0 -z-10 motion-reduce:transform-none"
-      >
-        <Image
-          src="/image.jpg"
-          alt="Cinematic dusk sky over a sketched city, plane and stars"
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover"
-          quality={90}
-        />
-      </motion.div>
+      {/* Background Image with Parallax - FIXED position for seamless transition */}
+      <div className="fixed inset-0 -z-20">
+        <motion.div
+          style={{ y }}
+          className="absolute inset-0 h-[120vh] w-full motion-reduce:transform-none"
+        >
+          <Image
+            src="/image.jpg"
+            alt="Cinematic dusk sky over a sketched city, plane and stars"
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover"
+            quality={90}
+          />
+        </motion.div>
+      </div>
 
       {/* Gradient Overlays for Readability */}
-      <div className="absolute inset-0 -z-[5] bg-gradient-to-b from-black/20 via-black/40 to-black/60" />
+      <div className="absolute inset-0 -z-[5] bg-gradient-to-b from-black/20 via-black/40 to-transparent" />
       <div className="absolute inset-0 -z-[5] bg-[radial-gradient(circle_at_center,transparent_0%,black/30_100%)]" />
 
       {/* Content */}
