@@ -20,6 +20,7 @@ export default function EventWaitPage() {
   const [submitting, setSubmitting] = useState(false);
   const [timeUntilStart, setTimeUntilStart] = useState<string>('');
   const [countdown, setCountdown] = useState<{ hours: number; minutes: number; seconds: number } | null>(null);
+  const [navigatingToRefilm, setNavigatingToRefilm] = useState(false);
 
   const session = getSession();
   const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
@@ -165,6 +166,21 @@ export default function EventWaitPage() {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleUpdateProfile = () => {
+    if (!session) {
+      console.error('[EventWait] No session found');
+      return;
+    }
+
+    console.log('[EventWait] Navigating to /refilm...');
+    setNavigatingToRefilm(true);
+    
+    // Add small delay for visual feedback
+    setTimeout(() => {
+      router.push('/refilm');
+    }, 100);
   };
 
   if (loading) {
@@ -329,16 +345,31 @@ export default function EventWaitPage() {
             While You Wait...
           </h3>
           <p className="text-sm text-[#eaeaf0]/70 mb-4">
-            Make sure your profile is ready for the event
+            Make sure your profile is ready for the event. Update your photo and intro video to make a great first impression!
           </p>
           <div className="flex flex-col sm:flex-row gap-3">
             <button
-              onClick={() => router.push('/refilm')}
-              className="flex-1 rounded-xl bg-[#ff9b6b] px-6 py-3 text-sm font-medium text-[#0a0a0c] hover:opacity-90 transition-opacity"
+              type="button"
+              onClick={handleUpdateProfile}
+              disabled={navigatingToRefilm}
+              className="flex-1 rounded-xl bg-[#ff9b6b] px-6 py-3 text-sm font-medium text-[#0a0a0c] hover:opacity-90 transition-all cursor-pointer active:scale-95 transform disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Update Photo & Video
+              {navigatingToRefilm ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Opening...
+                </span>
+              ) : (
+                'Update Photo & Video'
+              )}
             </button>
           </div>
+          <p className="mt-3 text-xs text-[#eaeaf0]/50 text-center">
+            Note: Available for paid users and QR verified accounts
+          </p>
         </motion.div>
 
         {/* Info Message */}
