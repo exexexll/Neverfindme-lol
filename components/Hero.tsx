@@ -153,16 +153,18 @@ export function Hero() {
             </Button>
           </div>
 
-          {/* Login link for existing users */}
-          <p className="mt-6 text-sm text-white/70">
-            Already have an account?{' '}
-            <Link 
-              href="/login"
-              className="font-medium text-[#ff9b6b] hover:underline focus-ring rounded"
-            >
-              Login
-            </Link>
-          </p>
+          {/* Login link for existing users (hidden if already logged in) */}
+          {!isVerified && (
+            <p className="mt-6 text-sm text-white/70">
+              Already have an account?{' '}
+              <Link 
+                href="/login"
+                className="font-medium text-[#ff9b6b] hover:underline focus-ring rounded"
+              >
+                Login
+              </Link>
+            </p>
+          )}
 
           {/* Live Active User Count */}
           {onlineUsers !== null && (
