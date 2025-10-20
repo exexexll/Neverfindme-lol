@@ -9,6 +9,7 @@ import { createGuestAccount, uploadSelfie, uploadVideo, linkAccount, getReferral
 import { saveSession, getSession } from '@/lib/session';
 import IntroductionComplete from '@/components/IntroductionComplete';
 import { PasswordInput } from '@/components/PasswordInput';
+import { compressImage } from '@/lib/imageCompression';
 
 type Step = 'name' | 'selfie' | 'video' | 'permanent' | 'introduction';
 type Gender = 'female' | 'male' | 'nonbinary' | 'unspecified';
@@ -252,37 +253,28 @@ function OnboardingPageContent() {
     const canvas = canvasRef.current;
     const video = videoRef.current;
 
-    // OPTIMIZATION: Resize to max 800x800 for faster uploads (like video optimization)
-    const maxSize = 800;
-    const aspectRatio = video.videoWidth / video.videoHeight;
-    
-    let canvasWidth = video.videoWidth;
-    let canvasHeight = video.videoHeight;
-    
-    if (canvasWidth > maxSize || canvasHeight > maxSize) {
-      if (aspectRatio > 1) {
-        canvasWidth = maxSize;
-        canvasHeight = maxSize / aspectRatio;
-      } else {
-        canvasHeight = maxSize;
-        canvasWidth = maxSize * aspectRatio;
-      }
-    }
-    
-    canvas.width = canvasWidth;
-    canvas.height = canvasHeight;
+    // Capture at full camera resolution first
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
     const ctx = canvas.getContext('2d');
     
     if (ctx) {
-      ctx.drawImage(video, 0, 0, canvasWidth, canvasHeight);
-      // OPTIMIZATION: Use 0.85 quality for good balance (vs 0.9 before)
-      // Reduces file size by 30-40% with minimal quality loss
+      ctx.drawImage(video, 0, 0);
+      
+      // Convert to blob
       canvas.toBlob(async (blob) => {
         if (blob) {
-          console.log('[Selfie] Compressed size:', (blob.size / 1024).toFixed(2), 'KB');
           setLoading(true);
           try {
-            await uploadSelfie(sessionToken, blob);
+            // PHASE 3: Advanced compression with WebP
+            console.log('[Selfie] Original size:', (blob.size / 1024).toFixed(0), 'KB');
+            
+            const compressed = await compressImage(blob, 800, 800, 0.85);
+            console.log('[Selfie] WebP compressed:',  (compressed.compressedSize / 1024).toFixed(0), 'KB',
+                       `(${compressed.reductionPercent.toFixed(1)}% reduction)`);
+            
+            await uploadSelfie(sessionToken, compressed.blob);
+            
             // Stop camera
             stream?.getTracks().forEach(track => track.stop());
             setStream(null);
@@ -293,7 +285,7 @@ function OnboardingPageContent() {
             setLoading(false);
           }
         }
-      }, 'image/jpeg', 0.9);
+      }, 'image/jpeg', 0.95); // High quality for compression input
     }
   };
 
