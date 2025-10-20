@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { getSession } from '@/lib/session';
 import { connectSocket, disconnectSocket } from '@/lib/socket';
 import { reportUser } from '@/lib/api';
+import { getMediaConstraints, getIceServers, detectDevice } from '@/lib/webrtc-config';
 
 type ViewState = 'room' | 'ended';
 
@@ -198,32 +199,15 @@ export default function RoomPage() {
       if (!currentSession) return;
 
       try {
-        // 1. Request user media
+        // 1. Request user media with optimized constraints
         console.log('[Media] Requesting getUserMedia...');
         setConnectionPhase('initializing');
         
-        // Detect Safari for specific constraints
-        const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        const { isSafari, isMobile } = detectDevice();
+        const constraints = getMediaConstraints();
+        console.log('[Media] Quality:', isMobile ? '720p HD' : '1080p Full HD');
         
-        console.log('[Media] Browser detection:', { isSafari, isMobile });
-        
-        // Optimized media constraints for full view capture
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { 
-            facingMode: 'user', // Front camera
-            aspectRatio: { ideal: isMobile ? 9/16 : 16/9 }, // Vertical on mobile, horizontal on desktop
-            width: { min: 480, ideal: isMobile ? 720 : 1280, max: 1920 },
-            height: { min: 480, ideal: isMobile ? 1280 : 720, max: 1920 },
-            frameRate: { ideal: isMobile ? 24 : 30 },
-          },
-          audio: {
-            echoCancellation: true,
-            noiseSuppression: true,
-            autoGainControl: true,
-            sampleRate: isMobile ? 16000 : 48000,
-          }
-        });
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
 
         console.log('[Media] Got local stream with tracks:', stream.getTracks().length);
         localStreamRef.current = stream;
@@ -233,34 +217,11 @@ export default function RoomPage() {
           localVideoRef.current.muted = true; // Always mute local preview
         }
 
-        // 2. Fetch TURN credentials from backend (secure)
-        console.log('[WebRTC] Fetching TURN credentials...');
+        // 2. EFFICIENCY: Get ICE servers (uses cache if available, saves 0.5-1s)
+        console.log('[WebRTC] Getting ICE servers...');
         setConnectionPhase('gathering');
         
-        let iceServers: RTCIceServer[] = [
-          { urls: 'stun:stun.l.google.com:19302' },
-          { urls: 'stun:stun1.l.google.com:19302' }
-        ];
-
-        try {
-          const apiBase = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3001';
-          const turnResponse = await fetch(`${apiBase}/turn/credentials`, {
-            headers: {
-              'Authorization': `Bearer ${currentSession.sessionToken}`
-            }
-          });
-          
-          if (turnResponse.ok) {
-            const turnData = await turnResponse.json();
-            iceServers = turnData.iceServers;
-            console.log(`[WebRTC] TURN credentials loaded from ${turnData.provider}`);
-          } else {
-            console.warn('[WebRTC] Failed to fetch TURN credentials, using STUN only');
-          }
-        } catch (error) {
-          console.error('[WebRTC] TURN credentials fetch error:', error);
-          console.warn('[WebRTC] Falling back to STUN only (~70% connection success)');
-        }
+        const iceServers = await getIceServers(currentSession.sessionToken);
 
         // 3. Create RTCPeerConnection with Safari-optimized config
         const config: RTCConfiguration = {

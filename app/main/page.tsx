@@ -9,6 +9,7 @@ import { MatchmakeOverlay } from '@/components/matchmake/MatchmakeOverlay';
 import { ReferralNotifications } from '@/components/ReferralNotifications';
 import DirectMatchInput from '@/components/DirectMatchInput';
 import { API_BASE } from '@/lib/config';
+import { prefetchTurnCredentials } from '@/lib/webrtc-config';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -60,6 +61,12 @@ function MainPageContent() {
         
         // User has paid AND (event mode off OR has access), continue with page load
         console.log('[Main] Access granted - event mode:', eventData.eventModeEnabled, 'can access:', eventData.canAccess);
+        
+        // EFFICIENCY: Prefetch TURN credentials (reduces call connection time by 0.5-1s)
+        prefetchTurnCredentials(session.sessionToken).catch(() => {
+          // Non-critical, will fetch on-demand if prefetch fails
+        });
+        
         setLoading(false);
         
         // Check if coming from direct match (intro or notification)
