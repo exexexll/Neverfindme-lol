@@ -69,11 +69,11 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
     }
   }, []);
 
-  // Show toast
+  // Show toast (no dependencies needed - just sets state)
   const showToast = useCallback((message: string, type: 'error' | 'info' = 'info') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
-  }, []);
+  }, []); // Empty deps is correct - no external dependencies
 
   // Track navigation rate and apply cooldown if needed
   const trackNavigation = useCallback((userId: string) => {
