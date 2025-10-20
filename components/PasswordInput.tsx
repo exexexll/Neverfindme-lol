@@ -26,6 +26,12 @@ export function PasswordInput({
   const [warnings, setWarnings] = useState<string[]>([]);
   const [score, setScore] = useState(0);
 
+  // Common passwords list
+  const commonPasswords = [
+    'password', '123456', '12345678', 'qwerty', 'abc123',
+    'password123', 'admin', 'letmein', 'welcome'
+  ];
+
   // Real-time password validation
   useEffect(() => {
     if (!value) {
@@ -241,9 +247,9 @@ export function PasswordInput({
               {value.length >= 6 ? '✓' : '○'} At least 6 characters
             </li>
             <li className={`flex items-center gap-2 ${
-              !commonPasswords.includes(value.toLowerCase()) && value ? 'text-green-400' : 'text-[#eaeaf0]/50'
+              value && errors.length === 0 ? 'text-green-400' : 'text-[#eaeaf0]/50'
             }`}>
-              {!commonPasswords.includes(value.toLowerCase()) && value ? '✓' : '○'} Not a common password
+              {value && errors.length === 0 ? '✓' : '○'} Not a common password
             </li>
           </ul>
           <p className="text-xs text-[#eaeaf0]/40 mt-2">Recommended:</p>
