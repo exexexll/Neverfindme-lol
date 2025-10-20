@@ -96,9 +96,9 @@ export async function compressVideo(
       'output.mp4'
     ]);
 
-    // Read output
-    const data = await ffmpeg.readFile('output.mp4');
-    const compressed = new Blob([data.buffer], { type: 'video/mp4' });
+    // Read output  
+    const data = await ffmpeg.readFile('output.mp4') as Uint8Array;
+    const compressed = new Blob([data], { type: 'video/mp4' });
 
     console.log('[Compression] Complete!',
       'Original:', (file.size / 1024 / 1024).toFixed(2), 'MB',
