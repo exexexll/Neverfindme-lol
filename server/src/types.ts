@@ -46,6 +46,13 @@ export interface User {
   qrUnlockedAt?: number; // When QR was unlocked
   // Event mode VIP access
   canAccessOutsideEvents?: boolean; // VIP users can bypass event restrictions
+  // Email/phone verification (Phase 2)
+  email_verified?: boolean;
+  verification_code?: string | null;
+  verification_code_expires_at?: number | null;
+  verification_attempts?: number;
+  phone_number?: string;
+  phone_verified?: boolean;
 }
 
 export interface Report {
