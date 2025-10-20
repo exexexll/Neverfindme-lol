@@ -275,9 +275,3 @@ export function PasswordInput({
   );
 }
 
-// Common passwords list (for frontend validation)
-const commonPasswords = [
-  'password', '123456', '12345678', 'qwerty', 'abc123',
-  'password123', 'admin', 'letmein', 'welcome'
-];
-

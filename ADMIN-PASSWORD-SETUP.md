@@ -37,7 +37,7 @@ const ADMIN_PASSWORD_HASH = process.env.ADMIN_PASSWORD_HASH;
 
 ```bash
 # Open terminal and run:
-node -e "const bcrypt = require('bcrypt'); bcrypt.hash('YOUR_NEW_ADMIN_PASSWORD', 12).then(hash => console.log(hash));"
+node -e "const bcrypt = require('bcrypt'); bcrypt.hash('328077', 12).then(hash => console.log(hash));"
 
 # Replace YOUR_NEW_ADMIN_PASSWORD with your actual password
 # Example output:
