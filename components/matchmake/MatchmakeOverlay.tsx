@@ -429,7 +429,8 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
       setTotalAvailable(queueData.totalAvailable);
       
       setUsers(prevUsers => {
-        console.log('[Matchmake] Current reel has:', prevUsers.length, 'users');
+        const currentViewingUserId = prevUsers[currentIndex]?.userId;
+        console.log('[Matchmake] Updating queue - currently viewing:', prevUsers[currentIndex]?.name);
         
         // Create a map of current user IDs to preserve order
         const prevUserIds = new Set(prevUsers.map(u => u.userId));
