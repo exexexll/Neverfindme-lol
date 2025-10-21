@@ -416,21 +416,22 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
           </motion.div>
 
           {/* Text Content - Animates */}
-          <div className="flex-1 overflow-hidden">
-            {/* Name - Smaller on mobile */}
-            <div className="flex items-center gap-2 mb-1">
+          <div className="flex-1 min-w-0">
+            {/* Name + Distance - Wrap on mobile if needed */}
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
               <motion.h3 
-                className="font-playfair font-bold text-white leading-none truncate"
+                className="font-playfair font-bold text-white leading-none"
                 initial={{ fontSize: isMobile ? '1.5rem' : '3rem' }}
                 animate={{
                   fontSize: isHovered ? (isMobile ? '1.5rem' : '3rem') : (isMobile ? '1.25rem' : '1.5rem'),
                 }}
                 transition={hasMounted ? { duration: 0.3, ease: 'easeOut' } : { duration: 0 }}
+                style={{ maxWidth: isMobile ? '60%' : 'none' }}
               >
                 {user.name}
               </motion.h3>
               
-              {/* Distance Badge (Location-based) */}
+              {/* Distance Badge (Location-based) - Always visible, wraps on mobile */}
               {user.hasLocation && user.distance !== null && user.distance !== undefined && (
                 <motion.div 
                   initial={{ opacity: 0, scale: 0.8 }}
