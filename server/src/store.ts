@@ -1148,8 +1148,8 @@ class DataStore {
     return inviteCode;
   }
 
-  // Validate and use an invite code
-  async useInviteCode(code: string, userId: string, userName: string): Promise<{ success: boolean; error?: string }> {
+  // Validate and use an invite code (with optional USC email for admin codes)
+  async useInviteCode(code: string, userId: string, userName: string, email?: string): Promise<{ success: boolean; error?: string; codeType?: 'user' | 'admin' }> {
     // CRITICAL FIX: Use getInviteCode which checks both memory AND database
     const inviteCode = await this.getInviteCode(code);
     
@@ -1159,6 +1159,28 @@ class DataStore {
 
     if (!inviteCode.isActive) {
       return { success: false, error: 'This invite code has been deactivated' };
+    }
+    
+    // USC EMAIL VALIDATION: Admin codes require @usc.edu email
+    if (inviteCode.type === 'admin') {
+      if (!email || typeof email !== 'string') {
+        return { success: false, error: 'USC email required for this code' };
+      }
+      
+      // Validate email format
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return { success: false, error: 'Invalid email format' };
+      }
+      
+      // STRICT: Must be @usc.edu domain
+      if (!email.toLowerCase().endsWith('@usc.edu')) {
+        return { 
+          success: false, 
+          error: 'Admin codes are only valid for @usc.edu email addresses'
+        };
+      }
+      
+      console.log(`[InviteCode] ✅ Admin code validated with USC email: ${email}`);
     }
 
     // Check if user already used this code (prevent reuse)
@@ -1179,10 +1201,25 @@ class DataStore {
       inviteCode.usesRemaining--;
       console.log(`[InviteCode] Code ${code} used by ${userName} - ${inviteCode.usesRemaining} uses remaining`);
     } else {
-      console.log(`[InviteCode] Admin code ${code} used by ${userName} - unlimited uses`);
+      console.log(`[InviteCode] Admin code ${code} used by ${userName} (USC: ${email}) - unlimited uses`);
+    }
+    
+    // Update in database if available
+    if (this.useDatabase) {
+      try {
+        await query(
+          `UPDATE invite_codes 
+           SET uses_remaining = $1, used_by = $2 
+           WHERE code = $3`,
+          [inviteCode.usesRemaining, JSON.stringify(inviteCode.usedBy), code]
+        );
+        console.log(`[InviteCode] ✅ Updated usage in database`);
+      } catch (error) {
+        console.error('[InviteCode] Failed to update in database (non-critical):', error);
+      }
     }
 
-    return { success: true };
+    return { success: true, codeType: inviteCode.type };
   }
 
   // Get all codes created by a user

@@ -267,11 +267,14 @@ router.post('/apply-code', requireAuth, async (req: any, res) => {
     await store.updateUser(req.userId, { email: email.toLowerCase() });
   }
 
-  // Use the code
-  const result = await store.useInviteCode(inviteCode, req.userId, user.name);
+  // Use the code (pass email for admin code validation)
+  const result = await store.useInviteCode(inviteCode, req.userId, user.name, email);
   
   if (!result.success) {
-    return res.status(403).json({ error: result.error });
+    return res.status(403).json({ 
+      error: result.error,
+      requiresUSCEmail: result.error?.includes('@usc.edu'), // Tell frontend USC email needed
+    });
   }
 
   // Generate NEW code for this user (viral growth: every verified user gets 4 invites)

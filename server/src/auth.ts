@@ -23,7 +23,7 @@ export function createAuthRoutes(
    * Optional: inviteCode for paywall bypass (QR code access)
    */
   router.post('/guest', async (req: any, res) => {
-  const { name, gender, referralCode, inviteCode } = req.body;
+  const { name, gender, referralCode, inviteCode, email } = req.body;
   const ip = req.userIp; // Set by middleware with centralized IP extraction
 
   if (!name || !name.trim()) {
@@ -40,6 +40,7 @@ export function createAuthRoutes(
   // PAYWALL CHECK: Validate invite code if provided
   let codeVerified = false;
   let codeUsed: string | undefined;
+  let uscEmail: string | undefined;
   
   if (inviteCode) {
     const sanitizedCode = inviteCode.trim().toUpperCase();
@@ -49,20 +50,25 @@ export function createAuthRoutes(
       return res.status(400).json({ error: 'Invalid invite code format' });
     }
 
-    // Use the code (this checks validity, uses remaining, etc.)
-    const result = await store.useInviteCode(sanitizedCode, userId, name.trim());
+    // Use the code (ASYNC - checks database + validates USC email for admin codes)
+    const result = await store.useInviteCode(sanitizedCode, userId, name.trim(), email);
     
     if (!result.success) {
       console.warn(`[Auth] Invalid invite code used: ${sanitizedCode} - ${result.error}`);
       return res.status(403).json({ 
         error: result.error,
         requiresPayment: true,
+        requiresUSCEmail: result.error?.includes('@usc.edu'), // Tell frontend USC email needed
       });
     }
 
     codeVerified = true;
     codeUsed = sanitizedCode;
-    console.log(`[Auth] ✅ User ${name} verified via invite code: ${sanitizedCode}`);
+    
+    // Store USC email if validated (for admin codes)
+    uscEmail = (email && email.toLowerCase().endsWith('@usc.edu')) ? email.toLowerCase() : undefined;
+    
+    console.log(`[Auth] ✅ User ${name} verified via ${result.codeType} code: ${sanitizedCode}${uscEmail ? ` (USC: ${uscEmail})` : ''}`);
   }
 
   // Generate invite code for new user (if they used an invite code or paid)
@@ -116,6 +122,7 @@ export function createAuthRoutes(
     accountType: 'guest',
     createdAt: Date.now(),
     banStatus: 'none',
+    email: uscEmail, // Store USC email if provided (for admin code users)
     // PAYWALL GRACE PERIOD: Users with invite code start in grace period
     // They get full access but need 4 successful sessions to unlock their own QR code
     paidStatus: codeVerified ? 'qr_grace_period' : 'unpaid',
