@@ -167,6 +167,8 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req: a
           paidStatus: 'paid',
           paidAt: Date.now(),
           paymentId: session.payment_intent as string,
+          qrUnlocked: true, // PAID users get code UNLOCKED immediately (not grace period)
+          successfulSessions: 0,
         });
 
         // Generate user's invite code (4 uses)
@@ -193,6 +195,8 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req: a
         await store.updateUser(userId, {
           myInviteCode: inviteCode,
           inviteCodeUsesRemaining: 4,
+          qrUnlocked: true, // Ensure it's unlocked for paid users
+          qrUnlockedAt: Date.now(),
         });
 
         console.log(`[Payment] ✅ Complete! Generated invite code ${inviteCode} for ${user.name} (4 uses)`);
