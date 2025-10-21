@@ -1282,7 +1282,7 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
 
       {/* Inactivity Warning - Non-blocking, tap to reactivate */}
       <AnimatePresence>
-        {showInactivityWarning && !incomingInvite && (
+        {showInactivityWarning && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
