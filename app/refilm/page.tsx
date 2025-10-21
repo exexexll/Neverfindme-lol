@@ -550,14 +550,21 @@ export default function RefilmPage() {
                 </div>
               )}
 
-              {isRecording && (
-                <button
-                  onClick={stopVideoRecording}
-                  className="focus-ring w-full rounded-xl bg-red-500 px-6 py-3 font-medium text-white shadow-sm transition-opacity hover:opacity-90"
-                >
-                  Stop recording
-                </button>
-              )}
+                  {isRecording && (
+                    <button
+                      onClick={stopVideoRecording}
+                      disabled={recordingTime < 5}
+                      className={`focus-ring w-full rounded-xl px-6 py-3 font-medium shadow-sm transition-opacity ${
+                        recordingTime < 5 
+                          ? 'bg-gray-500/50 text-gray-300 cursor-not-allowed opacity-50'
+                          : 'bg-red-500 text-white hover:opacity-90'
+                      }`}
+                    >
+                      {recordingTime < 5 
+                        ? `Keep recording... (${5 - recordingTime}s minimum)` 
+                        : 'Stop recording'}
+                    </button>
+                  )}
 
               {uploading && (
                 <div className="text-center text-sm text-[#eaeaf0]/70">
