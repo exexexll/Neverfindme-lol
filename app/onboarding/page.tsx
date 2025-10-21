@@ -352,13 +352,15 @@ function OnboardingPageContent() {
       setIsRecording(true);
       setRecordingTime(0);
 
-      // Start timer - clear any existing timer first to prevent double-counting
+      // CRITICAL: Clear any existing timer first to prevent double-counting
+      // (React Strict Mode can cause duplicate mounts in development)
       if (timerRef.current) {
         clearInterval(timerRef.current);
         timerRef.current = null;
       }
       
-      timerRef.current = setInterval(() => {
+      // Ensure no other intervals are running (defense in depth)
+      const intervalId = setInterval(() => {
         setRecordingTime(prev => {
           const newTime = prev + 1;
           if (newTime >= 60) {
@@ -368,6 +370,8 @@ function OnboardingPageContent() {
           return newTime;
         });
       }, 1000);
+      
+      timerRef.current = intervalId;
     } catch (err) {
       setError('Camera/microphone access denied. Please allow access to continue.');
     }
