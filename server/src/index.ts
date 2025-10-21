@@ -26,6 +26,7 @@ import { createEventAdminRoutes } from './event-admin';
 import { requireEventAccess } from './event-guard';
 import { authLimiter, apiLimiter, turnLimiter, paymentLimiter, reportLimiter, rsvpLimiter, eventPublicLimiter } from './rate-limit';
 import verificationRoutes from './verification';
+import locationRoutes from './location';
 import { securityHeaders, httpsRedirect } from './security-headers';
 import { memoryManager } from './memory-manager';
 import { 
@@ -204,6 +205,7 @@ app.use('/payment', paymentRoutes);
 app.use('/turn', turnLimiter, turnRoutes);
 app.use('/admin', authLimiter, adminAuthRoutes);
 app.use('/verification', apiLimiter, verificationRoutes);
+app.use('/location', apiLimiter, locationRoutes);
 // EVENT MODE: RSVP endpoint with strict rate limiting (SECURITY: prevent spam)
 app.use('/event/rsvp', rsvpLimiter);
 // EVENT MODE: Public event endpoints with rate limiting (SECURITY: prevent scraping)

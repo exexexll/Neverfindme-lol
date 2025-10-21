@@ -3,6 +3,7 @@ import { store } from './store';
 import { v4 as uuidv4 } from 'uuid';
 import { requirePayment } from './paywall-guard';
 import { requireEventAccess } from './event-guard';
+import { query } from './database';
 
 const router = express.Router();
 
@@ -121,7 +122,67 @@ router.get('/queue', requireAuth, requirePayment, requireEventAccess, async (req
     })
   );
   
-  const filteredUsers = users.filter(Boolean);
+  let filteredUsers = users.filter(Boolean) as any[];
+
+  // LOCATION-BASED SORTING: Calculate distances if user has location
+  try {
+    const currentUserLocation = await query(
+      'SELECT latitude, longitude FROM user_locations WHERE user_id = $1 AND expires_at > NOW()',
+      [req.userId]
+    );
+    
+    if (currentUserLocation.rows.length > 0) {
+      const { latitude: userLat, longitude: userLon } = currentUserLocation.rows[0];
+      console.log(`[Queue API] 📍 Current user has location, calculating distances...`);
+      
+      // Get locations for all users in queue
+      const userIds = filteredUsers.map(u => u.userId);
+      const locations = await query(
+        'SELECT user_id, latitude, longitude FROM user_locations WHERE user_id = ANY($1) AND expires_at > NOW()',
+        [userIds]
+      );
+      
+      const locationMap = new Map(
+        locations.rows.map(row => [row.user_id, { lat: row.latitude, lon: row.longitude }])
+      );
+      
+      // Calculate distance for each user (Haversine formula)
+      filteredUsers = filteredUsers.map(user => {
+        const targetLocation = locationMap.get(user.userId);
+        if (!targetLocation) {
+          return { ...user, distance: null, hasLocation: false };
+        }
+        
+        // Haversine formula
+        const R = 6371000; // Earth radius in meters
+        const φ1 = (userLat * Math.PI) / 180;
+        const φ2 = (targetLocation.lat * Math.PI) / 180;
+        const Δφ = ((targetLocation.lat - userLat) * Math.PI) / 180;
+        const Δλ = ((targetLocation.lon - userLon) * Math.PI) / 180;
+        
+        const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+                  Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        const distance = R * c; // meters
+        
+        return { ...user, distance, hasLocation: true };
+      });
+      
+      // Sort by distance (closest first), then by name for users without location
+      filteredUsers.sort((a, b) => {
+        if (a.distance === null && b.distance === null) return 0;
+        if (a.distance === null) return 1; // No location users go last
+        if (b.distance === null) return -1;
+        return a.distance - b.distance; // Ascending distance
+      });
+      
+      const withLocation = filteredUsers.filter(u => u.hasLocation).length;
+      console.log(`[Queue API] 📍 Sorted by distance: ${withLocation} users with location`);
+    }
+  } catch (error) {
+    console.error('[Queue API] Location sorting failed (non-critical):', error);
+    // Continue without distance sorting
+  }
 
   console.log(`[Queue API] Final result: ${filteredUsers.length} users (${filteredUsers.filter((u: any) => u.hasCooldown).length} with cooldown)`);
   console.log(`[Queue API] Returning: ${filteredUsers.map((u: any) => `${u.name}${u.hasCooldown ? ' [COOLDOWN]' : ''}`).join(', ')}`);

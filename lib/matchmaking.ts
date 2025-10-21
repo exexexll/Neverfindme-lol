@@ -15,6 +15,9 @@ export interface ReelUser {
   cooldownExpiry?: number | null;
   wasIntroducedToMe?: boolean;
   introducedBy?: string | null;
+  // Location-based (optional)
+  distance?: number | null; // meters
+  hasLocation?: boolean;
 }
 
 export interface ReelResponse {

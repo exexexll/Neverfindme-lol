@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { generateReferralLink } from '@/lib/api';
 import { getSession } from '@/lib/session';
+import { formatDistance } from '@/lib/distanceCalculation';
 
 interface UserCardProps {
   user: {
@@ -15,6 +16,8 @@ interface UserCardProps {
     videoUrl?: string;
     wasIntroducedToMe?: boolean;
     introducedBy?: string | null;
+    distance?: number | null; // meters
+    hasLocation?: boolean;
   };
   onInvite: (userId: string, seconds: number) => void;
   onRescind?: (userId: string) => void;
@@ -426,6 +429,25 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
               >
                 {user.name}
               </motion.h3>
+              
+              {/* Distance Badge (Location-based) */}
+              {user.hasLocation && user.distance !== null && user.distance !== undefined && (
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="flex-shrink-0 rounded-full bg-[#ff9b6b]/20 px-2.5 py-0.5 border border-[#ff9b6b]/40"
+                >
+                  <div className="flex items-center gap-1">
+                    <svg className="h-3 w-3 text-[#ff9b6b]" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                    </svg>
+                    <span className="text-xs font-bold text-[#ff9b6b]">
+                      {formatDistance(user.distance)}
+                    </span>
+                  </div>
+                </motion.div>
+              )}
+              
               {user.wasIntroducedToMe && isHovered && (
                 <motion.div 
                   initial={{ opacity: 0, scale: 0.8 }}

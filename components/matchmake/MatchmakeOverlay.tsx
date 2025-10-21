@@ -8,6 +8,8 @@ import { getQueue, ReelUser } from '@/lib/matchmaking';
 import { connectSocket } from '@/lib/socket';
 import { UserCard } from './UserCard';
 import { CalleeNotification } from './CalleeNotification';
+import { LocationPermissionModal } from '@/components/LocationPermissionModal';
+import { requestAndUpdateLocation } from '@/lib/locationAPI';
 
 interface MatchmakeOverlayProps {
   isOpen: boolean;
@@ -34,6 +36,8 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
   const touchStartX = useRef<number>(0);
   const [viewedUserIds, setViewedUserIds] = useState<Set<string>>(new Set()); // Track by userId, not index
   const [isRateLimited, setIsRateLimited] = useState(false);
+  const [showLocationModal, setShowLocationModal] = useState(false);
+  const [locationAsked, setLocationAsked] = useState(false);
   
   const socketRef = useRef<any>(null);
   const prevIndexRef = useRef<number>(-1);
@@ -224,10 +228,33 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
     }
   }, [isOpen]);
 
+  // Ask for location permission (once per session)
+  const askForLocation = useCallback(async () => {
+    const session = getSession();
+    if (!session || locationAsked) return;
+    
+    // Check if user previously granted location
+    const hasLocationConsent = localStorage.getItem('napalmsky_location_consent');
+    
+    if (hasLocationConsent === 'true') {
+      // Auto-update location
+      console.log('[Location] User previously consented, updating...');
+      await requestAndUpdateLocation(session.sessionToken);
+      setLocationAsked(true);
+    } else if (hasLocationConsent === null) {
+      // First time: Ask for permission
+      setShowLocationModal(true);
+    }
+    // If 'false', user declined before, don't ask again
+  }, [locationAsked]);
+
   // Load initial queue (no shuffling, consistent order)
   const loadInitialQueue = useCallback(async () => {
     const session = getSession();
     if (!session || loading) return;
+
+    // Ask for location permission before loading queue
+    await askForLocation();
 
     setLoading(true);
     try {
@@ -854,6 +881,32 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
     console.log('[Matchmake] Declined invite:', inviteId);
   };
 
+  // Handle location permission allow
+  const handleLocationAllow = useCallback(async () => {
+    const session = getSession();
+    if (!session) return;
+    
+    setShowLocationModal(false);
+    setLocationAsked(true);
+    
+    const success = await requestAndUpdateLocation(session.sessionToken);
+    if (success) {
+      localStorage.setItem('napalmsky_location_consent', 'true');
+      showToast('Location enabled - showing nearby people first', 'info');
+      loadInitialQueue();
+    } else {
+      showToast('Location permission denied', 'error');
+      localStorage.setItem('napalmsky_location_consent', 'false');
+    }
+  }, [showToast, loadInitialQueue]);
+
+  // Handle location permission deny
+  const handleLocationDeny = useCallback(() => {
+    setShowLocationModal(false);
+    setLocationAsked(true);
+    localStorage.setItem('napalmsky_location_consent', 'false');
+  }, []);
+
   // Handle close overlay
   const handleClose = () => {
     if (incomingInvite) {
@@ -1113,6 +1166,14 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
             )}
           </div>
       </div>
+
+      {/* Location Permission Modal */}
+      {showLocationModal && (
+        <LocationPermissionModal
+          onAllow={handleLocationAllow}
+          onDeny={handleLocationDeny}
+        />
+      )}
 
       {/* Incoming Invite (Blocking) */}
       <AnimatePresence>
