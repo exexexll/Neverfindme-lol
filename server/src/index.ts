@@ -1005,8 +1005,21 @@ io.on('connection', (socket) => {
       console.log(`[Queue] ${room.user1} marked available again`);
       console.log(`[Queue] ${room.user2} marked available again`);
 
-      // Notify both users
+      // Notify both users (CRITICAL: Use io.to for reliability)
+      console.log(`[Room] Emitting session:finalized to room ${roomId} (session: ${sessionId})`);
       io.to(roomId).emit('session:finalized', { sessionId });
+      
+      // BACKUP: Also emit directly to socket IDs (for mobile reliability)
+      const user1Socket = activeSockets.get(room.user1);
+      const user2Socket = activeSockets.get(room.user2);
+      if (user1Socket) {
+        io.to(user1Socket).emit('session:finalized', { sessionId });
+        console.log(`[Room] Direct emit to user1 socket: ${user1Socket}`);
+      }
+      if (user2Socket) {
+        io.to(user2Socket).emit('session:finalized', { sessionId });
+        console.log(`[Room] Direct emit to user2 socket: ${user2Socket}`);
+      }
 
       // Cleanup
       activeRooms.delete(roomId);
