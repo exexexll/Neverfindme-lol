@@ -354,9 +354,21 @@ export default function SettingsPage() {
             </div>
             
             {!locationEnabled && (
-              <p className="mt-3 text-xs text-[#eaeaf0]/40">
-                To enable: Open matchmaking and grant location permission when prompted
-              </p>
+              <div className="mt-4">
+                <button
+                  onClick={() => {
+                    // Clear localStorage to allow modal to show again
+                    localStorage.removeItem('napalmsky_location_consent');
+                    alert('Location permission reset. Open matchmaking to grant permission again.');
+                  }}
+                  className="w-full rounded-xl bg-[#ff9b6b] px-4 py-2.5 text-sm font-medium text-[#0a0a0c] hover:opacity-90"
+                >
+                  Enable Location Sharing
+                </button>
+                <p className="mt-2 text-xs text-center text-[#eaeaf0]/40">
+                  You'll be asked for permission when you open matchmaking
+                </p>
+              </div>
             )}
           </div>
 
