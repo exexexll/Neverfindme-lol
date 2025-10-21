@@ -30,6 +30,7 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
   const [seconds, setSeconds] = useState(300);
   const [showTimerModal, setShowTimerModal] = useState(false);
   const [tempSeconds, setTempSeconds] = useState('300');
+  const [tempInputValue, setTempInputValue] = useState('300');
   const [waitTime, setWaitTime] = useState(20);
   const [showWaitOptions, setShowWaitOptions] = useState(false);
   const [showReferralModal, setShowReferralModal] = useState(false);
@@ -327,17 +328,19 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
   };
 
   const handleSaveTimer = () => {
-    const num = parseInt(tempSeconds);
+    const num = parseInt(tempInputValue);
     
     // Enforce server validation: 60-500 seconds
     if (isNaN(num) || num < 60) {
       const defaultValue = 60;
       setSeconds(defaultValue);
       setTempSeconds(defaultValue.toString());
+      setTempInputValue(defaultValue.toString());
     } else {
       const clamped = Math.min(500, num);
       setSeconds(clamped);
       setTempSeconds(clamped.toString());
+      setTempInputValue(clamped.toString());
     }
     
     setShowTimerModal(false);
@@ -690,8 +693,17 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
                 <div>
                   <input
                     type="number"
-                    value={tempSeconds}
-                    onChange={(e) => setTempSeconds(e.target.value)}
+                    value={tempInputValue}
+                    onChange={(e) => setTempInputValue(e.target.value)}
+                    onBlur={() => {
+                      // On blur, validate and fix if needed
+                      const num = parseInt(tempInputValue);
+                      if (isNaN(num) || num < 60) {
+                        setTempInputValue('60');
+                      } else if (num > 500) {
+                        setTempInputValue('500');
+                      }
+                    }}
                     min="60"
                     max="500"
                     autoFocus
@@ -708,6 +720,7 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
                   <button
                     onClick={() => {
                       setTempSeconds(seconds.toString());
+                      setTempInputValue(seconds.toString());
                       setShowTimerModal(false);
                     }}
                     className="focus-ring flex-1 rounded-xl bg-white/10 px-6 py-3 font-medium text-[#eaeaf0] transition-all hover:bg-white/20"

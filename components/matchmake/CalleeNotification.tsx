@@ -23,6 +23,7 @@ interface CalleeNotificationProps {
 
 export function CalleeNotification({ invite, onAccept, onDecline }: CalleeNotificationProps) {
   const [seconds, setSeconds] = useState(invite.requestedSeconds);
+  const [inputValue, setInputValue] = useState(invite.requestedSeconds.toString());
   const [timeLeft, setTimeLeft] = useState(20); // Changed to 20s to respond
   const [videoOrientation, setVideoOrientation] = useState<'portrait' | 'landscape' | 'unknown'>('unknown');
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -124,18 +125,18 @@ export function CalleeNotification({ invite, onAccept, onDecline }: CalleeNotifi
   }, []);
 
   const handleSecondsChange = (value: string) => {
-    // Allow empty string for user to clear and retype
+    // Allow empty string while typing
+    setInputValue(value);
+    
     if (value === '') {
-      setSeconds(60); // Reset to minimum valid value
+      setSeconds(60); // Set to minimum for validation, but don't show in input
       return;
     }
     
     const num = parseInt(value);
     
-    // Clamp between 60 (server minimum) and 500 (reasonable maximum)
-    if (isNaN(num)) {
-      setSeconds(60);
-    } else {
+    // Update actual seconds value (clamped)
+    if (!isNaN(num)) {
       setSeconds(Math.min(500, Math.max(60, num)));
     }
   };
@@ -228,8 +229,15 @@ export function CalleeNotification({ invite, onAccept, onDecline }: CalleeNotifi
           </label>
           <input
             type="number"
-            value={seconds}
+            value={inputValue}
             onChange={(e) => handleSecondsChange(e.target.value)}
+            onBlur={() => {
+              // On blur, ensure value is valid
+              if (inputValue === '' || parseInt(inputValue) < 60) {
+                setInputValue('60');
+                setSeconds(60);
+              }
+            }}
             min="60"
             max="500"
             className={`w-full rounded-xl bg-white/10 px-4 text-center font-mono text-[#eaeaf0] focus:outline-none focus:ring-2 focus:ring-[#ff9b6b] ${
