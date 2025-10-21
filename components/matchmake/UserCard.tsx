@@ -193,13 +193,15 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
 
   // Handle double tap/click on video to pause/play
   const handleVideoInteraction = (e: React.MouseEvent | React.TouchEvent) => {
-    e.stopPropagation(); // Don't trigger card navigation
+    // REMOVED: e.stopPropagation() - Allow swipe gestures to bubble to parent
     
     const now = Date.now();
     const timeSinceLastTap = now - lastTapTime.current;
     
     // Double tap/click detection (within 300ms)
     if (timeSinceLastTap < 300 && timeSinceLastTap > 0) {
+      e.stopPropagation(); // Only stop for double-tap pause/play
+      
       if (videoRef.current) {
         if (isVideoPaused || videoRef.current.paused) {
           // Resume playback
@@ -216,13 +218,14 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
       lastTapTime.current = 0; // Reset to prevent triple-tap issues
     } else {
       lastTapTime.current = now;
+      // Single tap - don't stop propagation, let it bubble for swipe detection
     }
   };
 
-  // Wait timer countdown with safety timeout
+  // Wait timer countdown - Auto-cancel after 20 seconds (no "Keep Waiting")
   useEffect(() => {
     if (inviteStatus === 'waiting') {
-      console.log('[UserCard] Starting wait timer for user');
+      console.log('[UserCard] Starting wait timer for user (auto-cancel in 20s)');
       setWaitTime(20);
       setShowWaitOptions(false);
       
@@ -230,13 +233,20 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
       waitTimerRef.current = setInterval(() => {
         setWaitTime(prev => {
           const newTime = prev - 1;
-          console.log('[UserCard] Wait time:', newTime);
+          
           if (newTime <= 0) {
-            setShowWaitOptions(true);
+            // Auto-cancel after 20 seconds (no "Keep Waiting" option)
+            console.log('[UserCard] Wait timer expired - auto-canceling');
             if (waitTimerRef.current) {
               clearInterval(waitTimerRef.current);
               waitTimerRef.current = null;
             }
+            
+            // Auto-rescind the invite
+            if (onRescind) {
+              onRescind(user.userId);
+            }
+            
             return 0;
           }
           return newTime;
@@ -257,7 +267,7 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
         waitTimerRef.current = null;
       }
     };
-  }, [inviteStatus]); // ONLY depend on inviteStatus to prevent timer resets (user.name not needed)
+  }, [inviteStatus, user.userId, onRescind]); // Added onRescind to dependencies
 
   // Update cooldown timer
   useEffect(() => {
@@ -317,10 +327,19 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
   };
 
   const handleSaveTimer = () => {
-    const num = parseInt(tempSeconds) || 0;
-    const clamped = Math.min(500, Math.max(1, num));
-    setSeconds(clamped);
-    setTempSeconds(clamped.toString());
+    const num = parseInt(tempSeconds);
+    
+    // Enforce server validation: 60-500 seconds
+    if (isNaN(num) || num < 60) {
+      const defaultValue = 60;
+      setSeconds(defaultValue);
+      setTempSeconds(defaultValue.toString());
+    } else {
+      const clamped = Math.min(500, num);
+      setSeconds(clamped);
+      setTempSeconds(clamped.toString());
+    }
+    
     setShowTimerModal(false);
   };
 
@@ -360,6 +379,7 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
       onMouseLeave={() => !isMobile && setIsHovered(false)}
       onClick={handleUserInteraction}
       onTouchStart={handleUserInteraction}
+      style={{ touchAction: 'pan-y' }} // Allow vertical swipe gestures to bubble up
     >
       {/* User Info Overlay - Top (Animates based on hover) - Auto-minimizes on mobile */}
       <motion.div 
@@ -513,16 +533,17 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
       <div className="relative flex-1 bg-black flex items-center justify-center pb-32">
         {user.videoUrl ? (
           <div 
-            className="relative cursor-pointer w-full h-full flex items-center justify-center"
+            className="relative w-full h-full flex items-center justify-center"
             onClick={handleVideoInteraction}
             onTouchEnd={handleVideoInteraction}
+            style={{ touchAction: 'none' }} // Don't interfere with parent swipe
           >
             <video
               ref={videoRef}
               src={user.videoUrl}
               loop
               playsInline
-              className="w-full h-full"
+              className="w-full h-full pointer-events-none"
               style={{
                 objectFit: 'contain',
                 objectPosition: 'center'
@@ -627,7 +648,7 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
             {/* CTA Button - Responsive sizing to prevent overlap */}
             <motion.button
               onClick={() => !isSelf && inviteStatus !== 'cooldown' && onInvite(user.userId, seconds)}
-              disabled={inviteStatus === 'waiting' || inviteStatus === 'cooldown' || seconds < 1 || isSelf}
+              disabled={inviteStatus === 'waiting' || inviteStatus === 'cooldown' || seconds < 60 || isSelf}
               className="focus-ring flex-1 rounded-2xl bg-[#ff9b6b] font-playfair font-bold text-[#0a0a0c] shadow-2xl transition-opacity hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
               initial={{
                 paddingLeft: isMobile ? '1rem' : '3rem',
@@ -671,14 +692,15 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
                     type="number"
                     value={tempSeconds}
                     onChange={(e) => setTempSeconds(e.target.value)}
-                    min="1"
+                    min="60"
                     max="500"
                     autoFocus
+                    onFocus={(e) => e.target.select()} 
                     className="w-full rounded-xl bg-white/10 px-6 py-4 text-center font-mono text-4xl text-[#eaeaf0] focus:outline-none focus:ring-2 focus:ring-[#ff9b6b]"
-                    placeholder="300"
+                    placeholder="60-500"
                   />
                   <p className="mt-3 text-center text-sm text-[#eaeaf0]/70">
-                    Enter seconds (1-500)
+                    Enter seconds (60-500)
                   </p>
                 </div>
 
@@ -835,73 +857,12 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
                 </p>
               </div>
 
-              {/* Options After 20 Seconds */}
-              {showWaitOptions && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="space-y-4"
-                >
-                  <p className="text-white/80">What would you like to do?</p>
-                  <div className="flex gap-4">
-                    <button
-                      onClick={() => onRescind?.(user.userId)}
-                      className="focus-ring flex-1 rounded-xl bg-white/10 px-6 py-3 font-medium text-white transition-all hover:bg-white/20"
-                    >
-                      Cancel Request
-                    </button>
-                    <button
-                      onClick={() => {
-                        console.log('[UserCard] Keep Waiting clicked - restarting timer');
-                        setShowWaitOptions(false);
-                        setWaitTime(20);
-                        
-                        // IMPORTANT: Notify receiver to extend their timer too!
-                        const session = getSession();
-                        if (session) {
-                          const socket = require('@/lib/socket').getSocket();
-                          if (socket) {
-                            socket.emit('call:extend-wait', { toUserId: user.userId });
-                            console.log('[UserCard] ✅ Sent extend-wait notification to receiver');
-                          }
-                        }
-                        
-                        // Clear existing timer if any before creating new one
-                        if (waitTimerRef.current) {
-                          clearInterval(waitTimerRef.current);
-                          waitTimerRef.current = null;
-                        }
-                        
-                        // Restart timer for another 20 seconds
-                        waitTimerRef.current = setInterval(() => {
-                          setWaitTime(prev => {
-                            const newTime = prev - 1;
-                            if (newTime <= 0) {
-                              setShowWaitOptions(true);
-                              if (waitTimerRef.current) {
-                                clearInterval(waitTimerRef.current);
-                                waitTimerRef.current = null;
-                              }
-                              return 0;
-                            }
-                            return newTime;
-                          });
-                        }, 1000);
-                      }}
-                      className="focus-ring flex-1 rounded-xl bg-[#ff9b6b] px-6 py-3 font-medium text-[#0a0a0c] transition-opacity hover:opacity-90"
-                    >
-                      Keep Waiting
-                    </button>
-                  </div>
-                </motion.div>
-              )}
-
-              {/* Hint */}
-              {!showWaitOptions && (
-                <p className="text-sm text-white/40">
-                  Screen locked • Navigation disabled
-                </p>
-              )}
+              {/* Hint - Timer auto-cancels after 20 seconds */}
+              <p className="text-sm text-white/40">
+                {waitTime <= 5 
+                  ? `Auto-canceling in ${waitTime}s...`
+                  : 'Screen locked • Navigation disabled'}
+              </p>
             </div>
           </motion.div>
         )}

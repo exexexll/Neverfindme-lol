@@ -38,9 +38,32 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
   const [isRateLimited, setIsRateLimited] = useState(false);
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [locationAsked, setLocationAsked] = useState(false);
+  const [showInactivityWarning, setShowInactivityWarning] = useState(false);
+  const [isInactive, setIsInactive] = useState(false);
   
   const socketRef = useRef<any>(null);
   const prevIndexRef = useRef<number>(-1);
+  const lastActivityRef = useRef<number>(Date.now());
+  const inactivityCheckRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Track user activity for inactivity detection
+  const recordActivity = useCallback(() => {
+    lastActivityRef.current = Date.now();
+    
+    // If was inactive, reactivate
+    if (isInactive) {
+      console.log('[Matchmake] User reactivated!');
+      setIsInactive(false);
+      setShowInactivityWarning(false);
+      
+      // Send heartbeat to server to refresh presence
+      if (socketRef.current) {
+        socketRef.current.emit('heartbeat');
+        socketRef.current.emit('queue:join'); // Rejoin queue
+        console.log('[Matchmake] ✅ Sent reactivation heartbeat');
+      }
+    }
+  }, [isInactive]);
 
   // CRITICAL: Stop previous video immediately when currentIndex changes
   useEffect(() => {
@@ -56,7 +79,10 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
       });
     }
     prevIndexRef.current = currentIndex;
-  }, [currentIndex]);
+    
+    // Record activity on navigation
+    recordActivity();
+  }, [currentIndex, recordActivity]);
 
   // Load rate limit state from sessionStorage on mount (survives overlay close/open)
   useEffect(() => {
@@ -146,6 +172,7 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
     setMouseX(e.clientX);
     setMouseY(e.clientY);
     setShowCursor(true);
+    recordActivity(); // Record mouse movement as activity
   };
 
   // Hide custom cursor when mouse leaves
@@ -155,6 +182,9 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
 
   // Handle click - navigate based on cursor position
   const handleCardClick = (e: React.MouseEvent) => {
+    // Record activity
+    recordActivity();
+    
     // Don't navigate if clicking on buttons or interactive elements
     const target = e.target as HTMLElement;
     if (target.closest('button') || target.closest('input') || target.closest('a')) {
@@ -178,6 +208,9 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
 
   // Swipe detection for mobile - Improved to prevent conflicts
   const handleTouchStart = (e: React.TouchEvent) => {
+    // Record activity
+    recordActivity();
+    
     const target = e.target as HTMLElement;
     
     // Don't capture touch if user is interacting with buttons or inputs
@@ -190,6 +223,9 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
+    // Record activity
+    recordActivity();
+    
     const target = e.target as HTMLElement;
     
     // Don't navigate if touching buttons or inputs
@@ -242,6 +278,30 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
       };
     }
   }, [isOpen]);
+
+  // Inactivity detection - warn user when going stale
+  useEffect(() => {
+    if (!isOpen) return;
+    
+    // Check for inactivity every 10 seconds
+    inactivityCheckRef.current = setInterval(() => {
+      const now = Date.now();
+      const timeSinceActivity = now - lastActivityRef.current;
+      
+      // Warn at 45 seconds of inactivity (before 60s server threshold)
+      if (timeSinceActivity > 45000 && !isInactive) {
+        console.warn('[Matchmake] ⚠️ User inactive for 45s - showing warning');
+        setIsInactive(true);
+        setShowInactivityWarning(true);
+      }
+    }, 10000); // Check every 10 seconds
+    
+    return () => {
+      if (inactivityCheckRef.current) {
+        clearInterval(inactivityCheckRef.current);
+      }
+    };
+  }, [isOpen, isInactive]);
 
   // Ask for location permission (once per session)
   const askForLocation = useCallback(async () => {
@@ -848,15 +908,18 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
       return;
     }
 
+    // Record activity when inviting
+    recordActivity();
+
     console.log(`[Matchmake] 📞 Sending invite to user ${toUserId.substring(0, 8)} for ${requestedSeconds}s`);
 
     setInviteStatuses(prev => ({ ...prev, [toUserId]: 'waiting' }));
-    
+
     socketRef.current.emit('call:invite', {
       toUserId,
       requestedSeconds,
     });
-
+    
     console.log('[Matchmake] ✅ Invite event emitted to server');
   };
 
@@ -883,6 +946,9 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
       return;
     }
 
+    // Record activity when accepting
+    recordActivity();
+
     console.log(`[Matchmake] 📞 Accepting invite ${inviteId} with ${requestedSeconds}s`);
     
     socketRef.current.emit('call:accept', {
@@ -897,6 +963,9 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
   // Handle decline incoming
   const handleDecline = (inviteId: string) => {
     if (!socketRef.current) return;
+
+    // Record activity when declining
+    recordActivity();
 
     socketRef.current.emit('call:decline', { inviteId });
     setIncomingInvite(null);
@@ -1188,6 +1257,46 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
             )}
           </div>
       </div>
+
+      {/* Inactivity Warning - Non-blocking, tap to reactivate */}
+      <AnimatePresence>
+        {showInactivityWarning && !incomingInvite && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={recordActivity}
+            className="fixed inset-0 z-[80] flex items-center justify-center bg-black/60 backdrop-blur-sm cursor-pointer"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={recordActivity}
+              className="max-w-md mx-4 rounded-2xl bg-[#0a0a0c] p-8 shadow-2xl border-2 border-orange-500/50 text-center"
+            >
+              <div className="text-6xl mb-4">⏸️</div>
+              <h3 className="font-playfair text-2xl font-bold text-[#eaeaf0] mb-3">
+                You're Hidden from Others
+              </h3>
+              <p className="text-[#eaeaf0]/80 mb-6">
+                You've been inactive for 45 seconds. Other users can't see you in matchmaking right now.
+              </p>
+              <div className="rounded-xl bg-orange-500/10 border border-orange-500/30 p-4 mb-6">
+                <p className="text-sm text-orange-200">
+                  💡 <strong>Tap anywhere to reactivate</strong> and appear in matchmaking again
+                </p>
+              </div>
+              <button
+                onClick={recordActivity}
+                className="w-full rounded-xl bg-[#ff9b6b] px-6 py-3 font-medium text-[#0a0a0c] transition-opacity hover:opacity-90"
+              >
+                Reactivate Now
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Location Permission Modal */}
       {showLocationModal && (

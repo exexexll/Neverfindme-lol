@@ -124,8 +124,20 @@ export function CalleeNotification({ invite, onAccept, onDecline }: CalleeNotifi
   }, []);
 
   const handleSecondsChange = (value: string) => {
-    const num = parseInt(value) || 0;
-    setSeconds(Math.min(500, Math.max(1, num)));
+    // Allow empty string for user to clear and retype
+    if (value === '') {
+      setSeconds(60); // Reset to minimum valid value
+      return;
+    }
+    
+    const num = parseInt(value);
+    
+    // Clamp between 60 (server minimum) and 500 (reasonable maximum)
+    if (isNaN(num)) {
+      setSeconds(60);
+    } else {
+      setSeconds(Math.min(500, Math.max(60, num)));
+    }
   };
   
   // Detect mobile for compact UI
@@ -218,11 +230,12 @@ export function CalleeNotification({ invite, onAccept, onDecline }: CalleeNotifi
             type="number"
             value={seconds}
             onChange={(e) => handleSecondsChange(e.target.value)}
-            min="1"
+            min="60"
             max="500"
             className={`w-full rounded-xl bg-white/10 px-4 text-center font-mono text-[#eaeaf0] focus:outline-none focus:ring-2 focus:ring-[#ff9b6b] ${
               isMobile ? 'py-2 text-xl' : 'py-3 text-2xl'
             }`}
+            placeholder="60-500"
             aria-label="Your preferred call duration in seconds"
           />
           <p className="mt-2 text-xs text-[#eaeaf0]/50 text-center">
@@ -242,7 +255,7 @@ export function CalleeNotification({ invite, onAccept, onDecline }: CalleeNotifi
           <button
             ref={firstFocusRef}
             onClick={() => onAccept(invite.inviteId, seconds)}
-            disabled={seconds < 1}
+            disabled={seconds < 60 || seconds > 500}
             className="focus-ring flex-1 rounded-xl bg-[#ff9b6b] px-6 py-3 font-medium text-[#0a0a0c] shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50"
             aria-label="Accept call"
           >

@@ -311,6 +311,43 @@ configureRedisAdapter(io).catch((err) => {
 console.log('[Server] Starting memory manager...');
 memoryManager.start();
 
+// Start background stale user cleanup (every 30 seconds)
+setInterval(() => {
+  const now = Date.now();
+  const STALE_THRESHOLD = 60000; // Must match store.ts threshold - 60s
+  let cleanedCount = 0;
+  
+  // Get all presence entries from store
+  const allPresence = Array.from(store['presence'].entries());
+  
+  for (const [userId, presence] of allPresence) {
+    // If user has heartbeat and it's stale, mark offline
+    if (presence.lastHeartbeat && (now - presence.lastHeartbeat) > STALE_THRESHOLD) {
+      console.warn(`[Cleanup] Marking stale user ${userId.substring(0, 8)} offline (no heartbeat in ${Math.floor((now - presence.lastHeartbeat) / 1000)}s)`);
+      
+      store.updatePresence(userId, {
+        online: false,
+        available: false,
+      });
+      
+      // Broadcast offline status
+      io.emit('presence:update', {
+        userId,
+        online: false,
+        available: false,
+      });
+      
+      cleanedCount++;
+    }
+  }
+  
+  if (cleanedCount > 0) {
+    console.log(`[Cleanup] 🧹 Marked ${cleanedCount} stale users as offline`);
+  }
+}, 30000); // Run every 30 seconds
+
+console.log('[Server] Stale user cleanup started (every 30s)');
+
 io.on('connection', (socket) => {
   console.log(`Client connected: ${socket.id}`);
 
@@ -733,21 +770,7 @@ io.on('connection', (socket) => {
     console.log(`[Invite] ${inviteId} declined by user`);
   });
 
-  // Call: extend wait (caller wants to wait longer)
-  socket.on('call:extend-wait', async ({ toUserId }: { toUserId: string }) => {
-    if (!currentUserId) return;
-    
-    console.log(`[Invite] Caller ${currentUserId.substring(0, 8)} extending wait for ${toUserId.substring(0, 8)}`);
-    
-    // Notify receiver to add 20 more seconds to their timer
-    const targetSocket = activeSockets.get(toUserId);
-    if (targetSocket) {
-      io.to(targetSocket).emit('call:wait-extended', {
-        extraSeconds: 20
-      });
-      console.log('[Invite] ✅ Sent wait-extended notification to receiver');
-    }
-  });
+  // REMOVED: call:extend-wait - Users auto-cancel after 20s (no "Keep Waiting")
   
   // Call: rescind (caller cancels their own invite)
   socket.on('call:rescind', async ({ toUserId }: { toUserId: string }) => {

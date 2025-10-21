@@ -542,7 +542,7 @@ class DataStore {
   getAllOnlineAvailable(excludeUserId?: string): string[] {
     const allPresence = Array.from(this.presence.entries());
     const now = Date.now();
-    const STALE_THRESHOLD = 60000; // 60 seconds without heartbeat = stale
+    const STALE_THRESHOLD = 60000; // 60 seconds without heartbeat = stale (LENIENT)
     
     // Debug: Log presence states
     console.log(`[Store] getAllOnlineAvailable called - Total presence entries: ${allPresence.length}`);
@@ -578,13 +578,15 @@ class DataStore {
   updateHeartbeat(userId: string): void {
     const current = this.presence.get(userId);
     if (current) {
-      current.lastHeartbeat = Date.now();
-      current.lastActiveAt = Date.now();
+      const now = Date.now();
+      current.lastHeartbeat = now;
+      current.lastActiveAt = now;
       this.presence.set(userId, current);
       
-      // Log occasionally to avoid spam
-      if (Math.random() < 0.02) { // 2% of heartbeats
-        console.log(`[Store] 💓 Heartbeat: ${userId.substring(0, 8)} (${current.available ? 'available' : 'unavailable'})`);
+      // Log occasionally to avoid spam (more frequent for debugging)
+      if (Math.random() < 0.05) { // 5% of heartbeats
+        const timeSinceActive = Math.floor((now - (current.lastActiveAt || now)) / 1000);
+        console.log(`[Store] 💓 Heartbeat: ${userId.substring(0, 8)} (${current.available ? 'available' : 'unavailable'}, active ${timeSinceActive}s ago)`);
       }
     }
   }

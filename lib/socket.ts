@@ -60,9 +60,9 @@ export function connectSocket(sessionToken: string): Socket {
         socket.emit('heartbeat');
         console.log('[Socket] 💓 Heartbeat sent');
       }
-    }, 25000); // 25 seconds - well under the 60s stale threshold
+    }, 20000); // 20 seconds - keeps user active
     
-    console.log('[Socket] Heartbeat started (every 25s)');
+    console.log('[Socket] Heartbeat started (every 20s)');
   });
 
   socket.on('auth:success', () => {
