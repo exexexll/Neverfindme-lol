@@ -232,6 +232,9 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
       return;
     }
     
+    // Only start timer if not already running
+    if (waitTimerRef.current) return;
+    
     console.log('[UserCard] Starting 20s wait timer');
     setWaitTime(20);
     
@@ -242,7 +245,7 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
         if (next <= 0) {
           console.log('[UserCard] Wait expired - auto-rescinding');
           clearInterval(interval);
-          onRescind?.(user.userId);
+          if (onRescind) onRescind(user.userId);
           return 0;
         }
         return next;
@@ -257,7 +260,7 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
         waitTimerRef.current = null;
       }
     };
-  }, [inviteStatus, user.userId, onRescind]);
+  }, [inviteStatus]); // ONLY inviteStatus - not user.userId or onRescind
 
   // Update cooldown timer
   useEffect(() => {
