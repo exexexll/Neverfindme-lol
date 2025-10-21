@@ -139,12 +139,21 @@ app.use(cors({
       return callback(null, true);
     }
     
+    // Allow main domains
     if (allowedOrigins.includes(origin)) {
       callback(null, true);
-    } else {
-      console.warn(`[CORS] Rejected request from unauthorized origin: ${origin}`);
-      callback(new Error('Not allowed by CORS'));
+      return;
     }
+    
+    // Allow Vercel preview deployments (for testing)
+    if (origin.includes('vercel.app') || origin.includes('hansons-projects')) {
+      console.log('[CORS] Allowing Vercel preview:', origin);
+      callback(null, true);
+      return;
+    }
+    
+    console.warn(`[CORS] Rejected request from unauthorized origin: ${origin}`);
+    callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
 }));
