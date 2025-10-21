@@ -24,9 +24,14 @@ interface CalleeNotificationProps {
 export function CalleeNotification({ invite, onAccept, onDecline }: CalleeNotificationProps) {
   const [seconds, setSeconds] = useState(invite.requestedSeconds);
   const [inputValue, setInputValue] = useState(invite.requestedSeconds.toString());
+  const [timeLeft, setTimeLeft] = useState(20);
   const [videoOrientation, setVideoOrientation] = useState<'portrait' | 'landscape' | 'unknown'>('unknown');
   const videoRef = useRef<HTMLVideoElement>(null);
   const firstFocusRef = useRef<HTMLButtonElement>(null);
+  const onDeclineRef = useRef(onDecline);
+  
+  // Keep ref updated silently (no re-render)
+  onDeclineRef.current = onDecline;
 
   // Detect video orientation
   useEffect(() => {
@@ -59,8 +64,21 @@ export function CalleeNotification({ invite, onAccept, onDecline }: CalleeNotifi
     };
   }, []);
 
-  // REMOVED: Auto-decline timer - user must manually accept or decline
-  // No timer, no auto-actions, simple UI
+  // Countdown timer - starts on mount, never restarts
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeLeft(t => t > 0 ? t - 1 : 0);
+    }, 1000);
+    
+    return () => clearInterval(timer);
+  }, []);
+  
+  // Watch for timer hitting 0 - then decline
+  useEffect(() => {
+    if (timeLeft === 0) {
+      onDeclineRef.current(invite.inviteId);
+    }
+  }, [timeLeft, invite.inviteId]); // USE REF, not onDecline prop
 
   // Focus trap - focus first button on mount
   useEffect(() => {
@@ -112,7 +130,16 @@ export function CalleeNotification({ invite, onAccept, onDecline }: CalleeNotifi
         aria-labelledby="callee-title"
         aria-describedby="callee-description"
       >
-        {/* REMOVED: Timer display - no countdown, just decision UI */}
+        {/* Timer Warning */}
+        <div className="text-center">
+          <div className={`inline-block rounded-lg px-4 py-2 ${
+            timeLeft <= 10 ? 'bg-red-500/20 text-red-300' : 'bg-yellow-500/20 text-yellow-300'
+          }`}>
+            <span className="font-mono text-sm font-bold">
+              {timeLeft}s to respond
+            </span>
+          </div>
+        </div>
 
         {/* Title */}
         <div className="text-center">
