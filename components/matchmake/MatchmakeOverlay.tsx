@@ -40,6 +40,8 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
   const [locationAsked, setLocationAsked] = useState(false);
   const [showInactivityWarning, setShowInactivityWarning] = useState(false);
   const [isInactive, setIsInactive] = useState(false);
+  const [showProfileIncompleteModal, setShowProfileIncompleteModal] = useState(false);
+  const [profileStatus, setProfileStatus] = useState<{hasSelfie: boolean; hasVideo: boolean} | null>(null);
   
   const socketRef = useRef<any>(null);
   const prevIndexRef = useRef<number>(-1);
@@ -526,8 +528,38 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
     socketRef.current = socket;
 
     // WAIT for authentication before joining queue!
-    const handleAuth = () => {
-      console.log('[Matchmake] Socket authenticated, now joining presence and queue');
+    const handleAuth = async () => {
+      console.log('[Matchmake] Socket authenticated, checking profile completion...');
+      
+      // Check if user has selfie AND video before allowing queue join
+      try {
+        const session = getSession();
+        if (!session) return;
+        
+        const userRes = await fetch(`${process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3001'}/user/me`, {
+          headers: { 'Authorization': `Bearer ${session.sessionToken}` },
+        });
+        
+        if (userRes.ok) {
+          const userData = await userRes.json();
+          const hasSelfie = !!userData.selfieUrl;
+          const hasVideo = !!userData.videoUrl;
+          
+          setProfileStatus({ hasSelfie, hasVideo });
+          
+          // If missing photo or video, show modal
+          if (!hasSelfie || !hasVideo) {
+            console.warn('[Matchmake] Profile incomplete - selfie:', hasSelfie, 'video:', hasVideo);
+            setShowProfileIncompleteModal(true);
+            return; // Don't join queue
+          }
+        }
+      } catch (error) {
+        console.error('[Matchmake] Failed to check profile:', error);
+        // Continue anyway (fail open for better UX)
+      }
+      
+      console.log('[Matchmake] Profile complete, joining presence and queue');
       
       // Mark as online (presence:join)
       socket.emit('presence:join');
@@ -1293,6 +1325,63 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
               >
                 Reactivate Now
               </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Profile Incomplete Modal - Require photo/video for matchmaking */}
+      <AnimatePresence>
+        {showProfileIncompleteModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[90] flex items-center justify-center bg-black/90 p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="max-w-md mx-4 rounded-2xl bg-[#0a0a0c] p-8 shadow-2xl border-2 border-yellow-500/50 text-center"
+            >
+              <div className="text-6xl mb-4">📸</div>
+              <h3 className="font-playfair text-2xl font-bold text-[#eaeaf0] mb-3">
+                Complete Your Profile First
+              </h3>
+              <p className="text-[#eaeaf0]/80 mb-6">
+                {!profileStatus?.hasSelfie && !profileStatus?.hasVideo && 
+                  'You need a photo and intro video to start matchmaking.'}
+                {profileStatus?.hasSelfie && !profileStatus?.hasVideo && 
+                  'You need an intro video to start matchmaking.'}
+                {!profileStatus?.hasSelfie && profileStatus?.hasVideo && 
+                  'You need a profile photo to start matchmaking.'}
+              </p>
+              <div className="rounded-xl bg-yellow-500/10 border border-yellow-500/30 p-4 mb-6">
+                <p className="text-sm text-yellow-200">
+                  💡 Other users need to see your photo and video before calling you
+                </p>
+              </div>
+              <div className="space-y-3">
+                <button
+                  onClick={() => {
+                    setShowProfileIncompleteModal(false);
+                    router.push('/refilm');
+                  }}
+                  className="w-full rounded-xl bg-[#ff9b6b] px-6 py-3 font-medium text-[#0a0a0c] transition-opacity hover:opacity-90"
+                >
+                  Upload Photo & Video
+                </button>
+                <button
+                  onClick={() => {
+                    setShowProfileIncompleteModal(false);
+                    onClose();
+                  }}
+                  className="w-full rounded-xl bg-white/10 px-6 py-3 font-medium text-[#eaeaf0] transition-all hover:bg-white/20"
+                >
+                  Back to Dashboard
+                </button>
+              </div>
             </motion.div>
           </motion.div>
         )}

@@ -52,7 +52,47 @@ function OnboardingPageContent() {
   const [password, setPassword] = useState('');
   const [passwordValid, setPasswordValid] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState<string>('weak');
+  
+  // USC Email for admin QR codes
+  const [uscEmail, setUscEmail] = useState('');
+  const [needsUSCEmail, setNeedsUSCEmail] = useState(false);
+  
+  // Onboarding completion tracking
+  const [onboardingComplete, setOnboardingComplete] = useState(false);
 
+  // Prevent tab closing/navigation during onboarding (un-bypassable)
+  useEffect(() => {
+    if (onboardingComplete) return; // Allow leaving after complete
+    
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      // Prevent closing tab during onboarding
+      e.preventDefault();
+      const message = 'Your profile is not complete yet. Are you sure you want to leave?';
+      e.returnValue = message;
+      return e.returnValue;
+    };
+    
+    // Prevent back button
+    const handlePopState = (e: PopStateEvent) => {
+      if (!onboardingComplete) {
+        e.preventDefault();
+        window.history.pushState(null, '', window.location.href);
+        alert('Please complete your profile before navigating away.');
+      }
+    };
+    
+    // Add initial history entry to trap back button
+    window.history.pushState(null, '', window.location.href);
+    
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('popstate', handlePopState);
+    
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [onboardingComplete]);
+  
   // Check for referral code and invite code in URL
   useEffect(() => {
     const hasCheckedRef = { current: false };
@@ -177,6 +217,20 @@ function OnboardingPageContent() {
       setError('Please enter your name');
       return;
     }
+    
+    // If USC email is needed and not provided, show error
+    if (needsUSCEmail && !uscEmail.trim()) {
+      setError('USC email is required for this QR code');
+      return;
+    }
+    
+    // Validate USC email format if provided
+    if (needsUSCEmail && uscEmail.trim()) {
+      if (!/^[^\s@]+@usc\.edu$/i.test(uscEmail.trim())) {
+        setError('Please enter a valid @usc.edu email address');
+        return;
+      }
+    }
 
     if (!agreedToTerms) {
       setError('You must agree to the Terms of Service, Privacy Policy, and Content Policy to continue');
@@ -187,7 +241,14 @@ function OnboardingPageContent() {
     setError('');
 
     try {
-      const response = await createGuestAccount(name, gender, referralCode || undefined, inviteCode || undefined);
+      // Call API with USC email if provided
+      const response = await createGuestAccount(
+        name, 
+        gender, 
+        referralCode || undefined, 
+        inviteCode || undefined,
+        uscEmail || undefined // Pass USC email for admin code validation
+      );
       setSessionToken(response.sessionToken);
       setUserId(response.userId);
       saveSession({
@@ -218,6 +279,13 @@ function OnboardingPageContent() {
       console.log('[Onboarding] User verified or has code - proceeding to profile setup');
       setStep('selfie');
     } catch (err: any) {
+      // Check if error is USC email requirement
+      if (err.message?.includes('@usc.edu') || err.requiresUSCEmail) {
+        setNeedsUSCEmail(true);
+        setError('This QR code requires a USC email address');
+        return; // Stay on name step to collect email
+      }
+      
       setError(err.message);
     } finally {
       setLoading(false);
@@ -449,12 +517,29 @@ function OnboardingPageContent() {
   }, [recordedChunks, isRecording, sessionToken, stream, targetUser, referralCode]); // Added missing dependencies
 
   /**
+   * Skip Video - Allow completing onboarding without video
+   */
+  const handleSkipVideo = () => {
+    console.log('[Onboarding] User skipped video upload');
+    
+    // Stop camera if running
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+      setStream(null);
+    }
+    
+    // Go to permanent step (can upload video later from /refilm)
+    setStep('permanent');
+  };
+  
+  /**
    * Step 4: Skip permanent account step - go to main
    */
   const handleSkip = () => {
     // SIMPLIFIED: All users (referral or normal) go to main
     // Referral data is tracked in backend, will show "Introduced by X" badge in matchmaking
     console.log('[Onboarding] Skipping permanent account - going to main');
+    setOnboardingComplete(true); // Mark complete to allow navigation
     router.push('/main');
   };
 
@@ -468,11 +553,13 @@ function OnboardingPageContent() {
     localStorage.setItem('napalmsky_direct_match_target', targetUser.userId);
     localStorage.setItem('napalmsky_auto_invite', 'true');
     
+    setOnboardingComplete(true); // Mark complete to allow navigation
     // Navigate to main with matchmaking open
     router.push('/main?openMatchmaking=true&targetUser=' + targetUser.userId);
   };
 
   const handleSkipIntroduction = () => {
+    setOnboardingComplete(true); // Mark complete to allow navigation
     router.push('/main');
   };
 
@@ -493,6 +580,7 @@ function OnboardingPageContent() {
 
     try {
       await linkAccount(sessionToken, email, password);
+      setOnboardingComplete(true); // Mark complete to allow navigation
       router.push('/main');
     } catch (err: any) {
       setError(err.message);
@@ -612,6 +700,33 @@ function OnboardingPageContent() {
                       ))}
                     </div>
                   </div>
+                  
+                  {/* USC Email (Only for Admin QR Codes) */}
+                  {needsUSCEmail && (
+                    <div className="rounded-xl border-2 border-blue-500/30 bg-blue-500/10 p-4">
+                      <div className="mb-3">
+                        <div className="flex items-center gap-2 mb-2">
+                          <svg className="h-5 w-5 text-blue-300" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+                            <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+                          </svg>
+                          <label className="text-sm font-medium text-blue-300">
+                            USC Email Required
+                          </label>
+                        </div>
+                        <input
+                          type="email"
+                          value={uscEmail}
+                          onChange={(e) => setUscEmail(e.target.value)}
+                          placeholder="your@usc.edu"
+                          className="w-full rounded-xl bg-white/10 px-4 py-3 text-[#eaeaf0] placeholder-[#eaeaf0]/50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <p className="text-xs text-blue-200/80">
+                        💡 This QR code is restricted to USC students. Enter your USC email to continue.
+                      </p>
+                    </div>
+                  )}
 
                   {/* Legal Consent Checkbox */}
                   <div className="rounded-xl border border-white/10 bg-white/5 p-4">
@@ -788,11 +903,28 @@ function OnboardingPageContent() {
                         : 'Stop recording'}
                     </button>
                   )}
+                  
+                  {/* Skip Video Option - Can upload later from profile */}
+                  {!isRecording && recordedChunks.length === 0 && !loading && (
+                    <button
+                      onClick={handleSkipVideo}
+                      className="focus-ring w-full rounded-xl bg-white/10 px-6 py-3 font-medium text-[#eaeaf0] transition-all hover:bg-white/20"
+                    >
+                      Skip for now
+                    </button>
+                  )}
 
                   {loading && (
                     <div className="text-center text-sm text-[#eaeaf0]/70">
                       Uploading video...
                     </div>
+                  )}
+                  
+                  {/* Helpful hint */}
+                  {!isRecording && recordedChunks.length === 0 && !loading && (
+                    <p className="text-xs text-center text-[#eaeaf0]/50">
+                      You can upload an intro video later from your profile page
+                    </p>
                   )}
                 </div>
               </motion.div>

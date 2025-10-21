@@ -5,16 +5,19 @@
 
 import { API_BASE } from './config';
 
-export async function createGuestAccount(name: string, gender: string, referralCode?: string, inviteCode?: string) {
+export async function createGuestAccount(name: string, gender: string, referralCode?: string, inviteCode?: string, email?: string) {
   const res = await fetch(`${API_BASE}/auth/guest`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name, gender, referralCode, inviteCode }),
+    body: JSON.stringify({ name, gender, referralCode, inviteCode, email }),
   });
 
   if (!res.ok) {
     const error = await res.json();
-    throw new Error(error.error || 'Failed to create account');
+    // Pass through requiresUSCEmail flag
+    const err: any = new Error(error.error || 'Failed to create account');
+    err.requiresUSCEmail = error.requiresUSCEmail;
+    throw err;
   }
 
   return res.json();
