@@ -48,7 +48,10 @@ export function calculateDistance(
 export function formatDistance(meters: number): string {
   const feet = meters * 3.28084;
   
-  if (feet < 100) {
+  if (feet < 50) {
+    // Very close or same location: "nearby" (privacy + handles 0 distance)
+    return 'nearby';
+  } else if (feet < 100) {
     // Very close: Round to "within 100 ft" (privacy)
     return 'within 100 ft';
   } else if (feet < 528) {
