@@ -1386,9 +1386,10 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
       )}
 
       {/* Incoming Invite (Blocking) */}
-      <AnimatePresence>
+      <AnimatePresence mode="wait">
         {incomingInvite && (
           <CalleeNotification
+            key={incomingInvite.inviteId}
             invite={incomingInvite}
             onAccept={handleAccept}
             onDecline={handleDecline}
