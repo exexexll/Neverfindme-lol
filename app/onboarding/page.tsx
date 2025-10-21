@@ -319,8 +319,15 @@ function OnboardingPageContent() {
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
       }
-    } catch (err) {
-      setError('Camera access denied. Please allow camera access to continue.');
+    } catch (err: any) {
+      console.error('[Onboarding] Camera error:', err);
+      if (err.name === 'NotAllowedError') {
+        setError('Camera access denied. Please allow camera permission in your browser settings, then click "Start camera" again.');
+      } else if (err.name === 'NotFoundError') {
+        setError('No camera found. Please connect a camera and try again.');
+      } else {
+        setError('Camera error: ' + (err.message || 'Unable to access camera'));
+      }
     }
   };
 

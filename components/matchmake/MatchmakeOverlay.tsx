@@ -644,6 +644,12 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
       console.log('[Matchmake] Target user for this decline:', targetUserId?.substring(0, 8) || 'NOT FOUND');
 
       if (targetUserId) {
+        // Rejoin queue when invite is declined
+        if (socketRef.current) {
+          socketRef.current.emit('queue:join');
+          console.log('[Matchmake] Rejoined queue after decline');
+        }
+        
         if (reason === 'cooldown') {
           setInviteStatuses(prev => ({ ...prev, [targetUserId]: 'cooldown' }));
           showToast('You chatted recently — try again later (24h cooldown)', 'info');
@@ -935,6 +941,10 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
 
     console.log(`[Matchmake] 📞 Sending invite to user ${toUserId.substring(0, 8)} for ${requestedSeconds}s`);
 
+    // Mark self as unavailable while waiting (prevents others from inviting you)
+    socketRef.current.emit('queue:leave');
+    console.log('[Matchmake] Left queue while waiting for response');
+
     setInviteStatuses(prev => ({ ...prev, [toUserId]: 'waiting' }));
 
     socketRef.current.emit('call:invite', {
@@ -953,6 +963,10 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
 
     // Emit rescind event to server (sets 1h cooldown)
     socketRef.current.emit('call:rescind', { toUserId });
+
+    // Rejoin queue (become available again)
+    socketRef.current.emit('queue:join');
+    console.log('[Matchmake] Rejoined queue after canceling invite');
 
     // Set cooldown status immediately (server will enforce)
     setInviteStatuses(prev => ({ ...prev, [toUserId]: 'cooldown' }));
