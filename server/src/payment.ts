@@ -220,7 +220,7 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req: a
  * Apply an invite code to current user (for users on paywall)
  */
 router.post('/apply-code', requireAuth, async (req: any, res) => {
-  const { inviteCode } = req.body;
+  const { inviteCode, email } = req.body; // Email required for admin codes
   
   if (!inviteCode) {
     return res.status(400).json({ error: 'Invite code is required' });
@@ -236,6 +236,37 @@ router.post('/apply-code', requireAuth, async (req: any, res) => {
     return res.status(400).json({ error: 'You already have access' });
   }
 
+  // Get code details to check type
+  const codeDetails = await store.getInviteCode(inviteCode);
+  if (!codeDetails) {
+    return res.status(404).json({ error: 'Invalid invite code' });
+  }
+
+  // ADMIN CODE RESTRICTION: Require USC.edu email
+  if (codeDetails.type === 'admin') {
+    if (!email || typeof email !== 'string') {
+      return res.status(400).json({ error: 'Email required for permanent codes' });
+    }
+    
+    // Validate email format
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ error: 'Invalid email format' });
+    }
+    
+    // Require @usc.edu domain
+    if (!email.toLowerCase().endsWith('@usc.edu')) {
+      return res.status(403).json({ 
+        error: 'Permanent codes are only valid for @usc.edu email addresses',
+        requiresUSCEmail: true
+      });
+    }
+    
+    console.log(`[Payment] Admin code used with USC email: ${email}`);
+    
+    // Store USC email on user profile
+    await store.updateUser(req.userId, { email: email.toLowerCase() });
+  }
+
   // Use the code
   const result = store.useInviteCode(inviteCode, req.userId, user.name);
   
@@ -243,19 +274,41 @@ router.post('/apply-code', requireAuth, async (req: any, res) => {
     return res.status(403).json({ error: result.error });
   }
 
-  // Mark user in grace period (need 4 sessions to unlock QR)
+  // Generate NEW code for this user (viral growth: every verified user gets 4 invites)
+  const newUserCode = await generateSecureCode();
+  console.log(`[Payment] Generated new 4-use code for ${user.name}: ${newUserCode}`);
+  
+  const newInviteCode: InviteCode = {
+    code: newUserCode,
+    createdBy: req.userId,
+    createdByName: user.name,
+    createdAt: Date.now(),
+    type: 'user',
+    maxUses: 4,
+    usesRemaining: 4,
+    usedBy: [],
+    isActive: true,
+  };
+  
+  await store.createInviteCode(newInviteCode);
+
+  // Mark user in grace period (need 4 sessions to unlock THEIR OWN QR)
   await store.updateUser(req.userId, {
     paidStatus: 'qr_grace_period',
     inviteCodeUsed: inviteCode,
-    qrUnlocked: false,
+    myInviteCode: newUserCode, // Their own code (locked until 4 sessions)
+    inviteCodeUsesRemaining: 4,
+    qrUnlocked: false, // Starts locked
     successfulSessions: 0,
   });
 
   console.log(`[Payment] User ${user.name} entered grace period via code: ${inviteCode}`);
+  console.log(`[Payment] User will unlock their code (${newUserCode}) after 4 sessions`);
 
   res.json({ 
     success: true, 
     paidStatus: 'qr_grace_period',
+    myInviteCode: newUserCode, // Return their code
     qrUnlocked: false,
     sessionsNeeded: 4,
   });
