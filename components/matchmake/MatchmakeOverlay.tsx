@@ -9,7 +9,6 @@ import { connectSocket } from '@/lib/socket';
 import { UserCard } from './UserCard';
 import { CalleeNotification } from './CalleeNotification';
 import { LocationPermissionModal } from '@/components/LocationPermissionModal';
-import { ModeToggle } from './ModeToggle';
 import { requestAndUpdateLocation } from '@/lib/locationAPI';
 
 interface MatchmakeOverlayProps {
