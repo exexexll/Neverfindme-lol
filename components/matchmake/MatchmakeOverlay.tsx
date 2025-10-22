@@ -1208,6 +1208,35 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
         )}
       </AnimatePresence>
     
+      {/* Mobile Mode Indicator - Top Edge (Always Visible on Mobile) */}
+      {!showModeSelection && (
+        <div className="fixed top-0 left-0 right-0 z-[60] md:hidden">
+          <div className="bg-black/90 backdrop-blur-md px-4 py-2.5 border-b border-white/10">
+            <div className="flex items-center justify-center gap-3">
+              {chatMode === 'video' ? (
+                <>
+                  <svg className="w-4 h-4 text-[#ff9b6b]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                  <span className="text-sm font-medium text-white">Video Mode</span>
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4 text-[#ff9b6b]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                  <span className="text-sm font-medium text-white">Text Mode</span>
+                </>
+              )}
+              <div className="h-3 w-px bg-white/20" />
+              <span className="text-xs text-white/70">
+                {totalAvailable} {totalAvailable === 1 ? 'person' : 'people'}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+    
       {/* Transparent Overlay - Only Card Visible */}
       <div 
         className={`fixed inset-0 z-50 flex flex-col md:cursor-none ${showModeSelection ? 'hidden' : ''}`}
