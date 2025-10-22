@@ -1047,6 +1047,13 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
     localStorage.setItem('napalmsky_location_consent', 'false');
   }, []);
 
+  // Handle mode selection and start browsing
+  const handleStartBrowsing = () => {
+    setShowModeSelection(false);
+    setModeLocked(true);
+    console.log(`[Matchmake] Mode locked to: ${chatMode}`);
+  };
+
   // Handle close overlay
   const handleClose = () => {
     if (incomingInvite) {
@@ -1069,6 +1076,10 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
     // Clear direct match flags
     localStorage.removeItem('napalmsky_direct_match_target');
     localStorage.removeItem('napalmsky_auto_invite');
+    
+    // Reset mode selection for next time
+    setModeLocked(false);
+    setShowModeSelection(true);
 
     onClose();
   };
@@ -1341,15 +1352,6 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
               display: Object.values(inviteStatuses).includes('waiting') ? 'none' : 'block'
             }}
             className="rounded-full bg-black/60 p-3 backdrop-blur-md hover:bg-black/80 disabled:opacity-30 disabled:cursor-not-allowed border border-white/20"
-            aria-label="Close matchmaking"
-          >
-          <button
-            onClick={handleClose}
-            disabled={!!incomingInvite}
-            style={{
-              display: Object.values(inviteStatuses).includes('waiting') ? 'none' : 'block'
-            }}
-            className="focus-ring rounded-full bg-black/60 p-3 backdrop-blur-md transition-all hover:bg-black/80 disabled:opacity-30 disabled:cursor-not-allowed"
             aria-label="Close matchmaking"
             title={incomingInvite ? "Cannot close while receiving a call" : "Close matchmaking"}
           >
