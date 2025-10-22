@@ -19,14 +19,15 @@ interface UserCardProps {
     distance?: number | null; // meters
     hasLocation?: boolean;
   };
-  onInvite: (userId: string, seconds: number) => void;
+  onInvite: (userId: string, seconds: number, mode: 'video' | 'text') => void;
   onRescind?: (userId: string) => void;
   inviteStatus?: 'idle' | 'waiting' | 'declined' | 'timeout' | 'cooldown';
   cooldownExpiry?: number | null;
   isActive: boolean;
+  chatMode?: 'video' | 'text'; // Selected chat mode
 }
 
-export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', cooldownExpiry, isActive }: UserCardProps) {
+export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', cooldownExpiry, isActive, chatMode = 'video' }: UserCardProps) {
   const [seconds, setSeconds] = useState(300);
   const [showTimerModal, setShowTimerModal] = useState(false);
   const [tempSeconds, setTempSeconds] = useState('300');
@@ -642,7 +643,7 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
 
             {/* CTA Button - Responsive sizing to prevent overlap */}
             <motion.button
-              onClick={() => !isSelf && inviteStatus !== 'cooldown' && onInvite(user.userId, seconds)}
+              onClick={() => !isSelf && inviteStatus !== 'cooldown' && onInvite(user.userId, seconds, chatMode)}
               disabled={inviteStatus === 'waiting' || inviteStatus === 'cooldown' || seconds < 60 || isSelf}
               className="focus-ring flex-1 rounded-2xl bg-[#ff9b6b] font-playfair font-bold text-[#0a0a0c] shadow-2xl transition-opacity hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
               initial={{

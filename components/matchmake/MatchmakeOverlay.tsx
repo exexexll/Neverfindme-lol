@@ -9,6 +9,7 @@ import { connectSocket } from '@/lib/socket';
 import { UserCard } from './UserCard';
 import { CalleeNotification } from './CalleeNotification';
 import { LocationPermissionModal } from '@/components/LocationPermissionModal';
+import { ModeToggle } from './ModeToggle';
 import { requestAndUpdateLocation } from '@/lib/locationAPI';
 
 interface MatchmakeOverlayProps {
@@ -42,6 +43,7 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
   const [isInactive, setIsInactive] = useState(false);
   const [showProfileIncompleteModal, setShowProfileIncompleteModal] = useState(false);
   const [profileStatus, setProfileStatus] = useState<{hasSelfie: boolean; hasVideo: boolean} | null>(null);
+  const [chatMode, setChatMode] = useState<'video' | 'text'>('video'); // Default to video
   
   const socketRef = useRef<any>(null);
   const prevIndexRef = useRef<number>(-1);
@@ -923,7 +925,7 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
   }, [inviteStatuses]);
 
   // Handle invite
-  const handleInvite = (toUserId: string, requestedSeconds: number) => {
+  const handleInvite = (toUserId: string, requestedSeconds: number, mode: 'video' | 'text') => {
     if (!socketRef.current) {
       console.error('[Matchmake] ❌ Cannot send invite - socket not available');
       return;
@@ -939,7 +941,7 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
     // Record activity when inviting
     recordActivity();
 
-    console.log(`[Matchmake] 📞 Sending invite to user ${toUserId.substring(0, 8)} for ${requestedSeconds}s`);
+    console.log(`[Matchmake] 📞 Sending ${mode} invite to user ${toUserId.substring(0, 8)} for ${requestedSeconds}s`);
 
     // Mark self as unavailable while waiting (prevents others from inviting you)
     socketRef.current.emit('queue:leave');
@@ -950,6 +952,7 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
     socketRef.current.emit('call:invite', {
       toUserId,
       requestedSeconds,
+      chatMode: mode, // Include chat mode
     });
     
     console.log('[Matchmake] ✅ Invite event emitted to server');
@@ -1186,6 +1189,9 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
               {totalAvailable} {totalAvailable === 1 ? 'person' : 'people'} online
             </p>
           </div>
+          
+          {/* Mode Toggle */}
+          <ModeToggle mode={chatMode} onChange={setChatMode} />
           <button
             onClick={handleClose}
             disabled={!!incomingInvite}
@@ -1258,6 +1264,7 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
                         }
                         cooldownExpiry={users[currentIndex].cooldownExpiry}
                         isActive={true}
+                        chatMode={chatMode}
                       />
                     </motion.div>
                   </AnimatePresence>
