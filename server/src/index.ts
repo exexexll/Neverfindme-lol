@@ -205,7 +205,14 @@ app.use('/uploads', express.static(uploadsDir));
 
 // Socket.io state (must be declared before routes that need it)
 const activeSockets = new Map<string, string>(); // userId -> socketId
-const activeRooms = new Map<string, { user1: string; user2: string; messages: any[]; startedAt: number; duration: number }>(); // roomId -> room data
+const activeRooms = new Map<string, { 
+  user1: string; 
+  user2: string; 
+  messages: any[]; 
+  startedAt: number; 
+  duration: number;
+  chatMode?: 'video' | 'text'; // Track room mode
+}>(); // roomId -> room data
 
 // Routes with rate limiting and dependency injection
 app.use('/auth', authLimiter, createAuthRoutes(io, activeSockets));
@@ -761,13 +768,17 @@ io.on('connection', (socket) => {
     io.emit('queue:update', { userId: invite.fromUserId, available: false });
     io.emit('queue:update', { userId: invite.toUserId, available: false });
 
-    // Create room
+    // Get chat mode before creating room
+    const chatMode = invite.chatMode || 'video'; // Default to video
+
+    // Create room with chat mode
     activeRooms.set(roomId, {
       user1: invite.fromUserId,
       user2: invite.toUserId,
       messages: [],
       startedAt: Date.now(),
       duration: agreedSeconds,
+      chatMode: chatMode,
     });
 
     const user1 = await store.getUser(invite.fromUserId);
@@ -775,8 +786,6 @@ io.on('connection', (socket) => {
 
     const callerSocket = activeSockets.get(invite.fromUserId);
     const calleeSocket = activeSockets.get(invite.toUserId);
-    
-    const chatMode = invite.chatMode || 'video'; // Default to video
 
     // Notify both users with chatMode
     if (callerSocket) {
@@ -1077,11 +1086,36 @@ io.on('connection', (socket) => {
     
     console.log(`[TextChat] ${currentUserId.substring(0, 8)} accepted video upgrade in ${roomId.substring(0, 8)}`);
     
-    // Notify both users to switch to video mode
-    io.to(roomId).emit('textchat:upgrade-to-video', {
-      roomId,
-      message: 'Switching to video mode...',
-    });
+    // Update room mode to video
+    const room = activeRooms.get(roomId);
+    if (room) {
+      room.chatMode = 'video';
+      console.log(`[TextChat] Room ${roomId.substring(0, 8)} upgraded to video mode`);
+    }
+    
+    // Determine initiator roles (first user is initiator)
+    const isUser1 = room?.user1 === currentUserId;
+    
+    // Notify both users to switch to video mode with initiator roles
+    if (room?.user1) {
+      const user1Socket = activeSockets.get(room.user1);
+      if (user1Socket) {
+        io.to(user1Socket).emit('textchat:upgrade-to-video', {
+          roomId,
+          isInitiator: true, // user1 creates offer
+        });
+      }
+    }
+    
+    if (room?.user2) {
+      const user2Socket = activeSockets.get(room.user2);
+      if (user2Socket) {
+        io.to(user2Socket).emit('textchat:upgrade-to-video', {
+          roomId,
+          isInitiator: false, // user2 waits for offer
+        });
+      }
+    }
   });
   
   // TEXT CHAT: Decline video upgrade
@@ -1173,6 +1207,20 @@ io.on('connection', (socket) => {
         
         // Only save to history if call lasted at least 5 seconds (prevents accidental/spam calls)
         if (actualDuration >= 5) {
+          // For text chat, fetch messages from database instead of room.messages
+          let messages = room.messages;
+          if (room.chatMode === 'text') {
+            const dbMessages = await getRoomMessages(roomId, 200);
+            messages = dbMessages.map(m => ({
+              from: m.sender_user_id,
+              text: m.content || '',
+              timestamp: new Date(m.sent_at).getTime(),
+              type: m.message_type,
+              fileUrl: m.file_url,
+              gifUrl: m.gif_url,
+            }));
+          }
+          
           // Save to history for both users
           const history1 = {
             sessionId,
@@ -1181,7 +1229,8 @@ io.on('connection', (socket) => {
             partnerName: user2.name,
             startedAt: room.startedAt,
             duration: actualDuration,
-            messages: room.messages,
+            messages: messages,
+            chatMode: room.chatMode || 'video',
           };
 
           const history2 = {
@@ -1191,7 +1240,8 @@ io.on('connection', (socket) => {
             partnerName: user1.name,
             startedAt: room.startedAt,
             duration: actualDuration,
-            messages: room.messages,
+            messages: messages,
+            chatMode: room.chatMode || 'video',
           };
 
           await store.addHistory(room.user1, history1);

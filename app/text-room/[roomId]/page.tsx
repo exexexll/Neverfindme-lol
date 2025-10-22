@@ -46,6 +46,7 @@ export default function TextChatRoom() {
   const [videoRequested, setVideoRequested] = useState(false);
   const [incomingVideoRequest, setIncomingVideoRequest] = useState(false);
   const [sessionId, setSessionId] = useState('');
+  const [currentUserId, setCurrentUserId] = useState('');
 
   const socketRef = useRef<any>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -63,6 +64,8 @@ export default function TextChatRoom() {
       router.push('/main');
       return;
     }
+
+    setCurrentUserId(session.userId); // Store userId once
 
     const socket = connectSocket(session.sessionToken);
     socketRef.current = socket;
@@ -134,10 +137,10 @@ export default function TextChatRoom() {
     });
 
     // Listen for video upgrade accepted
-    socket.on('textchat:upgrade-to-video', ({ roomId: upgradeRoomId }: { roomId: string }) => {
+    socket.on('textchat:upgrade-to-video', ({ roomId: upgradeRoomId, isInitiator }: { roomId: string; isInitiator?: boolean }) => {
       console.log('[TextChat] Both users accepted video - upgrading...');
-      // Redirect to video room with same params
-      router.push(`/room/${upgradeRoomId}?duration=${timeRemaining}&peerId=${peerUserId}&peerName=${encodeURIComponent(peerName)}&initiator=false`);
+      // Redirect to video room with same params and correct initiator status
+      router.push(`/room/${upgradeRoomId}?duration=${timeRemaining}&peerId=${peerUserId}&peerName=${encodeURIComponent(peerName)}&initiator=${isInitiator || false}`);
     });
 
     // Listen for video decline
@@ -155,21 +158,34 @@ export default function TextChatRoom() {
     });
 
     return () => {
+      // Cleanup timers
       if (timerRef.current) clearInterval(timerRef.current);
       if (cooldownTimerRef.current) clearInterval(cooldownTimerRef.current);
+      
+      // Remove all socket listeners
+      socket.off('textchat:message');
+      socket.off('textchat:rate-limited');
+      socket.off('textchat:error');
+      socket.off('textchat:video-requested');
+      socket.off('textchat:upgrade-to-video');
+      socket.off('textchat:video-declined');
+      socket.off('session:finalized');
     };
-  }, [roomId, agreedSeconds, peerUserId, peerName, router, timeRemaining]);
+  }, [roomId, agreedSeconds, peerUserId, peerName, router]);
 
   // Start timer
   useEffect(() => {
     if (timerRef.current) return; // Already started
     
+    let elapsed = 0;
+    
     timerRef.current = setInterval(() => {
+      elapsed++;
       setTimeRemaining(prev => {
         const next = prev - 1;
         
         // Show video request button after 60 seconds elapsed
-        if (agreedSeconds - next >= 60 && !showVideoRequest) {
+        if (elapsed >= 60 && !showVideoRequest) {
           setShowVideoRequest(true);
         }
         
@@ -188,7 +204,7 @@ export default function TextChatRoom() {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [agreedSeconds, roomId, showVideoRequest]);
+  }, []); // Empty deps - only run once
 
   // Format time mm:ss
   const formatTime = (seconds: number) => {
@@ -302,7 +318,7 @@ export default function TextChatRoom() {
       {/* Messages Area */}
       <MessageList
         messages={messages}
-        currentUserId={getSession()?.userId || ''}
+        currentUserId={currentUserId}
         partnerName={peerName}
         onMessageRead={handleMessageRead}
       />
