@@ -1108,7 +1108,7 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
                   Choose Your Chat Mode
                 </h2>
                 <p className="text-[#eaeaf0]/70 text-lg">
-                  Select how you'd like to connect with people
+                  Select how you&apos;d like to connect with people
                 </p>
               </motion.div>
 
