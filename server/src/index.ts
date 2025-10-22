@@ -948,8 +948,8 @@ io.on('connection', (socket) => {
   socket.on('textchat:send', async ({ roomId, messageType, content, fileUrl, fileName, fileSizeBytes, gifUrl, gifId }) => {
     if (!currentUserId) return;
     
-    // Rate limit check (1.5s between messages)
-    const rateCheck = checkMessageRateLimit(currentUserId);
+    // Rate limit check (1.5s between messages) - ASYNC
+    const rateCheck = await checkMessageRateLimit(currentUserId);
     if (!rateCheck.allowed) {
       socket.emit('textchat:rate-limited', { retryAfter: rateCheck.retryAfter });
       console.log(`[TextChat] Rate limited: ${currentUserId.substring(0, 8)} - wait ${rateCheck.retryAfter}s`);
@@ -962,27 +962,41 @@ io.on('connection', (socket) => {
       sanitizedContent = sanitizeMessageContent(content);
     }
     
-    // Validate message
-    const validation = validateMessage(messageType, sanitizedContent, fileUrl, gifUrl);
+    // Validate message (include file size)
+    const validation = validateMessage(messageType, sanitizedContent, fileUrl, gifUrl, fileSizeBytes);
     if (!validation.valid) {
       socket.emit('textchat:error', { error: validation.error });
       console.warn(`[TextChat] Invalid message: ${validation.error}`);
       return;
     }
     
-    // Get room to find receiver
+    // Get room and verify user is in it (SECURITY)
     const room = activeRooms.get(roomId);
     if (!room) {
       socket.emit('textchat:error', { error: 'Room not found' });
       return;
     }
     
+    // SECURITY: Verify user is actually in this room
+    if (room.user1 !== currentUserId && room.user2 !== currentUserId) {
+      console.error(`[TextChat] SECURITY: User ${currentUserId.substring(0, 8)} tried to send message to room they're not in`);
+      socket.emit('textchat:error', { error: 'Unauthorized' });
+      return;
+    }
+    
     const receiverId = room.user1 === currentUserId ? room.user2 : room.user1;
+    
+    // Get sender info for message payload
+    const senderUser = await store.getUser(currentUserId);
+    if (!senderUser) {
+      socket.emit('textchat:error', { error: 'User not found' });
+      return;
+    }
     
     // Save to database
     try {
       const saved = await saveChatMessage({
-        sessionId: `session-${Date.now()}`,
+        sessionId: roomId, // Use roomId as session identifier
         roomId,
         senderUserId: currentUserId,
         receiverUserId: receiverId,
@@ -995,10 +1009,12 @@ io.on('connection', (socket) => {
         gifId,
       });
       
-      // Broadcast to room
+      // Broadcast to room with full sender info
       const messagePayload = {
         messageId: saved.messageId,
         from: currentUserId,
+        fromName: senderUser.name, // Include sender name
+        fromSelfie: senderUser.selfieUrl, // Include profile pic for UI
         messageType,
         content: sanitizedContent,
         fileUrl,

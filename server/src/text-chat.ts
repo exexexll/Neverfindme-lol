@@ -6,26 +6,46 @@
 import { query } from './database';
 import { store } from './store';
 
-// Rate limiting: Track last message time per user
-const userLastMessage = new Map<string, number>();
-
 /**
  * Rate Limit Check - 1.5 second cooldown between messages
+ * Uses database for persistence across restarts and server instances
  */
-export function checkMessageRateLimit(userId: string): { allowed: boolean; retryAfter: number } {
-  const now = Date.now();
-  const lastMessageTime = userLastMessage.get(userId) || 0;
-  const timeSinceLastMessage = now - lastMessageTime;
+export async function checkMessageRateLimit(userId: string): Promise<{ allowed: boolean; retryAfter: number }> {
   const COOLDOWN_MS = 1500; // 1.5 seconds
+  const now = Date.now();
   
-  if (timeSinceLastMessage < COOLDOWN_MS) {
-    const retryAfter = Math.ceil((COOLDOWN_MS - timeSinceLastMessage) / 1000);
-    return { allowed: false, retryAfter };
+  try {
+    // Get last message time from database
+    const result = await query(
+      `SELECT last_message_at FROM message_rate_limits WHERE user_id = $1`,
+      [userId]
+    );
+    
+    if (result.rows.length > 0) {
+      const lastMessageAt = new Date(result.rows[0].last_message_at).getTime();
+      const timeSinceLastMessage = now - lastMessageAt;
+      
+      if (timeSinceLastMessage < COOLDOWN_MS) {
+        const retryAfter = Math.ceil((COOLDOWN_MS - timeSinceLastMessage) / 1000);
+        return { allowed: false, retryAfter };
+      }
+    }
+    
+    // Update last message time in database
+    await query(
+      `INSERT INTO message_rate_limits (user_id, last_message_at, message_count_last_minute)
+       VALUES ($1, NOW(), 1)
+       ON CONFLICT (user_id) DO UPDATE 
+       SET last_message_at = NOW(), updated_at = NOW()`,
+      [userId]
+    );
+    
+    return { allowed: true, retryAfter: 0 };
+  } catch (error) {
+    console.error('[TextChat] Rate limit check failed (allowing message):', error);
+    // Fail open - allow message if database error
+    return { allowed: true, retryAfter: 0 };
   }
-  
-  // Update last message time
-  userLastMessage.set(userId, now);
-  return { allowed: true, retryAfter: 0 };
 }
 
 /**
@@ -49,7 +69,7 @@ export function sanitizeMessageContent(content: string): string {
 /**
  * Validate message data
  */
-export function validateMessage(messageType: string, content?: string, fileUrl?: string, gifUrl?: string): { valid: boolean; error?: string } {
+export function validateMessage(messageType: string, content?: string, fileUrl?: string, gifUrl?: string, fileSizeBytes?: number): { valid: boolean; error?: string } {
   // Check message type
   if (!['text', 'image', 'file', 'gif', 'system'].includes(messageType)) {
     return { valid: false, error: 'Invalid message type' };
@@ -69,8 +89,13 @@ export function validateMessage(messageType: string, content?: string, fileUrl?:
     if (!fileUrl) {
       return { valid: false, error: 'File URL required' };
     }
-    if (!fileUrl.startsWith('https://')) {
-      return { valid: false, error: 'Invalid file URL' };
+    // Must be HTTPS from Cloudinary (our upload service)
+    if (!fileUrl.startsWith('https://res.cloudinary.com/')) {
+      return { valid: false, error: 'Invalid file URL (must be from Cloudinary)' };
+    }
+    // File size limit: 5MB
+    if (messageType === 'file' && fileSizeBytes && fileSizeBytes > 5 * 1024 * 1024) {
+      return { valid: false, error: 'File too large (max 5MB)' };
     }
   }
   
@@ -78,9 +103,10 @@ export function validateMessage(messageType: string, content?: string, fileUrl?:
     if (!gifUrl) {
       return { valid: false, error: 'GIF URL required' };
     }
-    // Tenor GIFs should be from tenor.com or media.tenor.com
-    if (!gifUrl.includes('tenor.com')) {
-      return { valid: false, error: 'Invalid GIF URL (must be from Tenor)' };
+    // Strict Tenor URL validation (prevent spoofing)
+    const tenorRegex = /^https:\/\/(media\.tenor\.com|tenor\.com)\/.+/i;
+    if (!tenorRegex.test(gifUrl)) {
+      return { valid: false, error: 'Invalid GIF URL (must be from tenor.com)' };
     }
   }
   
