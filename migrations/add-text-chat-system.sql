@@ -2,6 +2,9 @@
 -- Phase 1: Foundation Tables
 -- Created: October 21, 2025
 
+-- Enable UUID extension if not already enabled
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 -- ==========================================
 -- Chat Messages Table
 -- ==========================================
@@ -144,20 +147,14 @@ FROM chat_messages
 WHERE deleted = FALSE
 GROUP BY room_id;
 
--- View: Recordings pending review
+-- View: Recordings pending review (simplified - no join to reports)
 CREATE OR REPLACE VIEW recordings_pending_review AS
-SELECT 
-  r.*,
-  rep.reported_user_id,
-  rep.reporter_user_id,
-  rep.reason,
-  rep.status as report_status
-FROM chat_recordings r
-LEFT JOIN reports rep ON r.report_id = rep.report_id
-WHERE r.retained_for_report = TRUE 
-AND r.reviewed = FALSE
-AND r.deleted_at IS NULL
-ORDER BY r.created_at DESC;
+SELECT *
+FROM chat_recordings
+WHERE retained_for_report = TRUE 
+AND reviewed = FALSE
+AND deleted_at IS NULL
+ORDER BY created_at DESC;
 
 -- ==========================================
 -- Grant Permissions (if using restricted user)
