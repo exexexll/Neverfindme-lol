@@ -994,9 +994,9 @@ export default function RoomPage() {
         </div>
       </div>
 
-      {/* Controls Footer */}
-      <div className="relative z-20 bg-black/40 p-4 backdrop-blur-md">
-        <div className="mx-auto flex max-w-md items-center justify-center gap-3">
+      {/* Controls Footer - Always Visible on Mobile */}
+      <div className="fixed bottom-0 left-0 right-0 z-30 bg-black/80 backdrop-blur-md p-4 sm:p-6 border-t border-white/10">
+        <div className="mx-auto flex max-w-md items-center justify-center gap-2 sm:gap-3">
           {/* Mic Toggle */}
           <button
             onClick={toggleMute}
