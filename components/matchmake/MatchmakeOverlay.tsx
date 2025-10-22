@@ -1347,8 +1347,8 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
           </div>
         )}
 
-        {/* Mode Indicator - Top Center (Locked, read-only) */}
-        <div className="absolute top-6 left-1/2 -translate-x-1/2 z-20">
+        {/* Mode Indicator - Top Center (Desktop Only) */}
+        <div className="absolute top-6 left-1/2 -translate-x-1/2 z-20 hidden md:block">
           <div className="flex items-center gap-3 rounded-full bg-black/60 backdrop-blur-md px-6 py-3 border border-white/20">
             <div className="flex items-center gap-2">
               {chatMode === 'video' ? (

@@ -42,14 +42,10 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
   const [hasMounted, setHasMounted] = useState(false); // Track if component has mounted
   const [isVideoPaused, setIsVideoPaused] = useState(false);
   const [videoOrientation, setVideoOrientation] = useState<'portrait' | 'landscape' | 'unknown'>('unknown');
-  const [uiVisible, setUiVisible] = useState(true); // Mobile: tap to show/hide UI
   const videoRef = useRef<HTMLVideoElement>(null);
   const waitTimerRef = useRef<NodeJS.Timeout | null>(null);
   const cooldownTimerRef = useRef<NodeJS.Timeout | null>(null);
   const autoMinimizeTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const lastTapTime = useRef<number>(0);
-  const holdStartTime = useRef<number>(0);
-  const holdTimer = useRef<NodeJS.Timeout | null>(null);
   
   // Detect mobile Safari for compact UI
   const isMobile = typeof window !== 'undefined' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
@@ -195,86 +191,18 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
     };
   }, [isActive, isVideoPaused, user.name]);
 
-  // Mobile: Tap to show/hide UI
-  const handleMobileTap = (e: React.TouchEvent) => {
-    if (!isMobile) return;
+  // TikTok-style: Simple tap anywhere to pause/play
+  const handleVideoTap = (e: React.MouseEvent | React.TouchEvent) => {
+    e.stopPropagation(); // Don't trigger navigation
     
-    e.stopPropagation(); // Don't trigger parent swipe
-    
-    // Toggle UI visibility
-    setUiVisible(prev => !prev);
-  };
-  
-  // Mobile: Long press (2s) to pause/play
-  const handleTouchStart = (e: React.TouchEvent) => {
-    if (!isMobile) return;
-    
-    holdStartTime.current = Date.now();
-    
-    holdTimer.current = setTimeout(() => {
-      // Held for 2 seconds - pause/play
-      if (videoRef.current) {
-        if (isVideoPaused || videoRef.current.paused) {
-          videoRef.current.play();
-          setIsVideoPaused(false);
-        } else {
-          videoRef.current.pause();
-          setIsVideoPaused(true);
-        }
+    if (videoRef.current) {
+      if (videoRef.current.paused || isVideoPaused) {
+        videoRef.current.play();
+        setIsVideoPaused(false);
+      } else {
+        videoRef.current.pause();
+        setIsVideoPaused(true);
       }
-    }, 2000);
-  };
-  
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (!isMobile) return;
-    
-    const holdDuration = Date.now() - holdStartTime.current;
-    
-    if (holdTimer.current) {
-      clearTimeout(holdTimer.current);
-    }
-    
-    // If held less than 2s, it's a tap (show/hide UI)
-    if (holdDuration < 2000) {
-      handleMobileTap(e);
-    }
-  };
-  
-  // Desktop: Zone-based controls with hold detection
-  const handleDesktopClick = (e: React.MouseEvent) => {
-    if (isMobile) return;
-    
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    const width = rect.width;
-    const height = rect.height;
-    
-    // Check if this is second tap (double-tap for center zone)
-    const now = Date.now();
-    const timeSinceLastTap = now - lastTapTime.current;
-    
-    // Center zone (40%) - double-tap for pause/play
-    const leftBoundary = width * 0.3;
-    const rightBoundary = width * 0.7;
-    const inCenterZone = x >= leftBoundary && x <= rightBoundary;
-    
-    if (inCenterZone && timeSinceLastTap < 300 && timeSinceLastTap > 0) {
-      // Double-tap in center - pause/play
-      e.stopPropagation();
-      if (videoRef.current) {
-        if (isVideoPaused || videoRef.current.paused) {
-          videoRef.current.play();
-          setIsVideoPaused(false);
-        } else {
-          videoRef.current.pause();
-          setIsVideoPaused(true);
-        }
-      }
-      lastTapTime.current = 0;
-    } else {
-      lastTapTime.current = now;
-      // Single click - let parent handle navigation
     }
   };
 
@@ -441,10 +369,9 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
         }}
         animate={{
           padding: isHovered ? (isMobile ? '0.5rem' : '2rem') : (isMobile ? '0.25rem' : '1rem'),
-          opacity: (isMobile && !uiVisible) ? 0 : (isHovered ? 1 : (isMobile ? 0.7 : 1)),
+          opacity: isHovered ? 1 : (isMobile ? 0.7 : 1),
         }}
         transition={hasMounted ? { duration: 0.3, ease: 'easeOut' } : { duration: 0 }}
-        style={{ pointerEvents: (isMobile && !uiVisible) ? 'none' : 'auto' }}
       >
         <motion.div 
           className="flex items-center gap-2 md:gap-4 rounded-xl md:rounded-2xl bg-black/70 backdrop-blur-md"
@@ -586,10 +513,8 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
         {user.videoUrl ? (
           <div 
             className="relative w-full h-full flex items-center justify-center"
-            onClick={handleDesktopClick}
-            onTouchStart={handleTouchStart}
-            onTouchEnd={handleTouchEnd}
-            style={{ touchAction: 'none' }}
+            onClick={handleVideoTap}
+            onTouchEnd={handleVideoTap}
           >
             <video
               ref={videoRef}
