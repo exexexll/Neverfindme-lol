@@ -43,7 +43,9 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
   const [isInactive, setIsInactive] = useState(false);
   const [showProfileIncompleteModal, setShowProfileIncompleteModal] = useState(false);
   const [profileStatus, setProfileStatus] = useState<{hasSelfie: boolean; hasVideo: boolean} | null>(null);
-  const [chatMode, setChatMode] = useState<'video' | 'text'>('video'); // Default to video
+  const [chatMode, setChatMode] = useState<'video' | 'text'>('video');
+  const [modeLocked, setModeLocked] = useState(false); // Lock mode after user starts browsing
+  const [showModeSelection, setShowModeSelection] = useState(true); // Show mode selection first
   
   const socketRef = useRef<any>(null);
   const prevIndexRef = useRef<number>(-1);
@@ -1077,9 +1079,125 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
 
   return (
     <>
+      {/* Mode Selection Screen - First thing user sees */}
+      <AnimatePresence>
+        {showModeSelection && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0a0a0c] p-4"
+          >
+            <div className="max-w-2xl w-full text-center space-y-8">
+              <motion.div
+                initial={{ y: -20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.1 }}
+              >
+                <h2 className="font-playfair text-4xl sm:text-5xl font-bold text-[#eaeaf0] mb-3">
+                  Choose Your Chat Mode
+                </h2>
+                <p className="text-[#eaeaf0]/70 text-lg">
+                  Select how you'd like to connect with people
+                </p>
+              </motion.div>
+
+              <div className="grid sm:grid-cols-2 gap-6">
+                {/* Video Mode */}
+                <motion.button
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: 0.2 }}
+                  onClick={() => setChatMode('video')}
+                  className={`group relative rounded-2xl p-8 transition-all ${
+                    chatMode === 'video'
+                      ? 'bg-[#ff9b6b] shadow-2xl shadow-[#ff9b6b]/20'
+                      : 'bg-white/5 hover:bg-white/10'
+                  }`}
+                >
+                  {chatMode === 'video' && (
+                    <div className="absolute top-4 right-4">
+                      <svg className="w-6 h-6 text-[#0a0a0c]" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                  )}
+                  
+                  <div className={`text-6xl mb-4 ${chatMode === 'video' ? 'scale-110' : ''} transition-transform`}>
+                    📹
+                  </div>
+                  <h3 className={`font-playfair text-2xl font-bold mb-2 ${
+                    chatMode === 'video' ? 'text-[#0a0a0c]' : 'text-[#eaeaf0]'
+                  }`}>
+                    Video Chat
+                  </h3>
+                  <p className={`text-sm ${
+                    chatMode === 'video' ? 'text-[#0a0a0c]/80' : 'text-[#eaeaf0]/60'
+                  }`}>
+                    Face-to-face video calls with live camera and audio
+                  </p>
+                </motion.button>
+
+                {/* Text Mode */}
+                <motion.button
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                  onClick={() => setChatMode('text')}
+                  className={`group relative rounded-2xl p-8 transition-all ${
+                    chatMode === 'text'
+                      ? 'bg-[#ff9b6b] shadow-2xl shadow-[#ff9b6b]/20'
+                      : 'bg-white/5 hover:bg-white/10'
+                  }`}
+                >
+                  {chatMode === 'text' && (
+                    <div className="absolute top-4 right-4">
+                      <svg className="w-6 h-6 text-[#0a0a0c]" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                  )}
+                  
+                  <div className={`text-6xl mb-4 ${chatMode === 'text' ? 'scale-110' : ''} transition-transform`}>
+                    💬
+                  </div>
+                  <h3 className={`font-playfair text-2xl font-bold mb-2 ${
+                    chatMode === 'text' ? 'text-[#0a0a0c]' : 'text-[#eaeaf0]'
+                  }`}>
+                    Text Chat
+                  </h3>
+                  <p className={`text-sm ${
+                    chatMode === 'text' ? 'text-[#0a0a0c]/80' : 'text-[#eaeaf0]/60'
+                  }`}>
+                    Message with text, images, and GIFs. Upgrade to video anytime after 60s.
+                  </p>
+                </motion.button>
+              </div>
+
+              <motion.button
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.4 }}
+                onClick={handleStartBrowsing}
+                className="w-full sm:w-auto mx-auto rounded-xl bg-[#ff9b6b] px-12 py-4 text-lg font-medium text-[#0a0a0c] hover:opacity-90 transition-opacity shadow-xl"
+              >
+                Continue with {chatMode === 'video' ? 'Video' : 'Text'} Mode
+              </motion.button>
+              
+              <button
+                onClick={handleClose}
+                className="text-sm text-[#eaeaf0]/50 hover:text-[#eaeaf0]/80 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    
       {/* Transparent Overlay - Only Card Visible */}
       <div 
-        className="fixed inset-0 z-50 flex flex-col md:cursor-none"
+        className={`fixed inset-0 z-50 flex flex-col md:cursor-none ${showModeSelection ? 'hidden' : ''}`}
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
         onClick={handleCardClick}
@@ -1187,19 +1305,44 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
           </div>
         )}
 
-        {/* Compact Header - Top Right (Hidden on mobile for minimal UI) */}
-        <div className="absolute top-6 right-6 items-center gap-4 z-20 hidden md:flex">
-          <div className="text-right">
-            <h2 className="font-playfair text-2xl font-bold text-white drop-shadow-lg">
-              Matchmake
-            </h2>
-            <p className="text-xs text-white/90 drop-shadow">
-              {totalAvailable} {totalAvailable === 1 ? 'person' : 'people'} online
-            </p>
+        {/* Mode Indicator - Top Center (Locked, read-only) */}
+        <div className="absolute top-6 left-1/2 -translate-x-1/2 z-20">
+          <div className="flex items-center gap-3 rounded-full bg-black/60 backdrop-blur-md px-6 py-3 border border-white/20">
+            <div className="flex items-center gap-2">
+              {chatMode === 'video' ? (
+                <>
+                  <svg className="w-5 h-5 text-[#ff9b6b]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                  <span className="text-sm font-medium text-white">Video Mode</span>
+                </>
+              ) : (
+                <>
+                  <svg className="w-5 h-5 text-[#ff9b6b]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                  <span className="text-sm font-medium text-white">Text Mode</span>
+                </>
+              )}
+            </div>
+            <div className="h-4 w-px bg-white/20" />
+            <span className="text-sm text-white/80">
+              {totalAvailable} {totalAvailable === 1 ? 'person' : 'people'}
+            </span>
           </div>
-          
-          {/* Mode Toggle */}
-          <ModeToggle mode={chatMode} onChange={setChatMode} />
+        </div>
+        
+        {/* Close Button - Top Right */}
+        <div className="absolute top-6 right-6 z-20">
+          <button
+            onClick={handleClose}
+            disabled={!!incomingInvite}
+            style={{
+              display: Object.values(inviteStatuses).includes('waiting') ? 'none' : 'block'
+            }}
+            className="rounded-full bg-black/60 p-3 backdrop-blur-md hover:bg-black/80 disabled:opacity-30 disabled:cursor-not-allowed border border-white/20"
+            aria-label="Close matchmaking"
+          >
           <button
             onClick={handleClose}
             disabled={!!incomingInvite}
