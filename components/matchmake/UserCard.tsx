@@ -192,14 +192,9 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
     };
   }, [isActive, isVideoPaused, user.name]);
 
-  // TikTok-style controls: Double-tap zones
-  const handleVideoTap = (e: React.MouseEvent | React.TouchEvent) => {
-    // DON'T stop propagation on touch - allow swipes to bubble
-    if ('touches' in e) {
-      // Touch event - allow swipe gestures
-      return;
-    }
-    e.stopPropagation(); // Only stop for mouse clicks
+  // TikTok-style controls: Double-tap zones (desktop only)
+  const handleVideoTap = (e: React.MouseEvent) => {
+    e.stopPropagation();
     
     if (!videoRef.current) return;
     
@@ -208,14 +203,8 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
     const isDoubleTap = timeSinceLastTap < 300 && timeSinceLastTap > 0;
     
     // Get tap position
-    let x = 0;
     const rect = e.currentTarget.getBoundingClientRect();
-    
-    if ('clientX' in e) {
-      x = e.clientX - rect.left;
-    } else if (e.changedTouches && e.changedTouches[0]) {
-      x = e.changedTouches[0].clientX - rect.left;
-    }
+    const x = e.clientX - rect.left;
     
     const width = rect.width;
     const leftThird = width / 3;
