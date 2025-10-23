@@ -265,7 +265,7 @@ export default function TextChatRoom() {
   };
 
   return (
-    <main className="flex h-screen flex-col bg-[#0a0a0c]">
+    <main className="fixed inset-0 flex flex-col bg-[#0a0a0c] overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-black/40">
         <div className="flex items-center gap-3">

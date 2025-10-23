@@ -212,7 +212,11 @@ const activeRooms = new Map<string, {
   messages: any[]; 
   startedAt: number; 
   duration: number;
-  chatMode?: 'video' | 'text'; // Track room mode
+  chatMode?: 'video' | 'text';
+  status: 'active' | 'grace_period' | 'ended';
+  gracePeriodExpires?: number;
+  user1Connected: boolean;
+  user2Connected: boolean;
 }>(); // roomId -> room data
 
 // Routes with rate limiting and dependency injection
@@ -773,7 +777,7 @@ io.on('connection', (socket) => {
     // Get chat mode before creating room
     const chatMode = invite.chatMode || 'video'; // Default to video
 
-    // Create room with chat mode
+    // Create room with chat mode and connection tracking
     activeRooms.set(roomId, {
       user1: invite.fromUserId,
       user2: invite.toUserId,
@@ -781,6 +785,9 @@ io.on('connection', (socket) => {
       startedAt: Date.now(),
       duration: agreedSeconds,
       chatMode: chatMode,
+      status: 'active',
+      user1Connected: true,
+      user2Connected: true,
     });
 
     const user1 = await store.getUser(invite.fromUserId);
@@ -880,13 +887,57 @@ io.on('connection', (socket) => {
     console.log(`[Invite] ${invite.inviteId} rescinded by caller`);
   });
 
-  // Join room
+  // Join room with security checks
   socket.on('room:join', async ({ roomId }) => {
     if (!currentUserId) {
       return socket.emit('error', { message: 'Not authenticated' });
     }
+    
+    const room = activeRooms.get(roomId);
+    
+    // SECURITY: Room doesn't exist
+    if (!room) {
+      console.warn(`[Room] User ${currentUserId.substring(0, 8)} tried to join non-existent room ${roomId.substring(0, 8)}`);
+      return socket.emit('room:invalid', { message: 'Room not found' });
+    }
+    
+    // SECURITY: User not authorized (not user1 or user2)
+    if (room.user1 !== currentUserId && room.user2 !== currentUserId) {
+      console.error(`[Room] SECURITY: User ${currentUserId.substring(0, 8)} unauthorized for room ${roomId.substring(0, 8)}`);
+      return socket.emit('room:unauthorized', { message: 'You are not part of this room' });
+    }
+    
+    // Check room status
+    if (room.status === 'ended') {
+      console.warn(`[Room] User ${currentUserId.substring(0, 8)} tried to join ended room`);
+      return socket.emit('room:ended', { message: 'This session has ended' });
+    }
+    
+    // Grace period - allow reconnection
+    if (room.status === 'grace_period') {
+      if (room.gracePeriodExpires && Date.now() > room.gracePeriodExpires) {
+        console.warn(`[Room] Grace period expired for room ${roomId.substring(0, 8)}`);
+        room.status = 'ended';
+        return socket.emit('room:ended', { message: 'Session ended - grace period expired' });
+      }
+      
+      // Reconnection successful
+      room.status = 'active';
+      if (room.user1 === currentUserId) room.user1Connected = true;
+      if (room.user2 === currentUserId) room.user2Connected = true;
+      
+      console.log(`[Room] ✅ User ${currentUserId.substring(0, 8)} reconnected to room ${roomId.substring(0, 8)}`);
+      
+      // Notify partner
+      io.to(roomId).emit('room:partner-reconnected', { userId: currentUserId });
+    } else {
+      // Normal join - mark as connected
+      if (room.user1 === currentUserId) room.user1Connected = true;
+      if (room.user2 === currentUserId) room.user2Connected = true;
+    }
+    
     socket.join(roomId);
-    console.log(`User ${currentUserId} joined room ${roomId}`);
+    console.log(`[Room] User ${currentUserId.substring(0, 8)} joined room ${roomId.substring(0, 8)}`);
   });
 
   // WebRTC signaling
