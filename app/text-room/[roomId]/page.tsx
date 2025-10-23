@@ -302,9 +302,27 @@ export default function TextChatRoom() {
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4">
+          {/* End Call Button */}
+          <button
+            onClick={() => {
+              if (confirm('End this chat?')) {
+                if (socketRef.current) {
+                  socketRef.current.emit('call:end', { roomId });
+                }
+                router.push('/history');
+              }
+            }}
+            className="rounded-full bg-red-500/20 p-2 hover:bg-red-500/30 transition-all"
+            aria-label="End chat"
+          >
+            <svg className="w-5 h-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          
           {/* Timer */}
-          <div className="font-playfair text-2xl font-bold text-[#ff9b6b]">
+          <div className="font-playfair text-xl sm:text-2xl font-bold text-[#ff9b6b]">
             {formatTime(timeRemaining)}
           </div>
 

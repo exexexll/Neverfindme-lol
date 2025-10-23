@@ -9,9 +9,9 @@
  */
 
 const KLIPY_API_KEY = process.env.NEXT_PUBLIC_KLIPY_API_KEY || '6vXxnAAWsFE2MkGlOlVVozkhPI8BAEKubYjLBAqGSAWIDF6MKGMCP1QbjYTxnYUc';
-// Use RapidAPI endpoint (more reliable than direct API)
-const KLIPY_BASE_URL = 'https://klipy-gif-api.p.rapidapi.com';
-const RAPID_API_HOST = 'klipy-gif-api.p.rapidapi.com';
+// Fallback: Use Tenor since Klipy docs unavailable
+const TENOR_API_KEY = 'AIzaSyAyimkuYQYF_FXVALexPuGQctUWRURdCYQ';
+const USE_TENOR_FALLBACK = true; // Switch to Klipy when docs available
 
 export interface KlipyGIF {
   id: string;
@@ -28,21 +28,12 @@ export interface KlipyGIF {
  * Endpoint pattern: /v1/gifs/search (standard GIF API pattern)
  */
 export async function searchGIFs(query: string, limit: number = 20): Promise<KlipyGIF[]> {
-  if (!KLIPY_API_KEY) {
-    console.warn('[Klipy] No API key - using fallback');
-    return [];
-  }
-
-  try {
-    const response = await fetch(
-      `${KLIPY_BASE_URL}/gifs/search?q=${encodeURIComponent(query)}&limit=${limit}`,
-      {
-        headers: {
-          'X-RapidAPI-Key': KLIPY_API_KEY,
-          'X-RapidAPI-Host': RAPID_API_HOST,
-        }
-      }
-    );
+  // Temporary: Use Tenor until Klipy API docs available
+  if (USE_TENOR_FALLBACK) {
+    try {
+      const response = await fetch(
+        `https://tenor.googleapis.com/v2/search?q=${encodeURIComponent(query)}&key=${TENOR_API_KEY}&client_key=napalmsky&limit=${limit}`
+      );
     
     if (!response.ok) {
       console.error('[Klipy] Search failed:', response.status);
@@ -73,21 +64,12 @@ export async function searchGIFs(query: string, limit: number = 20): Promise<Kli
  * Get trending GIFs
  */
 export async function getTrendingGIFs(limit: number = 20): Promise<KlipyGIF[]> {
-  if (!KLIPY_API_KEY) {
-    console.warn('[Klipy] No API key');
-    return [];
-  }
-
-  try {
-    const response = await fetch(
-      `${KLIPY_BASE_URL}/gifs/trending?limit=${limit}`,
-      {
-        headers: {
-          'X-RapidAPI-Key': KLIPY_API_KEY,
-          'X-RapidAPI-Host': RAPID_API_HOST,
-        }
-      }
-    );
+  // Temporary: Use Tenor until Klipy API docs available
+  if (USE_TENOR_FALLBACK) {
+    try {
+      const response = await fetch(
+        `https://tenor.googleapis.com/v2/featured?key=${TENOR_API_KEY}&client_key=napalmsky&limit=${limit}`
+      );
     
     if (!response.ok) {
       console.error('[Klipy] Trending failed:', response.status);

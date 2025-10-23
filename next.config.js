@@ -52,7 +52,7 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "img-src 'self' data: https: blob:",
               "font-src 'self' https://fonts.gstatic.com",
-              "connect-src 'self' https://*.railway.app https://*.cloudinary.com https://api.stripe.com wss://*.railway.app https://klipy-gif-api.p.rapidapi.com https://api.klipy.com https://media.klipy.com",
+              "connect-src 'self' https://*.railway.app https://*.cloudinary.com https://api.stripe.com wss://*.railway.app https://klipy-gif-api.p.rapidapi.com https://api.klipy.com https://media.klipy.com https://tenor.googleapis.com",
               "media-src 'self' https: blob:",
               "frame-src 'self' https://js.stripe.com",
             ].join('; ')
