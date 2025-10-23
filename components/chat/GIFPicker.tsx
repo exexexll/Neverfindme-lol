@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { searchGIFs, getTrendingGIFs, getGIFCategories, TenorGIF } from '@/lib/gifAPI';
+import { searchGIFs, getTrendingGIFs, getGIFCategories } from '@/lib/klipyAPI';
+import type { KlipyGIF } from '@/lib/klipyAPI';
 
 interface GIFPickerProps {
   onSelectGIF: (gifUrl: string, gifId: string) => void;
@@ -11,7 +12,7 @@ interface GIFPickerProps {
 
 export function GIFPicker({ onSelectGIF, onClose }: GIFPickerProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [gifs, setGifs] = useState<TenorGIF[]>([]);
+  const [gifs, setGifs] = useState<KlipyGIF[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
@@ -55,8 +56,14 @@ export function GIFPicker({ onSelectGIF, onClose }: GIFPickerProps) {
     setLoading(false);
   };
 
-  const handleSelectGIF = (gif: TenorGIF) => {
+  const handleSelectGIF = (gif: KlipyGIF) => {
     onSelectGIF(gif.url, gif.id);
+    
+    // Track impression for Klipy monetization
+    import('@/lib/klipyAPI').then(({ trackGIFImpression }) => {
+      trackGIFImpression(gif.id);
+    });
+    
     onClose();
   };
 
@@ -156,7 +163,7 @@ export function GIFPicker({ onSelectGIF, onClose }: GIFPickerProps) {
         {/* Footer */}
         <div className="px-4 py-3 border-t border-white/10">
           <p className="text-xs text-center text-[#eaeaf0]/40">
-            Powered by Tenor
+            Powered by Klipy
           </p>
         </div>
       </motion.div>
