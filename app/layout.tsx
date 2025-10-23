@@ -28,6 +28,13 @@ export const metadata: Metadata = {
     process.env.NEXT_PUBLIC_API_BASE || 
     'http://localhost:3000'
   ),
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1, // Prevent zoom on input focus
+    userScalable: false, // Disable pinch zoom
+    viewportFit: 'cover', // iOS safe area support
+  },
   title: 'Napalm Sky - 1-1 Video Social Network',
   description: 'Make Friends in SoCal— Live Matches, Zero Waiting, Infinite Possibilites.',
   keywords: ['1-1 video social network', 'video chat', 'matchmaking', 'social networking', 'live video'],

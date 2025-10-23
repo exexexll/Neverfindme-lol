@@ -264,8 +264,26 @@ export default function TextChatRoom() {
     socketRef.current.emit('textchat:mark-read', { messageId });
   };
 
+  // Hide global layout elements (header, footer)
+  useEffect(() => {
+    const wrapper = document.querySelector('.chat-room-wrapper');
+    if (wrapper) {
+      (wrapper as HTMLElement).style.display = 'none';
+    }
+    
+    return () => {
+      const wrapper = document.querySelector('.chat-room-wrapper');
+      if (wrapper) {
+        (wrapper as HTMLElement).style.display = '';
+      }
+    };
+  }, []);
+
   return (
-    <main className="fixed inset-0 flex flex-col bg-[#0a0a0c] overflow-hidden">
+    <main className="fixed inset-0 flex flex-col bg-[#0a0a0c] overflow-hidden z-50" style={{ 
+      height: '100dvh', // Dynamic viewport height (accounts for mobile keyboard)
+      maxHeight: '-webkit-fill-available',
+    }}>
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-black/40">
         <div className="flex items-center gap-3">
@@ -313,16 +331,20 @@ export default function TextChatRoom() {
         </div>
       </div>
 
-      {/* Messages Area */}
-      <MessageList
-        messages={messages}
-        currentUserId={currentUserId}
-        partnerName={peerName}
-        onMessageRead={handleMessageRead}
-      />
+      {/* Messages Area - Padded at bottom for fixed input */}
+      <div className="flex-1 overflow-hidden pb-24">
+        <MessageList
+          messages={messages}
+          currentUserId={currentUserId}
+          partnerName={peerName}
+          onMessageRead={handleMessageRead}
+        />
+      </div>
 
-      {/* Input Area */}
-      <div className="border-t border-white/10 p-4 bg-black/40">
+      {/* Input Area - Fixed at bottom, keyboard-aware */}
+      <div className="fixed bottom-0 left-0 right-0 border-t border-white/10 p-4 bg-black/95 backdrop-blur-md z-30" style={{
+        paddingBottom: 'max(1rem, env(safe-area-inset-bottom))', // iOS safe area
+      }}>
         <ChatInput
           onSendMessage={handleSendMessage}
           onSendFile={async () => {

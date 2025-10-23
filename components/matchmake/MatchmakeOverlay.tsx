@@ -9,6 +9,7 @@ import { connectSocket } from '@/lib/socket';
 import { UserCard } from './UserCard';
 import { CalleeNotification } from './CalleeNotification';
 import { LocationPermissionModal } from '@/components/LocationPermissionModal';
+import { VideoProgressBar } from './VideoProgressBar';
 import { requestAndUpdateLocation } from '@/lib/locationAPI';
 
 interface MatchmakeOverlayProps {
@@ -1601,6 +1602,14 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
         )}
       </AnimatePresence>
 
+
+      {/* Video Progress Bar - Bottom Edge (Optimized, no lag) */}
+      {!showModeSelection && users.length > 0 && users[currentIndex]?.videoUrl && (
+        <VideoProgressBar 
+          currentIndex={currentIndex}
+          users={users}
+        />
+      )}
 
       {/* Toast Notifications */}
       <AnimatePresence>
