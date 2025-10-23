@@ -1037,8 +1037,8 @@ export default function RoomPage() {
         </div>
       </div>
 
-      {/* Controls Footer - Always Visible on Mobile */}
-      <div className="fixed bottom-0 left-0 right-0 z-30 bg-black/80 backdrop-blur-md p-4 sm:p-6 border-t border-white/10">
+      {/* Controls Footer - Always Visible, Floating Above Video */}
+      <div className="absolute bottom-0 left-0 right-0 z-30 bg-gradient-to-t from-black/90 via-black/70 to-transparent backdrop-blur-sm p-4 sm:p-6 pt-8">
         <div className="mx-auto flex max-w-md items-center justify-center gap-2 sm:gap-3">
           {/* Mic Toggle */}
           <button

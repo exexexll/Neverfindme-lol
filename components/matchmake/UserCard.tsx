@@ -194,7 +194,12 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
 
   // TikTok-style controls: Double-tap zones
   const handleVideoTap = (e: React.MouseEvent | React.TouchEvent) => {
-    e.stopPropagation();
+    // DON'T stop propagation on touch - allow swipes to bubble
+    if ('touches' in e) {
+      // Touch event - allow swipe gestures
+      return;
+    }
+    e.stopPropagation(); // Only stop for mouse clicks
     
     if (!videoRef.current) return;
     
@@ -551,7 +556,6 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
           <div 
             className="relative w-full h-full flex items-center justify-center"
             onClick={handleVideoTap}
-            onTouchEnd={handleVideoTap}
           >
             <video
               ref={videoRef}
