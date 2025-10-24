@@ -498,73 +498,57 @@ export default function TextChatRoom() {
         )}
       </AnimatePresence>
 
-      {/* Messages Area - Scrollable with visible scrollbar */}
-      <style jsx>{`
-        .messages-scroll::-webkit-scrollbar {
-          width: 8px;
-        }
-        .messages-scroll::-webkit-scrollbar-track {
-          background: rgba(255, 255, 255, 0.03);
-        }
-        .messages-scroll::-webkit-scrollbar-thumb {
-          background: rgba(255, 155, 107, 0.3);
-          border-radius: 4px;
-        }
-        .messages-scroll::-webkit-scrollbar-thumb:hover {
-          background: rgba(255, 155, 107, 0.5);
-        }
-      `}</style>
-      <div className="messages-scroll flex-1 overflow-y-auto pb-24" style={{
-        scrollbarWidth: 'thin',
-        scrollbarColor: 'rgba(255, 155, 107, 0.3) rgba(255, 255, 255, 0.03)',
-      }}>
-        <MessageList
-          messages={messages}
-          currentUserId={currentUserId}
-          partnerName={peerName}
-          onMessageRead={handleMessageRead}
-        />
-        
-        {/* Typing Indicator - In message area where text will appear */}
-        <AnimatePresence>
-          {partnerTyping && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 10 }}
-              className="px-4 py-2"
-            >
-              <div className="flex items-start gap-2">
-                {/* Partner's profile pic (small) */}
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-white/10 overflow-hidden">
-                  {peerSelfie && (
-                    <Image src={peerSelfie} alt={peerName} width={32} height={32} className="object-cover" />
-                  )}
-                </div>
-                {/* Typing bubble */}
-                <div className="rounded-2xl bg-white/10 px-4 py-3 backdrop-blur-sm">
-                  <div className="flex gap-1">
-                    <motion.div
-                      className="w-2 h-2 rounded-full bg-[#eaeaf0]/60"
-                      animate={{ scale: [1, 1.3, 1] }}
-                      transition={{ repeat: Infinity, duration: 1, delay: 0 }}
-                    />
-                    <motion.div
-                      className="w-2 h-2 rounded-full bg-[#eaeaf0]/60"
-                      animate={{ scale: [1, 1.3, 1] }}
-                      transition={{ repeat: Infinity, duration: 1, delay: 0.2 }}
-                    />
-                    <motion.div
-                      className="w-2 h-2 rounded-full bg-[#eaeaf0]/60"
-                      animate={{ scale: [1, 1.3, 1] }}
-                      transition={{ repeat: Infinity, duration: 1, delay: 0.4 }}
-                    />
+      {/* Messages Area - Scrollable */}
+      <div className="flex-1 overflow-y-auto pb-24">
+        <div className="p-4 space-y-1">
+          {messages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-center p-8">
+              <div className="text-6xl mb-4">💬</div>
+              <h3 className="text-lg font-medium text-[#eaeaf0] mb-2">Start the conversation</h3>
+              <p className="text-sm text-[#eaeaf0]/60">Send a message to {peerName}</p>
+            </div>
+          ) : (
+            <>
+              {messages.map((message) => (
+                <MessageBubble
+                  key={message.messageId}
+                  message={message}
+                  isOwn={message.from === currentUserId}
+                  showSender={true}
+                />
+              ))}
+              
+              {partnerTyping && (
+                <div className="flex items-start gap-2 px-0 py-2">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-white/10 overflow-hidden">
+                    {peerSelfie && (
+                      <Image src={peerSelfie} alt={peerName} width={32} height={32} className="object-cover" />
+                    )}
+                  </div>
+                  <div className="rounded-2xl bg-white/10 px-4 py-3">
+                    <div className="flex gap-1">
+                      <motion.div
+                        className="w-2 h-2 rounded-full bg-[#eaeaf0]/60"
+                        animate={{ scale: [1, 1.3, 1] }}
+                        transition={{ repeat: Infinity, duration: 1, delay: 0 }}
+                      />
+                      <motion.div
+                        className="w-2 h-2 rounded-full bg-[#eaeaf0]/60"
+                        animate={{ scale: [1, 1.3, 1] }}
+                        transition={{ repeat: Infinity, duration: 1, delay: 0.2 }}
+                      />
+                      <motion.div
+                        className="w-2 h-2 rounded-full bg-[#eaeaf0]/60"
+                        animate={{ scale: [1, 1.3, 1] }}
+                        transition={{ repeat: Infinity, duration: 1, delay: 0.4 }}
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
-            </motion.div>
+              )}
+            </>
           )}
-        </AnimatePresence>
+        </div>
       </div>
 
       {/* Input Area - Fixed at bottom, keyboard-aware, prevents page jump */}
