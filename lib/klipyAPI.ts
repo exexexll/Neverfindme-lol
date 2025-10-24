@@ -10,6 +10,18 @@
 const KLIPY_APP_KEY = '6vXxnAAWsFE2MkGlOlVVozkhPI8BAEKubYjLBAqGSAWIDF6MKGMCP1QbjYTxnYUc';
 const KLIPY_BASE_URL = `https://api.klipy.com/api/v1/${KLIPY_APP_KEY}`;
 
+// Get or create consistent customer ID for this browser session
+function getCustomerId(): string {
+  if (typeof window === 'undefined') return 'server-user';
+  
+  let customerId = sessionStorage.getItem('klipy_customer_id');
+  if (!customerId) {
+    customerId = 'user-' + Math.random().toString(36).substr(2, 9);
+    sessionStorage.setItem('klipy_customer_id', customerId);
+  }
+  return customerId;
+}
+
 export interface KlipyGIF {
   id: string;
   title: string;
@@ -26,13 +38,15 @@ export interface KlipyGIF {
  */
 export async function searchGIFs(query: string, limit: number = 20): Promise<KlipyGIF[]> {
   try {
-    const customerId = 'user-' + Date.now(); // Unique ID per session
-    const response = await fetch(
-      `${KLIPY_BASE_URL}/gifs/search?q=${encodeURIComponent(query)}&per_page=${limit}&customer_id=${customerId}`
-    );
+    const customerId = getCustomerId();
+    const url = `${KLIPY_BASE_URL}/gifs/search?q=${encodeURIComponent(query)}&per_page=${limit}&customer_id=${customerId}`;
+    console.log('[Klipy] Searching:', url);
+    
+    const response = await fetch(url);
     
     if (!response.ok) {
-      console.error('[Klipy] Search failed:', response.status, await response.text());
+      const text = await response.text();
+      console.error('[Klipy] Search failed:', response.status, text);
       return [];
     }
     
@@ -41,15 +55,15 @@ export async function searchGIFs(query: string, limit: number = 20): Promise<Kli
     
     // Parse Klipy response structure: data.data array
     if (!json.result || !json.data?.data) {
-      console.error('[Klipy] Unexpected response structure');
+      console.error('[Klipy] Unexpected response structure:', json);
       return [];
     }
     
     return json.data.data.map((item: any) => ({
-      id: item.id?.toString() || item.slug,
+      id: item.slug || item.id?.toString(),
       title: item.title || 'GIF',
       url: item.file?.md?.gif?.url || item.file?.hd?.gif?.url,
-      previewUrl: item.file?.sm?.gif?.url || item.file?.md?.gif?.url,
+      previewUrl: item.file?.sm?.gif?.url || item.file?.xs?.gif?.url,
       width: item.file?.md?.gif?.width || 498,
       height: item.file?.md?.gif?.height || 280,
     }));
@@ -66,13 +80,15 @@ export async function searchGIFs(query: string, limit: number = 20): Promise<Kli
  */
 export async function getTrendingGIFs(limit: number = 20): Promise<KlipyGIF[]> {
   try {
-    const customerId = 'user-' + Date.now();
-    const response = await fetch(
-      `${KLIPY_BASE_URL}/gifs/trending?per_page=${limit}&customer_id=${customerId}`
-    );
+    const customerId = getCustomerId();
+    const url = `${KLIPY_BASE_URL}/gifs/trending?per_page=${limit}&customer_id=${customerId}`;
+    console.log('[Klipy] Fetching trending:', url);
+    
+    const response = await fetch(url);
     
     if (!response.ok) {
-      console.error('[Klipy] Trending failed:', response.status, await response.text());
+      const text = await response.text();
+      console.error('[Klipy] Trending failed:', response.status, text);
       return [];
     }
     
@@ -80,15 +96,15 @@ export async function getTrendingGIFs(limit: number = 20): Promise<KlipyGIF[]> {
     console.log('[Klipy] Trending response:', json);
     
     if (!json.result || !json.data?.data) {
-      console.error('[Klipy] Unexpected response structure');
+      console.error('[Klipy] Unexpected response structure:', json);
       return [];
     }
     
     return json.data.data.map((item: any) => ({
-      id: item.id?.toString() || item.slug,
+      id: item.slug || item.id?.toString(),
       title: item.title || 'Trending GIF',
       url: item.file?.md?.gif?.url || item.file?.hd?.gif?.url,
-      previewUrl: item.file?.sm?.gif?.url || item.file?.md?.gif?.url,
+      previewUrl: item.file?.sm?.gif?.url || item.file?.xs?.gif?.url,
       width: item.file?.md?.gif?.width || 498,
       height: item.file?.md?.gif?.height || 280,
     }));
@@ -135,7 +151,7 @@ export async function getGIFCategories(): Promise<string[]> {
  */
 export async function trackGIFImpression(gifSlug: string): Promise<void> {
   try {
-    const customerId = 'user-' + Date.now();
+    const customerId = getCustomerId();
     await fetch(`${KLIPY_BASE_URL}/gifs/share/${gifSlug}`, {
       method: 'POST',
       headers: { 
@@ -148,7 +164,6 @@ export async function trackGIFImpression(gifSlug: string): Promise<void> {
     });
     console.log('[Klipy] Tracked GIF share:', gifSlug);
   } catch (error) {
-    console.error('[Klipy] Failed to track impression:', error);
     // Silent fail - don't block user experience
   }
 }
