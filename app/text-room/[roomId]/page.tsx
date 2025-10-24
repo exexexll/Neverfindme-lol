@@ -76,8 +76,30 @@ export default function TextChatRoom() {
     const socket = connectSocket(session.sessionToken);
     socketRef.current = socket;
 
-    // Store roomId for reconnection
-    sessionStorage.setItem('current_room_id', roomId);
+    // CRITICAL: Check if this is a page reload (reconnection attempt)
+    const storedRoomId = sessionStorage.getItem('current_text_room_id');
+    const wasActive = sessionStorage.getItem('text_room_active') === 'true';
+    const lastJoinTime = parseInt(sessionStorage.getItem('text_room_join_time') || '0');
+    const timeSinceJoin = Date.now() - lastJoinTime;
+    
+    const isSameRoom = storedRoomId === roomId;
+    const isRecentReload = timeSinceJoin > 0 && timeSinceJoin < 30000; // 30 seconds
+    
+    if (isSameRoom && wasActive && isRecentReload) {
+      console.log('[TextRoom] Page reload detected - attempting reconnection');
+      setShowReconnecting(true);
+    } else if (!isSameRoom && wasActive) {
+      // Different room - clear old data
+      console.log('[TextRoom] New room - clearing old session data');
+      sessionStorage.removeItem('text_room_active');
+      sessionStorage.removeItem('text_room_join_time');
+      sessionStorage.removeItem('current_text_room_id');
+    }
+    
+    // Store current room info for future reconnection detection
+    sessionStorage.setItem('current_text_room_id', roomId);
+    sessionStorage.setItem('text_room_join_time', Date.now().toString());
+    sessionStorage.setItem('text_room_active', 'true');
 
     // Join room
     socket.emit('room:join', { roomId });
@@ -86,10 +108,7 @@ export default function TextChatRoom() {
     socket.on('connect', () => {
       console.log('[TextRoom] Socket reconnected - rejoining room');
       setShowReconnecting(false); // Hide reconnecting banner
-      const savedRoomId = sessionStorage.getItem('current_room_id');
-      if (savedRoomId === roomId) {
-        socket.emit('room:join', { roomId });
-      }
+      socket.emit('room:join', { roomId });
     });
     
     socket.on('reconnect', () => {
@@ -508,8 +527,26 @@ export default function TextChatRoom() {
         )}
       </AnimatePresence>
 
-      {/* Messages Area - Padded at bottom for fixed input */}
-      <div className="flex-1 overflow-hidden pb-24">
+      {/* Messages Area - Scrollable with visible scrollbar */}
+      <style jsx>{`
+        .messages-scroll::-webkit-scrollbar {
+          width: 8px;
+        }
+        .messages-scroll::-webkit-scrollbar-track {
+          background: rgba(255, 255, 255, 0.03);
+        }
+        .messages-scroll::-webkit-scrollbar-thumb {
+          background: rgba(255, 155, 107, 0.3);
+          border-radius: 4px;
+        }
+        .messages-scroll::-webkit-scrollbar-thumb:hover {
+          background: rgba(255, 155, 107, 0.5);
+        }
+      `}</style>
+      <div className="messages-scroll flex-1 overflow-y-auto pb-24" style={{
+        scrollbarWidth: 'thin',
+        scrollbarColor: 'rgba(255, 155, 107, 0.3) rgba(255, 255, 255, 0.03)',
+      }}>
         <MessageList
           messages={messages}
           currentUserId={currentUserId}

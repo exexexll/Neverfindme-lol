@@ -50,7 +50,14 @@ export async function searchGIFs(query: string, limit: number = 20): Promise<Kli
       return [];
     }
     
-    const json = await response.json();
+    // Check if response has content before parsing
+    const text = await response.text();
+    if (!text || text.trim() === '') {
+      console.error('[Klipy] Empty response from search');
+      return [];
+    }
+    
+    const json = JSON.parse(text);
     console.log('[Klipy] Search response:', json);
     
     // Parse Klipy response structure: data.data array
@@ -92,7 +99,14 @@ export async function getTrendingGIFs(limit: number = 20): Promise<KlipyGIF[]> {
       return [];
     }
     
-    const json = await response.json();
+    // Check if response has content before parsing
+    const text = await response.text();
+    if (!text || text.trim() === '') {
+      console.error('[Klipy] Empty response from trending');
+      return [];
+    }
+    
+    const json = JSON.parse(text);
     console.log('[Klipy] Trending response:', json);
     
     if (!json.result || !json.data?.data) {
