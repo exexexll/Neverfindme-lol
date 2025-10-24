@@ -86,11 +86,8 @@ export default function TextChatRoom() {
     const isRecentReload = timeSinceJoin > 0 && timeSinceJoin < 30000; // 30 seconds
     
     if (isSameRoom && wasActive && isRecentReload) {
-      console.log('[TextRoom] Page reload detected - attempting reconnection');
       setShowReconnecting(true);
     } else if (!isSameRoom && wasActive) {
-      // Different room - clear old data
-      console.log('[TextRoom] New room - clearing old session data');
       sessionStorage.removeItem('text_room_active');
       sessionStorage.removeItem('text_room_join_time');
       sessionStorage.removeItem('current_text_room_id');
@@ -106,14 +103,12 @@ export default function TextChatRoom() {
     
     // Handle socket reconnection (network switch, connection loss)
     socket.on('connect', () => {
-      console.log('[TextRoom] Socket reconnected - rejoining room');
-      setShowReconnecting(false); // Hide reconnecting banner
+      setShowReconnecting(false);
       socket.emit('room:join', { roomId });
     });
     
     socket.on('reconnect', () => {
-      console.log('[TextRoom] Socket reconnected after failure - rejoining room');
-      setShowReconnecting(false); // Hide reconnecting banner
+      setShowReconnecting(false);
       socket.emit('room:join', { roomId });
     });
     
@@ -153,13 +148,11 @@ export default function TextChatRoom() {
     });
     
     socket.on('room:ended-by-disconnect', () => {
-      console.log('[TextRoom] Session ended by disconnect timeout');
       router.push('/history');
     });
     
     // TORCH RULE: Inactivity system listeners
     socket.on('textroom:inactivity-warning', ({ secondsRemaining }: any) => {
-      console.log('[TorchRule] Inactivity warning received:', secondsRemaining);
       setInactivityWarning(true);
       setInactivityCountdown(secondsRemaining);
     });
@@ -169,34 +162,25 @@ export default function TextChatRoom() {
     });
     
     socket.on('textroom:inactivity-cleared', () => {
-      console.log('[TorchRule] Activity resumed - warning cleared');
       setInactivityWarning(false);
     });
     
     socket.on('textroom:ended-inactivity', () => {
-      console.log('[TorchRule] Session ended by server due to inactivity');
       alert('Session ended due to inactivity');
       router.push('/history');
     });
     
-    // Typing indicator
-    socket.on('textchat:typing', ({ userId }: { userId: string }) => {
-      console.log('[TextRoom] Typing event received from:', userId, 'peerUserId:', peerUserId);
-      // Show typing indicator (userId is the sender's ID from server)
+    socket.on('textchat:typing', () => {
       setPartnerTyping(true);
       
-      // Clear existing timeout
       if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
       
-      // Hide typing indicator after 2 seconds of no typing events (Instagram style)
       typingTimeoutRef.current = setTimeout(() => {
-        console.log('[TextRoom] Hiding typing indicator');
         setPartnerTyping(false);
       }, 2000);
     });
     
-    socket.on('disconnect', (reason) => {
-      console.log('[TextRoom] Socket disconnected:', reason);
+    socket.on('disconnect', () => {
       setShowReconnecting(true);
       setReconnectCountdown(10);
     });
@@ -301,31 +285,19 @@ export default function TextChatRoom() {
     };
   }, [roomId, agreedSeconds, peerUserId, peerName, router]);
 
-  // TORCH RULE: No fixed timer - show video request button after 60s of chat
   useEffect(() => {
     let elapsed = 0;
     
-    console.log('[TorchRule] Starting elapsed time counter for video upgrade button');
-    
-    // Simple elapsed time counter (not a countdown)
     const interval = setInterval(() => {
       elapsed++;
-      
-      // Log every 10 seconds for debugging
-      if (elapsed % 10 === 0) {
-        console.log(`[TorchRule] Elapsed: ${elapsed}s, showVideoRequest: ${showVideoRequest}`);
-      }
         
-      // Show video request button after 60 seconds elapsed
       if (elapsed >= 60) {
-        console.log('[TorchRule] 60 seconds reached - enabling video upgrade button');
         setShowVideoRequest(true);
-        clearInterval(interval); // Stop checking once button shown
+        clearInterval(interval);
       }
     }, 1000);
 
     return () => {
-      console.log('[TorchRule] Cleaning up elapsed timer');
       clearInterval(interval);
     };
   }, []); // Empty deps - run once on mount
@@ -334,7 +306,6 @@ export default function TextChatRoom() {
   // Don't wait for server (which checks every 30s) - more responsive UX
   useEffect(() => {
     if (inactivityWarning && inactivityCountdown <= 0) {
-      console.log('[TorchRule] Countdown reached 0 - ending session client-side');
       alert('Session ended due to inactivity');
       router.push('/history');
     }

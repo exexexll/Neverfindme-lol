@@ -10,14 +10,13 @@
 const KLIPY_APP_KEY = '6vXxnAAWsFE2MkGlOlVVozkhPI8BAEKubYjLBAqGSAWIDF6MKGMCP1QbjYTxnYUc';
 const KLIPY_BASE_URL = `https://api.klipy.com/api/v1/${KLIPY_APP_KEY}`;
 
-// Get or create consistent customer ID for this browser session
 function getCustomerId(): string {
   if (typeof window === 'undefined') return 'server-user';
   
-  let customerId = sessionStorage.getItem('klipy_customer_id');
+  let customerId = localStorage.getItem('klipy_customer_id');
   if (!customerId) {
     customerId = 'user-' + Math.random().toString(36).substr(2, 9);
-    sessionStorage.setItem('klipy_customer_id', customerId);
+    localStorage.setItem('klipy_customer_id', customerId);
   }
   return customerId;
 }
@@ -40,29 +39,21 @@ export async function searchGIFs(query: string, limit: number = 20): Promise<Kli
   try {
     const customerId = getCustomerId();
     const url = `${KLIPY_BASE_URL}/gifs/search?q=${encodeURIComponent(query)}&per_page=${limit}&customer_id=${customerId}`;
-    console.log('[Klipy] Searching:', url);
     
     const response = await fetch(url);
     
     if (!response.ok) {
-      const text = await response.text();
-      console.error('[Klipy] Search failed:', response.status, text);
       return [];
     }
     
-    // Check if response has content before parsing
     const text = await response.text();
     if (!text || text.trim() === '') {
-      console.error('[Klipy] Empty response from search');
       return [];
     }
     
     const json = JSON.parse(text);
-    console.log('[Klipy] Search response:', json);
     
-    // Parse Klipy response structure: data.data array
     if (!json.result || !json.data?.data) {
-      console.error('[Klipy] Unexpected response structure:', json);
       return [];
     }
     
@@ -75,7 +66,6 @@ export async function searchGIFs(query: string, limit: number = 20): Promise<Kli
       height: item.file?.md?.gif?.height || 280,
     }));
   } catch (error) {
-    console.error('[Klipy] Search error:', error);
     return [];
   }
 }
@@ -89,25 +79,19 @@ export async function getTrendingGIFs(limit: number = 20): Promise<KlipyGIF[]> {
   try {
     const customerId = getCustomerId();
     const url = `${KLIPY_BASE_URL}/gifs/trending?per_page=${limit}&customer_id=${customerId}`;
-    console.log('[Klipy] Fetching trending:', url);
     
     const response = await fetch(url);
     
     if (!response.ok) {
-      const text = await response.text();
-      console.error('[Klipy] Trending failed:', response.status, text);
       return [];
     }
     
-    // Check if response has content before parsing
     const text = await response.text();
     if (!text || text.trim() === '') {
-      console.error('[Klipy] Empty response from trending');
       return [];
     }
     
     const json = JSON.parse(text);
-    console.log('[Klipy] Trending response:', json);
     
     if (!json.result || !json.data?.data) {
       console.error('[Klipy] Unexpected response structure:', json);
@@ -123,7 +107,6 @@ export async function getTrendingGIFs(limit: number = 20): Promise<KlipyGIF[]> {
       height: item.file?.md?.gif?.height || 280,
     }));
   } catch (error) {
-    console.error('[Klipy] Trending error:', error);
     return [];
   }
 }
@@ -141,14 +124,13 @@ export async function getGIFCategories(): Promise<string[]> {
     
     if (response.ok) {
       const json = await response.json();
-      console.log('[Klipy] Categories response:', json);
       
       if (json.result && json.data?.categories) {
         return json.data.categories.map((cat: any) => cat.category || cat.query);
       }
     }
   } catch (error) {
-    console.log('[Klipy] Using default categories');
+    // Use fallback
   }
   
   // Fallback categories
@@ -173,11 +155,10 @@ export async function trackGIFImpression(gifSlug: string): Promise<void> {
       },
       body: JSON.stringify({
         customer_id: customerId,
-        q: '', // Search query that led to this share
+        q: '',
       }),
     });
-    console.log('[Klipy] Tracked GIF share:', gifSlug);
   } catch (error) {
-    // Silent fail - don't block user experience
+    // Silent fail
   }
 }
