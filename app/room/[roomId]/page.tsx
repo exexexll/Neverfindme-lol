@@ -340,6 +340,13 @@ export default function RoomPage() {
           }
           
           if (state === 'disconnected') {
+            // CRITICAL: Only handle disconnection if we were previously connected
+            // This prevents false positives during initial connection phase
+            if (connectionPhase !== 'connected') {
+              console.log('[WebRTC] Connection disconnected during initial setup - ignoring (not yet established)');
+              return;
+            }
+            
             console.warn('[WebRTC] Connection disconnected - entering grace period');
             setConnectionPhase('reconnecting');
             
@@ -352,6 +359,9 @@ export default function RoomPage() {
             
             // Show reconnecting UI
             setPermissionError('Connection lost. Attempting to reconnect...');
+            
+            // Track reconnection timeouts so we can clear them on success
+            const reconnectTimeouts: NodeJS.Timeout[] = [];
             
             // Attempt ICE restart to help reconnection
             const attemptReconnect = async () => {
@@ -380,28 +390,27 @@ export default function RoomPage() {
               }
             };
             
-            // First reconnect attempt after 2 seconds
-            setTimeout(attemptReconnect, 2000);
-            
-            // Second attempt after 5 seconds
-            setTimeout(attemptReconnect, 5000);
-            
-            // Third attempt after 8 seconds
-            setTimeout(attemptReconnect, 8000);
+            // Schedule reconnection attempts and track them
+            reconnectTimeouts.push(setTimeout(attemptReconnect, 2000));
+            reconnectTimeouts.push(setTimeout(attemptReconnect, 5000));
+            reconnectTimeouts.push(setTimeout(attemptReconnect, 8000));
             
             // Final check after grace period
-            setTimeout(() => {
-              const elapsedTime = Date.now() - disconnectTime;
-              
+            const finalTimeout = setTimeout(() => {
               if (pc.connectionState === 'connected') {
                 console.log('[WebRTC] ✅ Reconnected successfully during grace period');
                 setConnectionPhase('connected');
                 setPermissionError('');
+                // Clear all pending reconnection attempts
+                reconnectTimeouts.forEach(t => clearTimeout(t));
                 return;
               }
               
               if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
                 console.error(`[WebRTC] Still disconnected after ${gracePeriodMs}ms grace period, treating as failed`);
+                
+                // Clear pending reconnection attempts
+                reconnectTimeouts.forEach(t => clearTimeout(t));
                 
                 // Notify peer
                 if (socketRef.current) {
@@ -422,6 +431,9 @@ export default function RoomPage() {
                 setPermissionError('Connection lost. Please refresh the page or check your internet connection.');
               }
             }, gracePeriodMs);
+            
+            // Store final timeout ref for potential cleanup
+            reconnectTimeouts.push(finalTimeout);
           }
         };
 
@@ -429,21 +441,22 @@ export default function RoomPage() {
         const socket = connectSocket(currentSession.sessionToken);
         socketRef.current = socket;
 
-        // Store roomId and connection state for reconnection (handles tab reload)
-        sessionStorage.setItem('current_room_id', roomId);
-        sessionStorage.setItem('room_join_time', Date.now().toString());
-        sessionStorage.setItem('room_connection_active', 'true');
-        
-        // Detect if this is a reload during an active call
+        // Detect if this is a reload during an active call (CHECK BEFORE SETTING)
         const wasActiveCall = sessionStorage.getItem('room_connection_active') === 'true';
         const lastJoinTime = parseInt(sessionStorage.getItem('room_join_time') || '0');
         const timeSinceJoin = Date.now() - lastJoinTime;
         
-        if (wasActiveCall && timeSinceJoin < 30000) {
+        // Check if this is a recent reload (within 30 seconds) AND we had an active connection
+        if (wasActiveCall && lastJoinTime > 0 && timeSinceJoin > 0 && timeSinceJoin < 30000) {
           // User reloaded within 30 seconds - this is a reconnection attempt
           console.log('[Room] Detected tab reload during active call - attempting reconnection');
           setConnectionPhase('reconnecting');
         }
+        
+        // NOW store roomId and connection state for future reconnection detection
+        sessionStorage.setItem('current_room_id', roomId);
+        sessionStorage.setItem('room_join_time', Date.now().toString());
+        sessionStorage.setItem('room_connection_active', 'true');
         
         socket.emit('room:join', { roomId });
         
