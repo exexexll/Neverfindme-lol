@@ -1221,6 +1221,14 @@ io.on('connection', (socket) => {
     io.to(roomId).emit('room:socialShared', message);
   });
 
+  // TEXT CHAT: Typing indicator
+  socket.on('textchat:typing', ({ roomId, userId }) => {
+    if (!currentUserId) return;
+    
+    // Broadcast typing event to partner only
+    socket.to(roomId).emit('textchat:typing', { userId: currentUserId });
+  });
+
   // TEXT CHAT: Send message (text/image/file/GIF)
   socket.on('textchat:send', async ({ roomId, messageType, content, fileUrl, fileName, fileSizeBytes, gifUrl, gifId }) => {
     if (!currentUserId) return;

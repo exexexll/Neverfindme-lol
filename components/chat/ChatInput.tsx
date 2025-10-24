@@ -7,6 +7,7 @@ interface ChatInputProps {
   onSendMessage: (content: string) => void;
   onSendFile?: () => void;
   onSendGIF?: () => void;
+  onTyping?: () => void; // Typing indicator callback
   disabled?: boolean;
   rateLimited?: boolean;
   cooldownRemaining?: number; // Seconds until can send next message
@@ -15,13 +16,16 @@ interface ChatInputProps {
 export function ChatInput({ 
   onSendMessage, 
   onSendFile, 
-  onSendGIF, 
+  onSendGIF,
+  onTyping,
   disabled = false,
   rateLimited = false,
   cooldownRemaining = 0 
 }: ChatInputProps) {
   const [message, setMessage] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastTypingEmitRef = useRef<number>(0);
 
   const handleSend = () => {
     if (!message.trim() || disabled || rateLimited) return;
@@ -93,7 +97,18 @@ export function ChatInput({
             ref={inputRef}
             type="text"
             value={message}
-            onChange={(e) => setMessage(e.target.value)}
+            onChange={(e) => {
+              setMessage(e.target.value);
+              
+              // Emit typing event (throttled to once per 2 seconds)
+              if (onTyping && e.target.value.length > 0) {
+                const now = Date.now();
+                if (now - lastTypingEmitRef.current > 2000) {
+                  onTyping();
+                  lastTypingEmitRef.current = now;
+                }
+              }
+            }}
             onKeyPress={handleKeyPress}
             disabled={disabled || rateLimited}
             placeholder="Message..."

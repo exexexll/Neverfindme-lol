@@ -50,10 +50,12 @@ export default function TextChatRoom() {
   const [currentUserId, setCurrentUserId] = useState('');
   const [showReconnecting, setShowReconnecting] = useState(false);
   const [reconnectCountdown, setReconnectCountdown] = useState(10);
+  const [partnerTyping, setPartnerTyping] = useState(false);
 
   const socketRef = useRef<any>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const cooldownTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Initialize socket and load message history
   useEffect(() => {
@@ -152,6 +154,21 @@ export default function TextChatRoom() {
     socket.on('textroom:ended-inactivity', () => {
       alert('Session ended due to inactivity');
       router.push('/history');
+    });
+    
+    // Typing indicator
+    socket.on('textchat:typing', ({ userId }: { userId: string }) => {
+      if (userId === peerUserId) {
+        setPartnerTyping(true);
+        
+        // Clear existing timeout
+        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+        
+        // Hide typing indicator after 3 seconds of no typing events
+        typingTimeoutRef.current = setTimeout(() => {
+          setPartnerTyping(false);
+        }, 3000);
+      }
     });
     
     socket.on('disconnect', (reason) => {
@@ -270,17 +287,19 @@ export default function TextChatRoom() {
     timerRef.current = setInterval(() => {
       elapsed++;
         
-      // Show video request button after 60 seconds elapsed AND 5+ messages exchanged
-      if (elapsed >= 60 && messages.length >= 5 && !showVideoRequest) {
+      // Show video request button after 60 seconds elapsed
+      // Removed message count requirement to make button always visible after 60s
+      if (elapsed >= 60 && !showVideoRequest) {
         setShowVideoRequest(true);
-        console.log('[TorchRule] Video upgrade button now available (60s + 5 messages)');
+        console.log('[TorchRule] Video upgrade button now available after 60s');
       }
     }, 1000);
 
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [messages.length, showVideoRequest]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showVideoRequest]); // Only depend on showVideoRequest to avoid re-creating interval
 
   // Format time mm:ss
   const formatTime = (seconds: number) => {
@@ -416,26 +435,33 @@ export default function TextChatRoom() {
             )}
           </div>
 
-          {/* Video Request Button (appears after 60s) */}
-          {showVideoRequest && !videoRequested && (
-            <motion.button
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              onClick={handleRequestVideo}
-              className="flex items-center gap-2 rounded-full bg-[#ff9b6b] px-4 py-2 text-sm font-medium text-[#0a0a0c] hover:opacity-90 transition-opacity"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-              </svg>
-              Request Video
-            </motion.button>
-          )}
+          {/* Video Request Button (appears after 60s) - More visible */}
+          <AnimatePresence>
+            {showVideoRequest && !videoRequested && (
+              <motion.button
+                initial={{ scale: 0, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0, opacity: 0 }}
+                onClick={handleRequestVideo}
+                className="flex items-center gap-2 rounded-full bg-gradient-to-r from-[#ff9b6b] to-[#ff7a3d] px-5 py-2.5 text-sm font-bold text-[#0a0a0c] hover:shadow-lg hover:shadow-[#ff9b6b]/50 transition-all shadow-md animate-pulse"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                Upgrade to Video
+              </motion.button>
+            )}
 
-          {videoRequested && (
-            <div className="rounded-full bg-yellow-500/20 px-4 py-2">
-              <p className="text-xs text-yellow-300">Video requested...</p>
-            </div>
-          )}
+            {videoRequested && (
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                className="rounded-full bg-yellow-500/20 px-4 py-2 border border-yellow-500/30"
+              >
+                <p className="text-xs font-medium text-yellow-300">Waiting for {peerName}...</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
 
@@ -449,12 +475,49 @@ export default function TextChatRoom() {
         />
       </div>
 
+      {/* Typing Indicator - Instagram style */}
+      {partnerTyping && (
+        <div className="fixed bottom-20 left-4 z-30">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            className="flex items-center gap-2 rounded-full bg-white/10 backdrop-blur-md px-4 py-2 border border-white/20"
+          >
+            <div className="flex gap-1">
+              <motion.div
+                className="w-2 h-2 rounded-full bg-[#ff9b6b]"
+                animate={{ scale: [1, 1.2, 1] }}
+                transition={{ repeat: Infinity, duration: 1, delay: 0 }}
+              />
+              <motion.div
+                className="w-2 h-2 rounded-full bg-[#ff9b6b]"
+                animate={{ scale: [1, 1.2, 1] }}
+                transition={{ repeat: Infinity, duration: 1, delay: 0.2 }}
+              />
+              <motion.div
+                className="w-2 h-2 rounded-full bg-[#ff9b6b]"
+                animate={{ scale: [1, 1.2, 1] }}
+                transition={{ repeat: Infinity, duration: 1, delay: 0.4 }}
+              />
+            </div>
+            <span className="text-xs text-[#eaeaf0]/70">{peerName} is typing...</span>
+          </motion.div>
+        </div>
+      )}
+
       {/* Input Area - Fixed at bottom, keyboard-aware */}
       <div className="fixed bottom-0 left-0 right-0 border-t border-white/10 p-4 bg-black/95 backdrop-blur-md z-30" style={{
         paddingBottom: 'max(1rem, env(safe-area-inset-bottom))', // iOS safe area
       }}>
         <ChatInput
           onSendMessage={handleSendMessage}
+          onTyping={() => {
+            // Emit typing event (throttled by ChatInput component)
+            if (socketRef.current) {
+              socketRef.current.emit('textchat:typing', { roomId, userId: currentUserId });
+            }
+          }}
           onSendFile={async () => {
             const input = document.createElement('input');
             input.type = 'file';
