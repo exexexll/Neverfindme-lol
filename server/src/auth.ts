@@ -325,32 +325,10 @@ router.post('/link', async (req, res) => {
     });
   }
 
-  // SECURITY: Invalidate all other active sessions (single-session enforcement)
-  // NOTE: We invalidate BEFORE creating new session, so no need for exceptToken
-  const invalidatedCount = await store.invalidateUserSessions(user.userId);
-  console.log(`[Auth] Invalidating sessions for ${user.email}...`);
-  console.log(`[Auth] Invalidated ${invalidatedCount} existing sessions`);
-  
-  // Notify old sessions via Socket.IO (if they're connected)
-  if (invalidatedCount > 0) {
-    // Emit to all sockets for this user
-    const sockets = Array.from(activeSockets.entries())
-      .filter(([userId, _]) => userId === user.userId)
-      .map(([_, socketId]) => socketId);
-    
-    sockets.forEach(socketId => {
-      io.to(socketId).emit('session:invalidated', {
-        message: 'You have been logged out because you logged in from another device.',
-        reason: 'new_login',
-      });
-    });
-    
-    console.log(`[Auth] Notified ${sockets.length} active sockets of logout`);
-  }
-  
   // Get device info from User-Agent
   const deviceInfo = req.headers['user-agent'] || 'Unknown device';
 
+  // Create NEW session FIRST
   const sessionToken = uuidv4();
   const session: Session = {
     sessionToken,
@@ -364,6 +342,24 @@ router.post('/link', async (req, res) => {
   };
 
   await store.createSession(session);
+  
+  // SECURITY: NOW invalidate all OTHER sessions (except this one)
+  const invalidatedCount = await store.invalidateUserSessions(user.userId, sessionToken);
+  console.log(`[Auth] Invalidated ${invalidatedCount} old sessions (kept new session: ${sessionToken.substring(0, 8)})`);
+  
+  // Notify old sessions via Socket.IO
+  if (invalidatedCount > 0) {
+    const sockets = Array.from(activeSockets.entries())
+      .filter(([userId, _]) => userId === user.userId)
+      .map(([_, socketId]) => socketId);
+    
+    sockets.forEach(socketId => {
+      io.to(socketId).emit('session:invalidated', {
+        message: 'You have been logged out because you logged in from another device.',
+        reason: 'new_login',
+      });
+    });
+  }
   
   // Track IP for this user
   store.addUserIp(user.userId, ip);
