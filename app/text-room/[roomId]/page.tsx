@@ -236,8 +236,9 @@ export default function TextChatRoom() {
           body: notifContent,
           icon: msg.fromSelfie || '/logo.svg',
           badge: '/logo.svg',
-          tag: 'text-chat',
-          renotify: true,
+          tag: 'text-chat-' + msg.messageId,
+          requireInteraction: false,
+          silent: false,
         });
       }
     });
