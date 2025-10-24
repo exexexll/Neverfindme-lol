@@ -119,7 +119,7 @@ export function EmailVerification({ sessionToken, email, onVerified, onSkip }: E
         <button
           onClick={handleSendCode}
           disabled={loading}
-          className="w-full rounded-xl bg-[#ebd463] px-6 py-3 font-medium text-[#0a0a0c] hover:opacity-90 disabled:opacity-50"
+          className="w-full rounded-xl bg-[#fcf290] px-6 py-3 font-medium text-[#0a0a0c] hover:opacity-90 disabled:opacity-50"
         >
           {loading ? 'Sending...' : 'Send Verification Code'}
         </button>
@@ -136,7 +136,7 @@ export function EmailVerification({ sessionToken, email, onVerified, onSkip }: E
               maxLength={6}
               placeholder="000000"
               autoFocus
-              className="w-full rounded-xl bg-white/10 px-6 py-4 text-center text-3xl font-mono tracking-widest text-[#eaeaf0] focus:outline-none focus:ring-2 focus:ring-[#ebd463]"
+              className="w-full rounded-xl bg-white/10 px-6 py-4 text-center text-3xl font-mono tracking-widest text-[#eaeaf0] focus:outline-none focus:ring-2 focus:ring-[#fcf290]"
             />
           </div>
 
@@ -149,7 +149,7 @@ export function EmailVerification({ sessionToken, email, onVerified, onSkip }: E
           <button
             onClick={handleVerify}
             disabled={loading || code.length !== 6}
-            className="w-full rounded-xl bg-[#ebd463] px-6 py-3 font-medium text-[#0a0a0c] hover:opacity-90 disabled:opacity-50"
+            className="w-full rounded-xl bg-[#fcf290] px-6 py-3 font-medium text-[#0a0a0c] hover:opacity-90 disabled:opacity-50"
           >
             {loading ? 'Verifying...' : 'Verify Code'}
           </button>

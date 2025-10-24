@@ -29,7 +29,7 @@ export default async function CommunityGuidelinesPage() {
         <article 
           className="prose prose-invert prose-sm sm:prose-base max-w-4xl mx-auto
                      prose-headings:text-[#eaeaf0] prose-p:text-[#eaeaf0]/80
-                     prose-a:text-[#ebd463] prose-a:no-underline hover:prose-a:underline
+                     prose-a:text-[#fcf290] prose-a:no-underline hover:prose-a:underline
                      prose-strong:text-[#eaeaf0] prose-ul:text-[#eaeaf0]/80
                      prose-ol:text-[#eaeaf0]/80 prose-li:text-[#eaeaf0]/80"
           dangerouslySetInnerHTML={{ __html: content }}

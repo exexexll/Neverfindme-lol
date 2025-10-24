@@ -202,7 +202,7 @@ export function ReferralNotifications() {
                 <button
                   onClick={() => handleCallNow(latestNotification.referredUserId)}
                   disabled={callingUser === latestNotification.referredUserId}
-                  className="focus-ring w-full rounded-xl bg-[#ebd463] px-6 py-3 font-medium text-[#0a0a0c] transition-opacity hover:opacity-90 disabled:opacity-50"
+                  className="focus-ring w-full rounded-xl bg-[#fcf290] px-6 py-3 font-medium text-[#0a0a0c] transition-opacity hover:opacity-90 disabled:opacity-50"
                 >
                   {callingUser === latestNotification.referredUserId ? 'Opening...' : '📞 Call Now'}
                 </button>

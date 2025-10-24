@@ -232,7 +232,7 @@ export default function EventWaitPage() {
           <p className="text-[#eaeaf0]">Unable to load event information.</p>
           <button
             onClick={() => router.push('/main')}
-            className="mt-4 rounded-xl bg-[#ebd463] px-6 py-2 text-sm font-medium text-[#0a0a0c] hover:opacity-90"
+            className="mt-4 rounded-xl bg-[#fcf290] px-6 py-2 text-sm font-medium text-[#0a0a0c] hover:opacity-90"
           >
             Go to Dashboard
           </button>
@@ -264,11 +264,11 @@ export default function EventWaitPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="rounded-xl bg-gradient-to-r from-[#ebd463]/20 to-[#ff7a45]/20 border border-[#ebd463]/30 p-6 mb-6"
+          className="rounded-xl bg-gradient-to-r from-[#fcf290]/20 to-[#ff7a45]/20 border border-[#fcf290]/30 p-6 mb-6"
         >
           <div className="text-center">
             <p className="text-sm text-[#eaeaf0]/70 mb-2">Today&apos;s Event Window</p>
-            <p className="font-playfair text-3xl font-bold text-[#ebd463] mb-1">
+            <p className="font-playfair text-3xl font-bold text-[#fcf290] mb-1">
               {settings.eventStartTime.substring(0, 5)} - {settings.eventEndTime.substring(0, 5)}
             </p>
             <p className="text-sm text-[#eaeaf0]/70">
@@ -289,7 +289,7 @@ export default function EventWaitPage() {
             <div className="flex justify-center gap-4">
               <div className="text-center">
                 <div className="rounded-lg bg-white/5 px-6 py-4 min-w-[80px]">
-                  <p className="font-playfair text-4xl font-bold text-[#ebd463]">
+                  <p className="font-playfair text-4xl font-bold text-[#fcf290]">
                     {String(countdown.hours).padStart(2, '0')}
                   </p>
                 </div>
@@ -297,7 +297,7 @@ export default function EventWaitPage() {
               </div>
               <div className="text-center">
                 <div className="rounded-lg bg-white/5 px-6 py-4 min-w-[80px]">
-                  <p className="font-playfair text-4xl font-bold text-[#ebd463]">
+                  <p className="font-playfair text-4xl font-bold text-[#fcf290]">
                     {String(countdown.minutes).padStart(2, '0')}
                   </p>
                 </div>
@@ -305,7 +305,7 @@ export default function EventWaitPage() {
               </div>
               <div className="text-center">
                 <div className="rounded-lg bg-white/5 px-6 py-4 min-w-[80px]">
-                  <p className="font-playfair text-4xl font-bold text-[#ebd463]">
+                  <p className="font-playfair text-4xl font-bold text-[#fcf290]">
                     {String(countdown.seconds).padStart(2, '0')}
                   </p>
                 </div>
@@ -339,7 +339,7 @@ export default function EventWaitPage() {
           <button
             onClick={handleSubmitRSVP}
             disabled={submitting}
-            className="mt-4 w-full rounded-xl bg-[#ebd463] px-6 py-3 font-medium text-[#0a0a0c] hover:opacity-90 transition-opacity disabled:opacity-50"
+            className="mt-4 w-full rounded-xl bg-[#fcf290] px-6 py-3 font-medium text-[#0a0a0c] hover:opacity-90 transition-opacity disabled:opacity-50"
           >
             {submitting ? 'Saving...' : hasRSVP ? 'Update Time' : 'Save Time'}
           </button>
@@ -383,7 +383,7 @@ export default function EventWaitPage() {
               type="button"
               onClick={handleUpdateProfile}
               disabled={navigatingToRefilm}
-              className="flex-1 rounded-xl bg-[#ebd463] px-6 py-3 text-sm font-medium text-[#0a0a0c] hover:opacity-90 transition-all cursor-pointer active:scale-95 transform disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 rounded-xl bg-[#fcf290] px-6 py-3 text-sm font-medium text-[#0a0a0c] hover:opacity-90 transition-all cursor-pointer active:scale-95 transform disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {navigatingToRefilm ? (
                 <span className="flex items-center justify-center gap-2">

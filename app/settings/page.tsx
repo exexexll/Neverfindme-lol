@@ -362,7 +362,7 @@ export default function SettingsPage() {
                     localStorage.removeItem('bumpin_location_consent');
                     alert('Location permission reset. Open matchmaking to grant permission again.');
                   }}
-                  className="w-full rounded-xl bg-[#ebd463] px-4 py-2.5 text-sm font-medium text-[#0a0a0c] hover:opacity-90"
+                  className="w-full rounded-xl bg-[#fcf290] px-4 py-2.5 text-sm font-medium text-[#0a0a0c] hover:opacity-90"
                 >
                   Enable Location Sharing
                 </button>
@@ -411,14 +411,14 @@ export default function SettingsPage() {
                 </h3>
                 <p className="mb-6 text-[#eaeaf0]/70">
                   This feature will be available in a future update. For now, please email{' '}
-                  <a href="mailto:support@bumpin.app" className="text-[#ebd463] hover:underline">
+                  <a href="mailto:support@bumpin.app" className="text-[#fcf290] hover:underline">
                     support@bumpin.app
                   </a>{' '}
                   to report a concern.
                 </p>
                 <button
                   onClick={() => setShowReportStub(false)}
-                  className="focus-ring w-full rounded-xl bg-[#ebd463] px-6 py-3 font-medium text-[#0a0a0c] transition-opacity hover:opacity-90"
+                  className="focus-ring w-full rounded-xl bg-[#fcf290] px-6 py-3 font-medium text-[#0a0a0c] transition-opacity hover:opacity-90"
                 >
                   Got it
                 </button>
@@ -446,7 +446,7 @@ export default function SettingsPage() {
                 </p>
                 <button
                   onClick={() => setShowBlockStub(false)}
-                  className="focus-ring w-full rounded-xl bg-[#ebd463] px-6 py-3 font-medium text-[#0a0a0c] transition-opacity hover:opacity-90"
+                  className="focus-ring w-full rounded-xl bg-[#fcf290] px-6 py-3 font-medium text-[#0a0a0c] transition-opacity hover:opacity-90"
                 >
                   Got it
                 </button>

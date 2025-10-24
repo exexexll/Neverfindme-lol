@@ -60,7 +60,7 @@ export default function IntroductionComplete({
         <div className="rounded-xl bg-white/5 p-6 border border-white/10">
           <div className="flex items-center gap-4 mb-4">
             {targetUser.selfieUrl ? (
-              <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-full border-4 border-[#ebd463]/30">
+              <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-full border-4 border-[#fcf290]/30">
                 <Image
                   src={targetUser.selfieUrl}
                   alt={targetUser.name}
@@ -116,7 +116,7 @@ export default function IntroductionComplete({
             <>
               <button
                 onClick={onCallNow}
-                className="focus-ring w-full rounded-xl bg-[#ebd463] px-6 py-4 font-medium text-[#0a0a0c] text-lg shadow-sm transition-opacity hover:opacity-90"
+                className="focus-ring w-full rounded-xl bg-[#fcf290] px-6 py-4 font-medium text-[#0a0a0c] text-lg shadow-sm transition-opacity hover:opacity-90"
               >
                 📞 Call {targetUser.name} Now
               </button>
@@ -131,7 +131,7 @@ export default function IntroductionComplete({
                   {targetUser.name} is not online right now
                 </p>
                 <p className="mt-2 text-sm text-[#eaeaf0]/70">
-                  You can find them later in matchmaking or use your intro code: <span className="font-mono text-[#ebd463]">{referralCode}</span>
+                  You can find them later in matchmaking or use your intro code: <span className="font-mono text-[#fcf290]">{referralCode}</span>
                 </p>
               </div>
             </>
@@ -148,7 +148,7 @@ export default function IntroductionComplete({
         {/* Info */}
         <div className="rounded-lg bg-white/5 p-4">
           <p className="text-xs text-[#eaeaf0]/50 leading-relaxed">
-            💡 <strong>Tip:</strong> You can use your intro code <span className="font-mono text-[#ebd463]">{referralCode}</span> on the main page anytime to directly match with {targetUser.name}.
+            💡 <strong>Tip:</strong> You can use your intro code <span className="font-mono text-[#fcf290]">{referralCode}</span> on the main page anytime to directly match with {targetUser.name}.
           </p>
         </div>
       </motion.div>

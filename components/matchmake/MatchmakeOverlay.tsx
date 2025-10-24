@@ -1126,7 +1126,7 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
                   onClick={() => setChatMode('video')}
                   className={`group relative rounded-2xl p-6 sm:p-8 transition-all ${
                     chatMode === 'video'
-                      ? 'bg-[#ebd463] shadow-2xl shadow-[#ebd463]/20'
+                      ? 'bg-[#fcf290] shadow-2xl shadow-[#fcf290]/20'
                       : 'bg-white/5 hover:bg-white/10'
                   }`}
                 >
@@ -1161,7 +1161,7 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
                   onClick={() => setChatMode('text')}
                   className={`group relative rounded-2xl p-6 sm:p-8 transition-all ${
                     chatMode === 'text'
-                      ? 'bg-[#ebd463] shadow-2xl shadow-[#ebd463]/20'
+                      ? 'bg-[#fcf290] shadow-2xl shadow-[#fcf290]/20'
                       : 'bg-white/5 hover:bg-white/10'
                   }`}
                 >
@@ -1195,7 +1195,7 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.4 }}
                   onClick={handleStartBrowsing}
-                  className="w-full sm:w-auto mx-auto block rounded-xl bg-[#ebd463] px-8 sm:px-12 py-3 sm:py-4 text-base sm:text-lg font-medium text-[#0a0a0c] hover:opacity-90 transition-opacity shadow-xl"
+                  className="w-full sm:w-auto mx-auto block rounded-xl bg-[#fcf290] px-8 sm:px-12 py-3 sm:py-4 text-base sm:text-lg font-medium text-[#0a0a0c] hover:opacity-90 transition-opacity shadow-xl"
                 >
                   Continue with {chatMode === 'video' ? 'Video' : 'Text'} Mode
                 </motion.button>
@@ -1221,14 +1221,14 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
             <div className="flex items-center justify-center gap-3">
               {chatMode === 'video' ? (
                 <>
-                  <svg className="w-4 h-4 text-[#ebd463]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-4 h-4 text-[#fcf290]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                   </svg>
                   <span className="text-sm font-medium text-white">Video Mode</span>
                 </>
               ) : (
                 <>
-                  <svg className="w-4 h-4 text-[#ebd463]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-4 h-4 text-[#fcf290]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                   </svg>
                   <span className="text-sm font-medium text-white">Text Mode</span>
@@ -1362,14 +1362,14 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
             <div className="flex items-center gap-2">
               {chatMode === 'video' ? (
                 <>
-                  <svg className="w-5 h-5 text-[#ebd463]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-5 h-5 text-[#fcf290]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                   </svg>
                   <span className="text-sm font-medium text-white">Video Mode</span>
                 </>
               ) : (
                 <>
-                  <svg className="w-5 h-5 text-[#ebd463]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="w-5 h-5 text-[#fcf290]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                   </svg>
                   <span className="text-sm font-medium text-white">Text Mode</span>
@@ -1472,7 +1472,7 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
                       key={idx}
                       className={`w-2 rounded-full transition-all ${
                         idx === currentIndex 
-                          ? 'h-10 bg-[#ebd463] shadow-lg' 
+                          ? 'h-10 bg-[#fcf290] shadow-lg' 
                           : 'h-2 bg-white/40'
                       }`}
                     />
@@ -1488,7 +1488,7 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
 
             {loading && (
               <div className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-                <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-[#ebd463] border-t-transparent" />
+                <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-[#fcf290] border-t-transparent" />
               </div>
             )}
           </div>
@@ -1525,7 +1525,7 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
               </div>
               <button
                 onClick={recordActivity}
-                className="w-full rounded-xl bg-[#ebd463] px-6 py-3 font-medium text-[#0a0a0c] transition-opacity hover:opacity-90"
+                className="w-full rounded-xl bg-[#fcf290] px-6 py-3 font-medium text-[#0a0a0c] transition-opacity hover:opacity-90"
               >
                 Reactivate Now
               </button>
@@ -1572,7 +1572,7 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
                     setShowProfileIncompleteModal(false);
                     router.push('/refilm');
                   }}
-                  className="w-full rounded-xl bg-[#ebd463] px-6 py-3 font-medium text-[#0a0a0c] transition-opacity hover:opacity-90"
+                  className="w-full rounded-xl bg-[#fcf290] px-6 py-3 font-medium text-[#0a0a0c] transition-opacity hover:opacity-90"
                 >
                   Upload Photo & Video
                 </button>

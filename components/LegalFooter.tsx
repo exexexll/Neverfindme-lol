@@ -11,42 +11,42 @@ export function LegalFooter() {
           <div className="flex flex-wrap justify-center gap-4 text-sm">
             <Link 
               href="/terms-of-service" 
-              className="text-[#eaeaf0]/60 hover:text-[#ebd463] transition-colors"
+              className="text-[#eaeaf0]/60 hover:text-[#fcf290] transition-colors"
             >
               Terms of Service
             </Link>
             <span className="text-[#eaeaf0]/30">|</span>
             <Link 
               href="/privacy-policy" 
-              className="text-[#eaeaf0]/60 hover:text-[#ebd463] transition-colors"
+              className="text-[#eaeaf0]/60 hover:text-[#fcf290] transition-colors"
             >
               Privacy Policy
             </Link>
             <span className="text-[#eaeaf0]/30">|</span>
             <Link 
               href="/acceptable-use" 
-              className="text-[#eaeaf0]/60 hover:text-[#ebd463] transition-colors"
+              className="text-[#eaeaf0]/60 hover:text-[#fcf290] transition-colors"
             >
               Acceptable Use
             </Link>
             <span className="text-[#eaeaf0]/30">|</span>
             <Link 
               href="/cookie-policy" 
-              className="text-[#eaeaf0]/60 hover:text-[#ebd463] transition-colors"
+              className="text-[#eaeaf0]/60 hover:text-[#fcf290] transition-colors"
             >
               Cookie Policy
             </Link>
             <span className="text-[#eaeaf0]/30">|</span>
             <Link 
               href="/community-guidelines" 
-              className="text-[#eaeaf0]/60 hover:text-[#ebd463] transition-colors"
+              className="text-[#eaeaf0]/60 hover:text-[#fcf290] transition-colors"
             >
               Community Guidelines
             </Link>
             <span className="text-[#eaeaf0]/30">|</span>
             <Link 
               href="/content-policy" 
-              className="text-[#eaeaf0]/60 hover:text-[#ebd463] transition-colors"
+              className="text-[#eaeaf0]/60 hover:text-[#fcf290] transition-colors"
             >
               Content Policy
             </Link>
@@ -60,7 +60,7 @@ export function LegalFooter() {
               Contact:{' '}
               <a 
                 href="mailto:everything@bumpin.com" 
-                className="text-[#ebd463]/80 hover:text-[#ebd463] transition-colors"
+                className="text-[#fcf290]/80 hover:text-[#fcf290] transition-colors"
               >
                 everything@bumpin.com
               </a>

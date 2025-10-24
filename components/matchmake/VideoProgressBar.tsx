@@ -44,7 +44,7 @@ export function VideoProgressBar({ currentIndex, users }: VideoProgressBarProps)
   return (
     <div className="fixed bottom-0 left-0 right-0 h-1 bg-white/10 z-[45]">
       <div 
-        className="h-full bg-[#ebd463] will-change-transform"
+        className="h-full bg-[#fcf290] will-change-transform"
         style={{ 
           width: `${progress}%`,
           transform: 'translateZ(0)', // Force GPU acceleration

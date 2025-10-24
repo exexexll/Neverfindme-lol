@@ -71,8 +71,8 @@ export function Header() {
               <Link
                 href="/manifesto"
                 className={cn(
-                  'focus-ring rounded-md text-sm font-medium transition-colors hover:text-[#ebd463] sm:text-base',
-                  pathname === '/manifesto' ? 'text-[#ebd463]' : 'text-[#e6e6e9]'
+                  'focus-ring rounded-md text-sm font-medium transition-colors hover:text-[#fcf290] sm:text-base',
+                  pathname === '/manifesto' ? 'text-[#fcf290]' : 'text-[#e6e6e9]'
                 )}
               >
                 Meet Who and Do What?
@@ -81,7 +81,7 @@ export function Header() {
             <li>
               <Link
                 href="/onboarding"
-                className="focus-ring rounded-xl bg-[#ebd463] px-4 py-2 text-sm font-medium text-[#0a0a0c] shadow-sm transition-opacity hover:opacity-90 sm:text-base"
+                className="focus-ring rounded-xl bg-[#fcf290] px-4 py-2 text-sm font-medium text-[#0a0a0c] shadow-sm transition-opacity hover:opacity-90 sm:text-base"
               >
                 Start connecting
               </Link>

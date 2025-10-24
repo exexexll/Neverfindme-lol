@@ -155,7 +155,7 @@ export default function SocialsPage() {
                       type="text"
                       value={socials[platform.key] || ''}
                       onChange={(e) => handleChange(platform.key, e.target.value)}
-                      className="w-full rounded-xl bg-white/10 px-4 py-3 text-[#eaeaf0] placeholder-[#eaeaf0]/50 focus:outline-none focus:ring-2 focus:ring-[#ebd463]"
+                      className="w-full rounded-xl bg-white/10 px-4 py-3 text-[#eaeaf0] placeholder-[#eaeaf0]/50 focus:outline-none focus:ring-2 focus:ring-[#fcf290]"
                       placeholder={platform.placeholder}
                     />
                     {normalizedPreviews[platform.key] && (
@@ -177,7 +177,7 @@ export default function SocialsPage() {
             <button
               onClick={handleSave}
               disabled={saving}
-              className="focus-ring w-full rounded-xl bg-[#ebd463] px-6 py-3 font-medium text-[#0a0a0c] shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50"
+              className="focus-ring w-full rounded-xl bg-[#fcf290] px-6 py-3 font-medium text-[#0a0a0c] shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50"
             >
               {saving ? 'Saving...' : saved ? '✓ Saved!' : 'Save preset links'}
             </button>

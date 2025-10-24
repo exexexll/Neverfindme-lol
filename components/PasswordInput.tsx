@@ -130,7 +130,7 @@ export function PasswordInput({
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           autoFocus={autoFocus}
-          className="w-full rounded-xl bg-white/10 px-4 py-3 pr-12 text-[#eaeaf0] placeholder-[#eaeaf0]/50 focus:outline-none focus:ring-2 focus:ring-[#ebd463]"
+          className="w-full rounded-xl bg-white/10 px-4 py-3 pr-12 text-[#eaeaf0] placeholder-[#eaeaf0]/50 focus:outline-none focus:ring-2 focus:ring-[#fcf290]"
         />
         <button
           type="button"

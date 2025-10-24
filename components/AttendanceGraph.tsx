@@ -98,7 +98,7 @@ export function AttendanceGraph({ attendance, startTime, endTime }: AttendanceGr
                     initial={{ width: 0 }}
                     animate={{ width: `${percentage}%` }}
                     transition={{ duration: 0.5, delay: index * 0.05 }}
-                    className="absolute inset-y-0 left-0 bg-gradient-to-r from-[#ebd463] to-[#ff7a45] rounded-lg"
+                    className="absolute inset-y-0 left-0 bg-gradient-to-r from-[#fcf290] to-[#ff7a45] rounded-lg"
                   />
                   
                   {/* Count label inside bar */}
@@ -126,7 +126,7 @@ export function AttendanceGraph({ attendance, startTime, endTime }: AttendanceGr
           return (
             <div className="mt-4 pt-4 border-t border-white/10">
               <p className="text-xs text-[#eaeaf0]/70">
-                <span className="text-[#ebd463] font-medium">Peak time:</span> {formatTime(peakTime)} with {attendance[peakTime]} {attendance[peakTime] === 1 ? 'person' : 'people'}
+                <span className="text-[#fcf290] font-medium">Peak time:</span> {formatTime(peakTime)} with {attendance[peakTime]} {attendance[peakTime] === 1 ? 'person' : 'people'}
               </p>
             </div>
           );

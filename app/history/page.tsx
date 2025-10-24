@@ -152,7 +152,7 @@ export default function HistoryPage() {
                           key={i}
                           className={`rounded-lg p-3 text-sm ${
                             msg.from === getSession()?.userId
-                              ? 'bg-[#ebd463]/20 text-[#eaeaf0]'
+                              ? 'bg-[#fcf290]/20 text-[#eaeaf0]'
                               : 'bg-white/10 text-[#eaeaf0]/90'
                           }`}
                         >

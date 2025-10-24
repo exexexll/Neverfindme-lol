@@ -93,7 +93,7 @@ export function Hero() {
     <section
       ref={ref}
       className="relative flex min-h-[620px] h-[100dvh] w-full items-center justify-center overflow-hidden"
-      style={{ backgroundColor: '#ebd463' }}
+      style={{ backgroundColor: '#fcf290' }}
     >
       {/* Dim overlay for atmospheric lighting */}
       <div className="absolute inset-0 pointer-events-none bg-black/30" />
@@ -138,7 +138,7 @@ export function Hero() {
             {checkingSession ? (
               <button
                 disabled
-                className="rounded-xl bg-[#ebd463]/50 px-8 py-3 font-medium text-[#0a0a0c] cursor-wait"
+                className="rounded-xl bg-[#fcf290]/50 px-8 py-3 font-medium text-[#0a0a0c] cursor-wait"
               >
                 Loading...
               </button>
@@ -147,7 +147,7 @@ export function Hero() {
                 onClick={handleConnect}
                 className="rounded-xl px-8 py-3 font-bold text-black shadow-lg transition-all hover:scale-105 hover:shadow-xl active:scale-95 focus-ring"
                 style={{
-                  backgroundColor: '#ebd463',
+                  backgroundColor: '#fcf290',
                   boxShadow: '0 6px 20px rgba(0, 0, 0, 0.3)',
                 }}
               >
@@ -165,7 +165,7 @@ export function Hero() {
               Already have an account?{' '}
               <Link 
                 href="/login"
-                className="font-medium text-[#ebd463] hover:underline focus-ring rounded"
+                className="font-medium text-[#fcf290] hover:underline focus-ring rounded"
               >
                 Login
               </Link>

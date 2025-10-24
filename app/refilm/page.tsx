@@ -317,8 +317,8 @@ export default function RefilmPage() {
           {mode === 'select' && currentUser && (
             <>
               {/* User Information */}
-              <div className="rounded-2xl border border-[#ebd463]/30 bg-[#ebd463]/10 p-6">
-                <h2 className="mb-4 font-playfair text-2xl font-bold text-[#ebd463]">
+              <div className="rounded-2xl border border-[#fcf290]/30 bg-[#fcf290]/10 p-6">
+                <h2 className="mb-4 font-playfair text-2xl font-bold text-[#fcf290]">
                   Your Information
                 </h2>
                 <div className="grid gap-4 sm:grid-cols-2 text-[#eaeaf0]/90">
@@ -497,7 +497,7 @@ export default function RefilmPage() {
                 <button
                   onClick={capturePhoto}
                   disabled={uploading || !stream}
-                  className="focus-ring flex-1 rounded-xl bg-[#ebd463] px-6 py-3 font-medium text-[#0a0a0c] shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50"
+                  className="focus-ring flex-1 rounded-xl bg-[#fcf290] px-6 py-3 font-medium text-[#0a0a0c] shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50"
                 >
                   {uploading ? 'Uploading...' : 'Capture'}
                 </button>
@@ -543,7 +543,7 @@ export default function RefilmPage() {
                   <button
                     onClick={startVideoRecording}
                     disabled={uploading}
-                    className="focus-ring flex-1 rounded-xl bg-[#ebd463] px-6 py-3 font-medium text-[#0a0a0c] shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50"
+                    className="focus-ring flex-1 rounded-xl bg-[#fcf290] px-6 py-3 font-medium text-[#0a0a0c] shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50"
                   >
                     Start recording
                   </button>

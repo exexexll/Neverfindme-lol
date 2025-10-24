@@ -100,7 +100,7 @@ export function GIFPicker({ onSelectGIF, onClose }: GIFPickerProps) {
               handleSearch(e.target.value);
             }}
             placeholder="Search for GIFs..."
-            className="w-full rounded-full bg-white/10 px-4 py-2.5 text-sm text-[#eaeaf0] placeholder-[#eaeaf0]/40 focus:outline-none focus:ring-2 focus:ring-[#ebd463]"
+            className="w-full rounded-full bg-white/10 px-4 py-2.5 text-sm text-[#eaeaf0] placeholder-[#eaeaf0]/40 focus:outline-none focus:ring-2 focus:ring-[#fcf290]"
             autoFocus
           />
         </div>
@@ -114,7 +114,7 @@ export function GIFPicker({ onSelectGIF, onClose }: GIFPickerProps) {
                 onClick={() => handleCategoryClick(category)}
                 className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                   activeCategory === category
-                    ? 'bg-[#ebd463] text-[#0a0a0c]'
+                    ? 'bg-[#fcf290] text-[#0a0a0c]'
                     : 'bg-white/10 text-[#eaeaf0] hover:bg-white/20'
                 }`}
               >
@@ -150,7 +150,7 @@ export function GIFPicker({ onSelectGIF, onClose }: GIFPickerProps) {
       }}>
         {loading ? (
             <div className="flex items-center justify-center h-64">
-              <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#ebd463] border-t-transparent" />
+              <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#fcf290] border-t-transparent" />
             </div>
           ) : gifs.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-64 text-center">
@@ -163,7 +163,7 @@ export function GIFPicker({ onSelectGIF, onClose }: GIFPickerProps) {
                 <button
                   key={gif.id}
                   onClick={() => handleSelectGIF(gif)}
-                  className="relative aspect-square rounded-lg overflow-hidden bg-white/5 hover:ring-2 hover:ring-[#ebd463] transition-all group"
+                  className="relative aspect-square rounded-lg overflow-hidden bg-white/5 hover:ring-2 hover:ring-[#fcf290] transition-all group"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img

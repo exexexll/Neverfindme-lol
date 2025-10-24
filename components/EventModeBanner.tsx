@@ -119,7 +119,7 @@ export function EventModeBanner() {
             minimized ? 'w-12' : 'w-80'
           }`}
         >
-          <div className="bg-gradient-to-br from-[#ebd463] to-[#ff7a45] text-white">
+          <div className="bg-gradient-to-br from-[#fcf290] to-[#ff7a45] text-white">
             {/* Minimized State - Just Icon */}
             {minimized ? (
               <button

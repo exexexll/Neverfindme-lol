@@ -22,7 +22,7 @@ export function ModeToggle({ mode, onChange }: ModeToggleProps) {
         {mode === 'video' && (
           <motion.div
             layoutId="mode-indicator"
-            className="absolute inset-0 bg-[#ebd463] rounded-full"
+            className="absolute inset-0 bg-[#fcf290] rounded-full"
             transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
           />
         )}
@@ -46,7 +46,7 @@ export function ModeToggle({ mode, onChange }: ModeToggleProps) {
         {mode === 'text' && (
           <motion.div
             layoutId="mode-indicator"
-            className="absolute inset-0 bg-[#ebd463] rounded-full"
+            className="absolute inset-0 bg-[#fcf290] rounded-full"
             transition={{ type: 'spring', bounce: 0.2, duration: 0.6 }}
           />
         )}

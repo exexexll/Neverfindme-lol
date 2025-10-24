@@ -643,11 +643,11 @@ function OnboardingPageContent() {
     <main id="main" className="min-h-screen bg-[#0a0a0c] py-20">
       {/* Upload Progress Bar */}
       {showUploadProgress && (
-        <div className="fixed top-4 right-4 z-50 bg-black/90 backdrop-blur-md rounded-xl p-4 border border-[#ebd463]/30 shadow-2xl">
+        <div className="fixed top-4 right-4 z-50 bg-black/90 backdrop-blur-md rounded-xl p-4 border border-[#fcf290]/30 shadow-2xl">
           <p className="text-sm text-[#eaeaf0] mb-2 font-medium">Uploading video...</p>
           <div className="w-48 h-2 bg-white/10 rounded-full overflow-hidden">
             <div 
-              className="h-full bg-gradient-to-r from-[#ebd463] to-[#ff7b4b] transition-all duration-300"
+              className="h-full bg-gradient-to-r from-[#fcf290] to-[#ff7b4b] transition-all duration-300"
               style={{ width: `${uploadProgress}%` }}
             />
           </div>
@@ -669,10 +669,10 @@ function OnboardingPageContent() {
                 className="space-y-8 motion-reduce:opacity-100 motion-reduce:translate-y-0"
               >
                 {referralCode && (
-                  <div className="rounded-2xl border-2 border-[#ebd463]/30 bg-[#ebd463]/10 p-6">
+                  <div className="rounded-2xl border-2 border-[#fcf290]/30 bg-[#fcf290]/10 p-6">
                     <div className="flex items-center gap-3 mb-2">
                       <span className="text-2xl">💝</span>
-                      <h3 className="font-playfair text-xl font-bold text-[#ebd463]">
+                      <h3 className="font-playfair text-xl font-bold text-[#fcf290]">
                         Someone wants you to meet {referrerName || 'someone special'}!
                       </h3>
                     </div>
@@ -696,7 +696,7 @@ function OnboardingPageContent() {
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && handleNameSubmit()}
-                      className="w-full rounded-xl bg-white/10 px-4 py-3 text-[#eaeaf0] placeholder-[#eaeaf0]/50 focus:outline-none focus:ring-2 focus:ring-[#ebd463]"
+                      className="w-full rounded-xl bg-white/10 px-4 py-3 text-[#eaeaf0] placeholder-[#eaeaf0]/50 focus:outline-none focus:ring-2 focus:ring-[#fcf290]"
                       placeholder="Enter your name"
                       autoFocus
                     />
@@ -714,7 +714,7 @@ function OnboardingPageContent() {
                           onClick={() => setGender(g)}
                           className={`focus-ring rounded-xl px-4 py-3 font-medium capitalize transition-all ${
                             gender === g
-                              ? 'bg-[#ebd463] text-[#0a0a0c]'
+                              ? 'bg-[#fcf290] text-[#0a0a0c]'
                               : 'bg-white/10 text-[#eaeaf0] hover:bg-white/20'
                           }`}
                         >
@@ -758,20 +758,20 @@ function OnboardingPageContent() {
                         type="checkbox"
                         checked={agreedToTerms}
                         onChange={(e) => setAgreedToTerms(e.target.checked)}
-                        className="mt-1 h-5 w-5 rounded border-white/20 bg-white/10 text-[#ebd463] 
-                                 focus:ring-2 focus:ring-[#ebd463] focus:ring-offset-0"
+                        className="mt-1 h-5 w-5 rounded border-white/20 bg-white/10 text-[#fcf290] 
+                                 focus:ring-2 focus:ring-[#fcf290] focus:ring-offset-0"
                       />
                       <span className="text-sm text-[#eaeaf0]/80">
                         I have read and agree to the{' '}
-                        <Link href="/terms-of-service" target="_blank" className="text-[#ebd463] hover:underline">
+                        <Link href="/terms-of-service" target="_blank" className="text-[#fcf290] hover:underline">
                           Terms of Service
                         </Link>
                         ,{' '}
-                        <Link href="/privacy-policy" target="_blank" className="text-[#ebd463] hover:underline">
+                        <Link href="/privacy-policy" target="_blank" className="text-[#fcf290] hover:underline">
                           Privacy Policy
                         </Link>
                         , and{' '}
-                        <Link href="/content-policy" target="_blank" className="text-[#ebd463] hover:underline">
+                        <Link href="/content-policy" target="_blank" className="text-[#fcf290] hover:underline">
                           Content Policy
                         </Link>
                         . I confirm I am at least 18 years old.
@@ -788,7 +788,7 @@ function OnboardingPageContent() {
                   <button
                     onClick={handleNameSubmit}
                     disabled={loading || !agreedToTerms}
-                    className="focus-ring w-full rounded-xl bg-[#ebd463] px-6 py-3 font-medium text-[#0a0a0c] shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50"
+                    className="focus-ring w-full rounded-xl bg-[#fcf290] px-6 py-3 font-medium text-[#0a0a0c] shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50"
                   >
                     {loading ? 'Creating account...' : 'Continue'}
                   </button>
@@ -799,7 +799,7 @@ function OnboardingPageContent() {
                       Already have an account?{' '}
                       <Link 
                         href={referralCode ? `/login?ref=${referralCode}` : '/login'}
-                        className="font-medium text-[#ebd463] hover:underline"
+                        className="font-medium text-[#fcf290] hover:underline"
                       >
                         Login here
                       </Link>
@@ -849,7 +849,7 @@ function OnboardingPageContent() {
                   <button
                     onClick={captureSelfie}
                     disabled={loading || !stream}
-                    className="focus-ring w-full rounded-xl bg-[#ebd463] px-6 py-3 font-medium text-[#0a0a0c] shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50"
+                    className="focus-ring w-full rounded-xl bg-[#fcf290] px-6 py-3 font-medium text-[#0a0a0c] shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50"
                   >
                     {loading ? 'Uploading...' : 'Capture selfie'}
                   </button>
@@ -905,7 +905,7 @@ function OnboardingPageContent() {
                     <button
                       onClick={startVideoRecording}
                       disabled={loading}
-                      className="focus-ring w-full rounded-xl bg-[#ebd463] px-6 py-3 font-medium text-[#0a0a0c] shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50"
+                      className="focus-ring w-full rounded-xl bg-[#fcf290] px-6 py-3 font-medium text-[#0a0a0c] shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50"
                     >
                       Start recording
                     </button>
@@ -982,7 +982,7 @@ function OnboardingPageContent() {
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full rounded-xl bg-white/10 px-4 py-3 text-[#eaeaf0] placeholder-[#eaeaf0]/50 focus:outline-none focus:ring-2 focus:ring-[#ebd463]"
+                      className="w-full rounded-xl bg-white/10 px-4 py-3 text-[#eaeaf0] placeholder-[#eaeaf0]/50 focus:outline-none focus:ring-2 focus:ring-[#fcf290]"
                       placeholder="your@email.com"
                     />
                   </div>
@@ -1019,7 +1019,7 @@ function OnboardingPageContent() {
                     <button
                       onClick={handleMakePermanent}
                       disabled={loading}
-                      className="focus-ring flex-1 rounded-xl bg-[#ebd463] px-6 py-3 font-medium text-[#0a0a0c] shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50"
+                      className="focus-ring flex-1 rounded-xl bg-[#fcf290] px-6 py-3 font-medium text-[#0a0a0c] shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50"
                     >
                       {loading ? 'Saving...' : 'Make permanent'}
                     </button>

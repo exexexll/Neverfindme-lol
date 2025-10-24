@@ -73,7 +73,7 @@ function PaymentSuccessPageContent() {
     return (
       <main className="flex min-h-screen items-center justify-center bg-[#0a0a0c]">
         <div className="text-center">
-          <div className="mb-4 inline-block h-12 w-12 animate-spin rounded-full border-4 border-[#ebd463] border-t-transparent" />
+          <div className="mb-4 inline-block h-12 w-12 animate-spin rounded-full border-4 border-[#fcf290] border-t-transparent" />
           <p className="text-[#eaeaf0]">Processing your payment...</p>
           {retryCount > 2 && (
             <div className="mt-6 space-y-3">
@@ -84,7 +84,7 @@ function PaymentSuccessPageContent() {
                   // Redirect to onboarding, NOT main (unpaid users shouldn't bypass)
                   router.push('/onboarding');
                 }}
-                className="rounded-xl bg-[#ebd463]/20 px-6 py-2 text-sm text-[#ebd463] hover:bg-[#ebd463]/30"
+                className="rounded-xl bg-[#fcf290]/20 px-6 py-2 text-sm text-[#fcf290] hover:bg-[#fcf290]/30"
               >
                 Continue to Onboarding
               </button>
@@ -173,7 +173,7 @@ function PaymentSuccessPageContent() {
                   router.push('/main');
                 }
               }}
-              className="focus-ring w-full rounded-xl bg-[#ebd463] px-6 py-3 font-medium text-[#0a0a0c] transition-opacity hover:opacity-90"
+              className="focus-ring w-full rounded-xl bg-[#fcf290] px-6 py-3 font-medium text-[#0a0a0c] transition-opacity hover:opacity-90"
             >
               Continue to Profile Setup →
             </button>

@@ -39,7 +39,7 @@ export function CookieConsent() {
           className="fixed bottom-0 left-0 right-0 z-50 p-4 sm:p-6"
         >
           <div className="max-w-6xl mx-auto">
-            <div className="bg-[#0a0a0c]/95 backdrop-blur-lg border border-[#ebd463]/30 rounded-2xl shadow-2xl p-6">
+            <div className="bg-[#0a0a0c]/95 backdrop-blur-lg border border-[#fcf290]/30 rounded-2xl shadow-2xl p-6">
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                 {/* Cookie Icon */}
                 <div className="text-4xl">🍪</div>
@@ -55,7 +55,7 @@ export function CookieConsent() {
                   </p>
                   <Link 
                     href="/cookie-policy" 
-                    className="text-sm text-[#ebd463] hover:underline"
+                    className="text-sm text-[#fcf290] hover:underline"
                     target="_blank"
                   >
                     Learn more about our cookie policy →
@@ -74,9 +74,9 @@ export function CookieConsent() {
                   </button>
                   <button
                     onClick={acceptAll}
-                    className="px-6 py-2 rounded-xl bg-[#ebd463] text-[#0a0a0c] 
+                    className="px-6 py-2 rounded-xl bg-[#fcf290] text-[#0a0a0c] 
                              hover:opacity-90 transition-all text-sm font-medium
-                             shadow-lg shadow-[#ebd463]/20"
+                             shadow-lg shadow-[#fcf290]/20"
                   >
                     Accept All
                   </button>

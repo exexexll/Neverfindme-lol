@@ -1068,7 +1068,7 @@ export default function RoomPage() {
           <div className="space-y-3">
             <button
               onClick={() => router.push(`/history`)}
-              className="focus-ring w-full rounded-xl bg-[#ebd463] px-6 py-3 font-medium text-[#0a0a0c] shadow-sm transition-opacity hover:opacity-90"
+              className="focus-ring w-full rounded-xl bg-[#fcf290] px-6 py-3 font-medium text-[#0a0a0c] shadow-sm transition-opacity hover:opacity-90"
             >
               View Past Chats
             </button>
@@ -1186,8 +1186,8 @@ export default function RoomPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="h-2 w-2 animate-pulse rounded-full bg-[#ebd463]" />
-            <span className="text-sm font-medium text-[#ebd463]">Live</span>
+            <span className="h-2 w-2 animate-pulse rounded-full bg-[#fcf290]" />
+            <span className="text-sm font-medium text-[#fcf290]">Live</span>
           </div>
         </div>
       </header>
@@ -1282,7 +1282,7 @@ export default function RoomPage() {
             </svg>
             {/* Notification badge - show if has unread messages and chat closed */}
             {!chatOpen && messages.some(m => m.from !== getSession()?.userId) && (
-              <div className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-[#ebd463] border-2 border-black flex items-center justify-center">
+              <div className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-[#fcf290] border-2 border-black flex items-center justify-center">
                 <span className="text-xs font-bold text-[#0a0a0c]">
                   {messages.filter(m => m.from !== getSession()?.userId).length}
                 </span>
@@ -1294,9 +1294,9 @@ export default function RoomPage() {
           <button
             onClick={handleGiveSocial}
             aria-label="Share socials"
-            className="focus-ring rounded-full bg-black/80 backdrop-blur-md p-4 transition-all hover:bg-black/90 active:scale-95 border border-[#ebd463]/40"
+            className="focus-ring rounded-full bg-black/80 backdrop-blur-md p-4 transition-all hover:bg-black/90 active:scale-95 border border-[#fcf290]/40"
           >
-            <svg className="h-6 w-6 text-[#ebd463]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="h-6 w-6 text-[#fcf290]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
             </svg>
           </button>
@@ -1346,7 +1346,7 @@ export default function RoomPage() {
                         msg.from === 'system'
                           ? 'bg-yellow-500/10 text-yellow-200 border border-yellow-500/30'
                           : msg.from === getSession()?.userId
-                          ? 'bg-[#ebd463]/20 text-[#eaeaf0] ml-8'
+                          ? 'bg-[#fcf290]/20 text-[#eaeaf0] ml-8'
                           : 'bg-white/10 text-[#eaeaf0]/90 mr-8'
                       }`}
                     >
@@ -1390,12 +1390,12 @@ export default function RoomPage() {
                     }
                   }}
                   placeholder="Type a message..."
-                  className="flex-1 rounded-xl bg-white/10 px-4 py-2 text-sm text-[#eaeaf0] placeholder-[#eaeaf0]/50 focus:outline-none focus:ring-2 focus:ring-[#ebd463]"
+                  className="flex-1 rounded-xl bg-white/10 px-4 py-2 text-sm text-[#eaeaf0] placeholder-[#eaeaf0]/50 focus:outline-none focus:ring-2 focus:ring-[#fcf290]"
                 />
                 <button
                   onClick={sendMessage}
                   disabled={!chatInput.trim()}
-                  className="focus-ring rounded-xl bg-[#ebd463] px-4 py-2 text-sm font-medium text-[#0a0a0c] transition-opacity hover:opacity-90 disabled:opacity-50"
+                  className="focus-ring rounded-xl bg-[#fcf290] px-4 py-2 text-sm font-medium text-[#0a0a0c] transition-opacity hover:opacity-90 disabled:opacity-50"
                 >
                   Send
                 </button>
@@ -1463,7 +1463,7 @@ export default function RoomPage() {
               {!peerConnectionFailed && (
                 <button
                   onClick={retryPermissions}
-                  className="focus-ring flex-1 rounded-xl bg-[#ebd463] px-6 py-3 font-medium text-[#0a0a0c] transition-opacity hover:opacity-90"
+                  className="focus-ring flex-1 rounded-xl bg-[#fcf290] px-6 py-3 font-medium text-[#0a0a0c] transition-opacity hover:opacity-90"
                 >
                   Retry
                 </button>
@@ -1568,7 +1568,7 @@ export default function RoomPage() {
               </button>
               <button
                 onClick={confirmGiveSocial}
-                className="focus-ring flex-1 rounded-xl bg-[#ebd463] px-6 py-3 font-medium text-[#0a0a0c] transition-opacity hover:opacity-90"
+                className="focus-ring flex-1 rounded-xl bg-[#fcf290] px-6 py-3 font-medium text-[#0a0a0c] transition-opacity hover:opacity-90"
               >
                 Share
               </button>
@@ -1604,7 +1604,7 @@ export default function RoomPage() {
             {/* Progress Bar Only (removed spinning circle) */}
             <div className="w-64 h-2 bg-white/10 rounded-full overflow-hidden mx-auto">
               <motion.div
-                className="h-full bg-gradient-to-r from-[#ebd463] to-[#ebd463]"
+                className="h-full bg-gradient-to-r from-[#fcf290] to-[#fcf290]"
                 initial={{ width: '0%' }}
                 animate={{ 
                   width: connectionPhase === 'initializing' ? '33%' : 
@@ -1661,7 +1661,7 @@ export default function RoomPage() {
             <div className="flex flex-col gap-3 w-full">
               <button
                 onClick={() => router.push('/main')}
-                className="w-full rounded-xl bg-[#ebd463] px-6 py-3 font-medium text-[#0a0a0c] 
+                className="w-full rounded-xl bg-[#fcf290] px-6 py-3 font-medium text-[#0a0a0c] 
                          shadow-lg transition-all hover:opacity-90"
               >
                 Return to Main

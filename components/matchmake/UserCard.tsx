@@ -476,13 +476,13 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
                     <motion.div 
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={{ opacity: 1, scale: 1 }}
-                      className="flex-shrink-0 rounded-full bg-[#ebd463]/20 px-2.5 py-0.5 border border-[#ebd463]/40"
+                      className="flex-shrink-0 rounded-full bg-[#fcf290]/20 px-2.5 py-0.5 border border-[#fcf290]/40"
                     >
                       <div className="flex items-center gap-1">
-                        <svg className="h-3 w-3 text-[#ebd463]" fill="currentColor" viewBox="0 0 20 20">
+                        <svg className="h-3 w-3 text-[#fcf290]" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
                         </svg>
-                        <span className="text-xs font-bold text-[#ebd463]">
+                        <span className="text-xs font-bold text-[#fcf290]">
                           {formatDistance(user.distance)}
                         </span>
                       </div>
@@ -674,7 +674,7 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
             <motion.button
               onClick={() => !isSelf && inviteStatus !== 'cooldown' && onInvite(user.userId, seconds, chatMode)}
               disabled={inviteStatus === 'waiting' || inviteStatus === 'cooldown' || seconds < 60 || isSelf}
-              className="focus-ring flex-1 rounded-2xl bg-[#ebd463] font-playfair font-bold text-[#0a0a0c] shadow-2xl transition-opacity hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="focus-ring flex-1 rounded-2xl bg-[#fcf290] font-playfair font-bold text-[#0a0a0c] shadow-2xl transition-opacity hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
               initial={{
                 paddingLeft: isMobile ? '1rem' : '3rem',
                 paddingRight: isMobile ? '1rem' : '3rem',
@@ -730,7 +730,7 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
                     max="500"
                     autoFocus
                     onFocus={(e) => e.target.select()} 
-                    className="w-full rounded-xl bg-white/10 px-6 py-4 text-center font-mono text-4xl text-[#eaeaf0] focus:outline-none focus:ring-2 focus:ring-[#ebd463]"
+                    className="w-full rounded-xl bg-white/10 px-6 py-4 text-center font-mono text-4xl text-[#eaeaf0] focus:outline-none focus:ring-2 focus:ring-[#fcf290]"
                     placeholder="60-500"
                   />
                   <p className="mt-3 text-center text-sm text-[#eaeaf0]/70">
@@ -751,7 +751,7 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
                   </button>
                   <button
                     onClick={handleSaveTimer}
-                    className="focus-ring flex-1 rounded-xl bg-[#ebd463] px-6 py-3 font-medium text-[#0a0a0c] transition-opacity hover:opacity-90"
+                    className="focus-ring flex-1 rounded-xl bg-[#fcf290] px-6 py-3 font-medium text-[#0a0a0c] transition-opacity hover:opacity-90"
                   >
                     Save
                   </button>
@@ -777,7 +777,7 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
               </h3>
               
               <p className="mb-6 text-center text-sm text-[#eaeaf0]/70">
-                Share this link to introduce your friend to <strong className="text-[#ebd463]">{user.name}</strong>. 
+                Share this link to introduce your friend to <strong className="text-[#fcf290]">{user.name}</strong>. 
                 When they sign up, {user.name} will be notified!
               </p>
 
@@ -793,7 +793,7 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
                 {/* Copy Button */}
                 <button
                   onClick={handleCopyLink}
-                  className="focus-ring w-full rounded-xl bg-[#ebd463] px-6 py-3 font-medium text-[#0a0a0c] transition-opacity hover:opacity-90"
+                  className="focus-ring w-full rounded-xl bg-[#fcf290] px-6 py-3 font-medium text-[#0a0a0c] transition-opacity hover:opacity-90"
                 >
                   {copySuccess ? '✓ Copied!' : '📋 Copy Link'}
                 </button>
@@ -866,7 +866,7 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
                       cx="60"
                       cy="60"
                       r="54"
-                      stroke="#ebd463"
+                      stroke="#fcf290"
                       strokeWidth="8"
                       fill="none"
                       strokeDasharray={`${(2 * Math.PI * 54)}`}

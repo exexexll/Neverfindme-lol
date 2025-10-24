@@ -62,7 +62,7 @@ export function LocationPermissionModal({ onAllow, onDeny }: LocationPermissionM
           </button>
           <button
             onClick={onAllow}
-            className="flex-1 rounded-xl bg-[#ebd463] px-6 py-3 font-medium text-[#0a0a0c] transition-opacity hover:opacity-90"
+            className="flex-1 rounded-xl bg-[#fcf290] px-6 py-3 font-medium text-[#0a0a0c] transition-opacity hover:opacity-90"
           >
             Show Nearby
           </button>

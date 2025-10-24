@@ -502,7 +502,7 @@ export default function TextChatRoom() {
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0, opacity: 0 }}
                 onClick={handleRequestVideo}
-                className="hidden sm:flex items-center gap-2 rounded-full bg-gradient-to-r from-[#ebd463] to-[#ebd463] px-4 py-2 text-sm font-bold text-[#0a0a0c] hover:shadow-lg hover:shadow-[#ebd463]/50 transition-all shadow-md"
+                className="hidden sm:flex items-center gap-2 rounded-full bg-gradient-to-r from-[#fcf290] to-[#fcf290] px-4 py-2 text-sm font-bold text-[#0a0a0c] hover:shadow-lg hover:shadow-[#fcf290]/50 transition-all shadow-md"
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -535,7 +535,7 @@ export default function TextChatRoom() {
           >
             <button
               onClick={handleRequestVideo}
-              className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#ebd463] to-[#ebd463] px-4 py-3 text-sm font-bold text-[#0a0a0c] shadow-lg"
+              className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#fcf290] to-[#fcf290] px-4 py-3 text-sm font-bold text-[#0a0a0c] shadow-lg"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
@@ -634,7 +634,7 @@ export default function TextChatRoom() {
             className="flex-shrink-0 p-2 rounded-full bg-white/5 hover:bg-white/10 transition-all"
             aria-label="Share socials"
           >
-            <svg className="w-5 h-5 text-[#ebd463]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-5 h-5 text-[#fcf290]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
             </svg>
           </button>
@@ -752,7 +752,7 @@ export default function TextChatRoom() {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="max-w-md rounded-2xl bg-[#0a0a0c] p-8 shadow-2xl border-2 border-[#ebd463]/50 text-center"
+              className="max-w-md rounded-2xl bg-[#0a0a0c] p-8 shadow-2xl border-2 border-[#fcf290]/50 text-center"
             >
               <div className="text-6xl mb-4">📹</div>
               <h3 className="font-playfair text-2xl font-bold text-[#eaeaf0] mb-3">
@@ -770,7 +770,7 @@ export default function TextChatRoom() {
                 </button>
                 <button
                   onClick={handleAcceptVideo}
-                  className="flex-1 rounded-xl bg-[#ebd463] px-6 py-3 font-medium text-[#0a0a0c] hover:opacity-90 transition-opacity"
+                  className="flex-1 rounded-xl bg-[#fcf290] px-6 py-3 font-medium text-[#0a0a0c] hover:opacity-90 transition-opacity"
                 >
                   Accept Video
                 </button>

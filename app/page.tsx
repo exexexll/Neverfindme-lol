@@ -30,7 +30,7 @@ export default function HomePage() {
                 </Button>
                 <Link 
                   href="/login"
-                  className="text-sm font-medium text-[#eaeaf0]/70 hover:text-[#ebd463] transition-colors"
+                  className="text-sm font-medium text-[#eaeaf0]/70 hover:text-[#fcf290] transition-colors"
                 >
                   Already have an account? Login
                 </Link>
@@ -57,7 +57,7 @@ export default function HomePage() {
               <span className="text-[#e6e6e9]/30">•</span>
               <Link 
                 href="/manifesto"
-                className="text-[#e6e6e9]/50 transition-colors hover:text-[#ebd463]"
+                className="text-[#e6e6e9]/50 transition-colors hover:text-[#fcf290]"
               >
                 Meet Who and Do What?
               </Link>

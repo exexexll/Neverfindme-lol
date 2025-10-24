@@ -75,7 +75,7 @@ export function SessionInvalidatedModal() {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
-            className="max-w-md w-full bg-[#0a0a0c] rounded-2xl border-2 border-[#ebd463]/30 p-8 text-center space-y-6"
+            className="max-w-md w-full bg-[#0a0a0c] rounded-2xl border-2 border-[#fcf290]/30 p-8 text-center space-y-6"
           >
             {/* Icon */}
             <div className="mx-auto w-16 h-16 rounded-full bg-yellow-500/20 flex items-center justify-center">
@@ -104,7 +104,7 @@ export function SessionInvalidatedModal() {
             {/* Button */}
             <button
               onClick={handleOk}
-              className="w-full rounded-xl bg-[#ebd463] px-6 py-3 font-medium text-[#0a0a0c] 
+              className="w-full rounded-xl bg-[#fcf290] px-6 py-3 font-medium text-[#0a0a0c] 
                        shadow-lg transition-all hover:opacity-90"
             >
               OK, Go to Login
