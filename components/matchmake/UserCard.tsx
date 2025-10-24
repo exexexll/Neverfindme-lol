@@ -626,52 +626,54 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
             )}
           </AnimatePresence>
           
-          {/* Action Row: Timer Button + CTA Button */}
+          {/* Action Row: Timer Button (video only) + CTA Button */}
           <div className="flex gap-2 sm:gap-3">
-            {/* Timer Display Button - Shrinks when not hovered */}
-            <motion.button
-              onClick={() => setShowTimerModal(true)}
-              disabled={inviteStatus === 'waiting'}
-              className="focus-ring flex-shrink-0 rounded-2xl bg-black/70 backdrop-blur-md transition-all hover:bg-black/80 disabled:opacity-50"
-              initial={{
-                paddingLeft: '2rem',
-                paddingRight: '2rem',
-                paddingTop: '1.5rem',
-                paddingBottom: '1.5rem',
-              }}
-              animate={{
-                paddingLeft: isHovered ? '2rem' : '1rem',
-                paddingRight: isHovered ? '2rem' : '1rem',
-                paddingTop: isHovered ? '1.5rem' : '1rem',
-                paddingBottom: isHovered ? '1.5rem' : '1rem',
-              }}
-              transition={hasMounted ? { duration: 0.3, ease: 'easeOut' } : { duration: 0 }}
-            >
-              <div className="text-center">
-                <motion.div 
-                  className="font-mono font-bold text-white"
-                  initial={{ fontSize: '2.25rem' }}
-                  animate={{
-                    fontSize: isHovered ? '2.25rem' : '1.5rem',
-                  }}
-                  transition={hasMounted ? { duration: 0.3 } : { duration: 0 }}
-                >
-                  {seconds.toString().padStart(3, '0')}
-                </motion.div>
-                <AnimatePresence>
-                  {isHovered && (
-                    <motion.div 
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="text-sm text-white/70 mt-1"
-                    >
-                      seconds
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            </motion.button>
+            {/* TORCH RULE: Only show timer button for VIDEO mode */}
+            {chatMode === 'video' && (
+              <motion.button
+                onClick={() => setShowTimerModal(true)}
+                disabled={inviteStatus === 'waiting'}
+                className="focus-ring flex-shrink-0 rounded-2xl bg-black/70 backdrop-blur-md transition-all hover:bg-black/80 disabled:opacity-50"
+                initial={{
+                  paddingLeft: '2rem',
+                  paddingRight: '2rem',
+                  paddingTop: '1.5rem',
+                  paddingBottom: '1.5rem',
+                }}
+                animate={{
+                  paddingLeft: isHovered ? '2rem' : '1rem',
+                  paddingRight: isHovered ? '2rem' : '1rem',
+                  paddingTop: isHovered ? '1.5rem' : '1rem',
+                  paddingBottom: isHovered ? '1.5rem' : '1rem',
+                }}
+                transition={hasMounted ? { duration: 0.3, ease: 'easeOut' } : { duration: 0 }}
+              >
+                <div className="text-center">
+                  <motion.div 
+                    className="font-mono font-bold text-white"
+                    initial={{ fontSize: '2.25rem' }}
+                    animate={{
+                      fontSize: isHovered ? '2.25rem' : '1.5rem',
+                    }}
+                    transition={hasMounted ? { duration: 0.3 } : { duration: 0 }}
+                  >
+                    {seconds.toString().padStart(3, '0')}
+                  </motion.div>
+                  <AnimatePresence>
+                    {isHovered && (
+                      <motion.div 
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="text-sm text-white/70 mt-1"
+                      >
+                        seconds
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </motion.button>
+            )}
 
             {/* CTA Button - Responsive sizing to prevent overlap */}
             <motion.button

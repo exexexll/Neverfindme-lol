@@ -189,42 +189,60 @@ export function CalleeNotification({ invite, onAccept, onDecline }: CalleeNotifi
             </div>
           )}
 
-          {/* Gender + Requested Duration */}
+          {/* Gender + Mode Info */}
           <div className="flex items-center justify-center gap-4 text-sm text-[#eaeaf0]/70">
             <span className="capitalize">{invite.fromUser.gender}</span>
             <span>•</span>
-            <span>Wants {invite.requestedSeconds}s call</span>
+            {invite.chatMode === 'text' ? (
+              <span>Text Chat Request</span>
+            ) : (
+              <span>Wants {invite.requestedSeconds}s call</span>
+            )}
           </div>
         </div>
 
-        {/* Your Duration Input */}
-        <div>
-          <label className="block text-sm font-medium text-[#eaeaf0] mb-2 text-center">
-            Your preferred duration (seconds)
-          </label>
-          <input
-            type="number"
-            value={inputValue}
-            onChange={(e) => handleSecondsChange(e.target.value)}
-            onBlur={() => {
-              // On blur, ensure value is valid
-              if (inputValue === '' || parseInt(inputValue) < 60) {
-                setInputValue('60');
-                setSeconds(60);
-              }
-            }}
-            min="60"
-            max="500"
-            className={`w-full rounded-xl bg-white/10 px-4 text-center font-mono text-[#eaeaf0] focus:outline-none focus:ring-2 focus:ring-[#ff9b6b] ${
-              isMobile ? 'py-2 text-xl' : 'py-3 text-2xl'
-            }`}
-            placeholder="60-500"
-            aria-label="Your preferred call duration in seconds"
-          />
-          <p className="mt-2 text-xs text-[#eaeaf0]/50 text-center">
-            Final duration will be averaged: {Math.floor((invite.requestedSeconds + seconds) / 2)}s
-          </p>
-        </div>
+        {/* Duration Input - TORCH RULE: Only for VIDEO mode */}
+        {invite.chatMode === 'text' ? (
+          <div className="text-center py-4">
+            <div className="inline-flex items-center gap-2 rounded-xl bg-green-500/10 px-6 py-3 border border-green-500/30">
+              <span className="h-2 w-2 rounded-full bg-green-300 animate-pulse" />
+              <p className="text-sm font-medium text-green-300">
+                Unlimited time - activity-based
+              </p>
+            </div>
+            <p className="mt-2 text-xs text-[#eaeaf0]/50">
+              Chat continues as long as you&apos;re both active
+            </p>
+          </div>
+        ) : (
+          <div>
+            <label className="block text-sm font-medium text-[#eaeaf0] mb-2 text-center">
+              Your preferred duration (seconds)
+            </label>
+            <input
+              type="number"
+              value={inputValue}
+              onChange={(e) => handleSecondsChange(e.target.value)}
+              onBlur={() => {
+                // On blur, ensure value is valid
+                if (inputValue === '' || parseInt(inputValue) < 60) {
+                  setInputValue('60');
+                  setSeconds(60);
+                }
+              }}
+              min="60"
+              max="500"
+              className={`w-full rounded-xl bg-white/10 px-4 text-center font-mono text-[#eaeaf0] focus:outline-none focus:ring-2 focus:ring-[#ff9b6b] ${
+                isMobile ? 'py-2 text-xl' : 'py-3 text-2xl'
+              }`}
+              placeholder="60-500"
+              aria-label="Your preferred call duration in seconds"
+            />
+            <p className="mt-2 text-xs text-[#eaeaf0]/50 text-center">
+              Final duration will be averaged: {Math.floor((invite.requestedSeconds + seconds) / 2)}s
+            </p>
+          </div>
+        )}
 
         {/* Actions */}
         <div className="flex gap-3">
