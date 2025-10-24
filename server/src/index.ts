@@ -1538,6 +1538,16 @@ io.on('connection', (socket) => {
             
             await store.addHistory(room.user1, history1);
             await store.addHistory(room.user2, history2);
+            
+            // CRITICAL: Set 24h cooldown even on disconnect (prevents reconnect spamming)
+            await store.setCooldown(room.user1, room.user2, Date.now() + 24 * 60 * 60 * 1000);
+            console.log(`[Cooldown] Set 24h cooldown after grace period expiration: ${room.user1.substring(0, 8)} ↔ ${room.user2.substring(0, 8)}`);
+            
+            // Track session completion for QR unlock (if duration > 30s)
+            if (actualDuration > 30) {
+              await store.trackSessionCompletion(room.user1, room.user2, roomId!, actualDuration);
+              await store.trackSessionCompletion(room.user2, room.user1, roomId!, actualDuration);
+            }
           }
           
           // Emit to both users
