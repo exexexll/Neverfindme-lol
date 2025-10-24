@@ -115,6 +115,20 @@ export function createAuthRoutes(
     }
   }
 
+  // Determine paid status based on code type
+  let paidStatus: 'unpaid' | 'paid' | 'qr_verified' | 'qr_grace_period' = 'unpaid';
+  if (codeVerified) {
+    const codeInfo = await store.getInviteCode(codeUsed!);
+    if (codeInfo?.type === 'admin') {
+      // Admin code users (USC students) get PAID status directly
+      paidStatus = 'paid';
+      console.log('[Auth] Admin code user - setting as PAID (no grace period)');
+    } else {
+      // Regular invite codes get grace period (need 4 sessions)
+      paidStatus = 'qr_grace_period';
+    }
+  }
+
   const user: User = {
     userId,
     name: name.trim(),
@@ -123,9 +137,7 @@ export function createAuthRoutes(
     createdAt: Date.now(),
     banStatus: 'none',
     email: uscEmail, // Store USC email if provided (for admin code users)
-    // PAYWALL GRACE PERIOD: Users with invite code start in grace period
-    // They get full access but need 4 successful sessions to unlock their own QR code
-    paidStatus: codeVerified ? 'qr_grace_period' : 'unpaid',
+    paidStatus,
     inviteCodeUsed: codeUsed,
     // New user's own invite code (if they were verified)
     myInviteCode: newUserInviteCode,
