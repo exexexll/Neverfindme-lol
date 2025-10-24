@@ -347,15 +347,17 @@ function MainPageContent() {
             </div>
           </div>
 
-          {/* Matchmaking Overlay */}
-          <MatchmakeOverlay
-            isOpen={showMatchmake}
-            onClose={() => {
-              setShowMatchmake(false);
-              setDirectMatchTarget(null);
-            }}
-            directMatchTarget={directMatchTarget}
-          />
+          {/* Matchmaking Overlay - Only mount when actually opening */}
+          {showMatchmake && (
+            <MatchmakeOverlay
+              isOpen={showMatchmake}
+              onClose={() => {
+                setShowMatchmake(false);
+                setDirectMatchTarget(null);
+              }}
+              directMatchTarget={directMatchTarget}
+            />
+          )}
         </motion.div>
       </Container>
 
