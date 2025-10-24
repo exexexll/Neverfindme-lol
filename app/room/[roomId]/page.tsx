@@ -272,6 +272,10 @@ export default function RoomPage() {
             setRemoteTrackReceived(true);
             setConnectionPhase('connected');
             
+            // Update timestamp to mark successful connection
+            // This helps reconnection logic know we had a stable connection
+            sessionStorage.setItem('room_join_time', Date.now().toString());
+            
             // Clear connection timeout on successful connection
             if (connectionTimeoutRef.current) {
               clearTimeout(connectionTimeoutRef.current);
@@ -342,8 +346,14 @@ export default function RoomPage() {
           if (state === 'disconnected') {
             // CRITICAL: Only handle disconnection if we were previously connected
             // This prevents false positives during initial connection phase
-            if (connectionPhase !== 'connected') {
+            if (connectionPhase !== 'connected' && connectionPhase !== 'reconnecting') {
               console.log('[WebRTC] Connection disconnected during initial setup - ignoring (not yet established)');
+              return;
+            }
+            
+            // If we're already in reconnecting state, don't trigger again
+            if (connectionPhase === 'reconnecting') {
+              console.log('[WebRTC] Already in reconnecting state - skipping duplicate handler');
               return;
             }
             
@@ -441,19 +451,32 @@ export default function RoomPage() {
         const socket = connectSocket(currentSession.sessionToken);
         socketRef.current = socket;
 
-        // Detect if this is a reload during an active call (CHECK BEFORE SETTING)
+        // CRITICAL: Check if this is a reconnection (tab reload) or a NEW room
+        const storedRoomId = sessionStorage.getItem('current_room_id');
         const wasActiveCall = sessionStorage.getItem('room_connection_active') === 'true';
         const lastJoinTime = parseInt(sessionStorage.getItem('room_join_time') || '0');
         const timeSinceJoin = Date.now() - lastJoinTime;
         
-        // Check if this is a recent reload (within 30 seconds) AND we had an active connection
-        if (wasActiveCall && lastJoinTime > 0 && timeSinceJoin > 0 && timeSinceJoin < 30000) {
-          // User reloaded within 30 seconds - this is a reconnection attempt
+        // ONLY treat as reconnection if:
+        // 1. Same room ID (not a different room)
+        // 2. Was active in last 30 seconds
+        // 3. Had an active connection flag
+        const isSameRoom = storedRoomId === roomId;
+        const isRecentReload = lastJoinTime > 0 && timeSinceJoin > 0 && timeSinceJoin < 30000;
+        
+        if (isSameRoom && wasActiveCall && isRecentReload) {
+          // User reloaded the SAME room within 30 seconds - this is a reconnection attempt
           console.log('[Room] Detected tab reload during active call - attempting reconnection');
           setConnectionPhase('reconnecting');
+        } else if (!isSameRoom && wasActiveCall) {
+          // Different room - clear old session data
+          console.log('[Room] New room detected - clearing old session data');
+          sessionStorage.removeItem('room_connection_active');
+          sessionStorage.removeItem('room_join_time');
+          sessionStorage.removeItem('current_room_id');
         }
         
-        // NOW store roomId and connection state for future reconnection detection
+        // Store current room info for future reconnection detection
         sessionStorage.setItem('current_room_id', roomId);
         sessionStorage.setItem('room_join_time', Date.now().toString());
         sessionStorage.setItem('room_connection_active', 'true');
@@ -780,8 +803,10 @@ export default function RoomPage() {
     // Cleanup on unmount
     return () => {
       console.log('[Room] Component unmounting - running cleanup');
-      // Clear reconnection state
+      // Clear reconnection state completely
       sessionStorage.removeItem('room_connection_active');
+      sessionStorage.removeItem('room_join_time');
+      sessionStorage.removeItem('current_room_id');
       cleanupConnections();
       disconnectSocket();
     };
