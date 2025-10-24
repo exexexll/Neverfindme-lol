@@ -185,7 +185,7 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
         video.currentTime = 0;
       }
     };
-  }, [isActive, isVideoPaused, user.name]);
+  }, [isActive, isVideoPaused, overlayOpen, user.name]);
 
   // TikTok-style controls: Double-tap zones (desktop only)
   const handleVideoTap = (e: React.MouseEvent) => {
