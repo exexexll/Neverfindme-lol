@@ -3,14 +3,15 @@
 import { useEffect, useState, Suspense } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { Container } from '@/components/Container';
 import { getSession } from '@/lib/session';
 import { MatchmakeOverlay } from '@/components/matchmake/MatchmakeOverlay';
 import { ReferralNotifications } from '@/components/ReferralNotifications';
-import { AnimatedIcons } from '@/components/AnimatedIcons';
 import DirectMatchInput from '@/components/DirectMatchInput';
 import { API_BASE } from '@/lib/config';
 import { prefetchTurnCredentials } from '@/lib/webrtc-config';
 import Link from 'next/link';
+import Image from 'next/image';
 
 function MainPageContent() {
   const router = useRouter();
@@ -26,11 +27,13 @@ function MainPageContent() {
       return;
     }
     
-    // Payment and event checks
+    // CRITICAL SECURITY FIX: Verify user has paid before allowing access
+    // Backend routes are protected with requirePayment middleware, but frontend needs check too
     const paymentPromise = fetch(`${API_BASE}/payment/status`, {
       headers: { 'Authorization': `Bearer ${session.sessionToken}` },
     }).then(res => res.json());
     
+    // CRITICAL FIX: Check event mode status (prevents back button bypass)
     const eventPromise = fetch(`${API_BASE}/event/status`, {
       headers: { 'Authorization': `Bearer ${session.sessionToken}` },
     }).then(res => res.json());
@@ -42,27 +45,44 @@ function MainPageContent() {
                         paymentData.paidStatus === 'qr_grace_period';
         
         if (!hasPaid) {
+          console.warn('[Main] Unpaid user attempted access - redirecting to paywall');
           router.push('/paywall');
           return;
         }
         
+        // CRITICAL: Check if event mode is active and user doesn't have access
         if (eventData.eventModeEnabled && !eventData.canAccess) {
+          console.log('[Main] Event mode active, user blocked - redirecting to event-wait');
+          console.log('[Main] User is VIP:', eventData.isVIP);
+          console.log('[Main] Event is active:', eventData.isEventActive);
           router.push('/event-wait');
           return;
         }
         
-        prefetchTurnCredentials(session.sessionToken).catch(() => {});
+        // User has paid AND (event mode off OR has access), continue with page load
+        console.log('[Main] Access granted - event mode:', eventData.eventModeEnabled, 'can access:', eventData.canAccess);
+        
+        // EFFICIENCY: Prefetch TURN credentials (reduces call connection time by 0.5-1s)
+        prefetchTurnCredentials(session.sessionToken).catch(() => {
+          // Non-critical, will fetch on-demand if prefetch fails
+        });
+        
         setLoading(false);
         
-        // Handle direct match parameters
+        // Check if coming from direct match (intro or notification)
         const openMatchmaking = searchParams.get('openMatchmaking');
         const targetUser = searchParams.get('targetUser');
         const refCode = searchParams.get('ref');
         
+        // Handle referral code (registered user clicking referral link)
         if (refCode) {
+          console.log('[Main] Referral code detected for registered user:', refCode);
+          // Fetch target user from referral code
           fetch(`${API_BASE}/referral/info/${refCode}`)
             .then(res => res.json())
             .then(data => {
+              console.log('[Main] Referral target:', data.targetUserName);
+              // Get target userId from referral system
               fetch(`${API_BASE}/referral/direct-match`, {
                 method: 'POST',
                 headers: {
@@ -78,118 +98,270 @@ function MainPageContent() {
                     setShowMatchmake(true);
                   }
                 })
-                .catch(err => console.error(err));
+                .catch(err => console.error('[Main] Failed to fetch target:', err));
             })
-            .catch(err => console.error(err));
+            .catch(err => console.error('[Main] Failed to fetch referral info:', err));
         } else if (openMatchmaking === 'true' && targetUser) {
+          console.log('[Main] Opening matchmaking for direct match with:', targetUser);
           setDirectMatchTarget(targetUser);
           setShowMatchmake(true);
         }
       })
       .catch(err => {
-        console.error(err);
+        console.error('[Main] Payment/event status check failed:', err);
+        // On error, redirect to onboarding to be safe
         router.push('/onboarding');
       });
   }, [router, searchParams]);
 
   const handleDirectMatch = (targetUserId: string, targetName: string) => {
+    console.log('[Main] Direct match requested for:', targetName);
     setDirectMatchTarget(targetUserId);
     setShowMatchmake(true);
   };
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center bg-white">
-        <div className="text-black">Loading...</div>
+      <main className="flex min-h-screen items-center justify-center bg-[#0a0a0c]">
+        <div className="text-[#eaeaf0]">Loading...</div>
       </main>
     );
   }
 
+  // Sky blue gradient style for text (500 Days of Summer aesthetic)
+  const skyBlueButtonClass = "bg-gradient-to-br from-[#4FC3F7] via-[#29B6F6] to-[#03A9F4] animate-gradient";
+  
+  // Silver-grey title bar (Windows 95/2000 style)
+  const silverTitleBarClass = "bg-gradient-to-b from-gray-300 to-gray-400";
+
   return (
-    <main id="main" className="relative min-h-screen" style={{ backgroundColor: 'white' }}>
-      {/* Grid pattern */}
-      <div className="fixed inset-0 pointer-events-none" style={{
-        backgroundImage: `
-          repeating-linear-gradient(0deg, transparent, transparent 40px, #ffc46a 40px, #ffc46a 41px),
-          repeating-linear-gradient(90deg, transparent, transparent 40px, #ffc46a 40px, #ffc46a 41px)
-        `,
-      }} />
-
-      {/* Animated Icons */}
-      <AnimatedIcons />
-
-      <div className="relative z-10 min-h-screen flex items-center justify-center p-4">
-        <div className={`relative w-full max-w-7xl ${showMatchmake ? 'opacity-0 pointer-events-none' : 'opacity-100'} transition-opacity duration-300`}>
-          {/* Desktop Layout */}
-          <div className="hidden md:block">
-            <div className="absolute top-8 left-8">
-              <DirectMatchInput onMatch={handleDirectMatch} />
-            </div>
-
-            <Link href="/refilm" className="absolute top-8 right-8 px-6 py-3 rounded-xl font-bold text-black shadow-lg hover:scale-105 transition-all" style={{ backgroundColor: '#ffc46a' }}>
-              Profile
-            </Link>
-
-            <div className="flex flex-col items-center gap-4">
-              <button
-                onClick={() => setShowMatchmake(true)}
-                className="px-16 py-8 rounded-2xl font-playfair text-5xl font-bold text-black shadow-2xl hover:scale-105 transition-all"
-                style={{
-                  backgroundColor: '#ffc46a',
-                  boxShadow: '0 20px 60px rgba(0,0,0,0.3), inset 0 -4px 12px rgba(0,0,0,0.2), inset 0 4px 12px rgba(255,255,255,0.4)',
-                  transform: 'perspective(800px) rotateX(2deg)',
-                }}
-              >
-                Matchmake Now
-              </button>
-              
-              <Link href="/socials" className="px-4 py-2 rounded-lg text-sm font-medium text-black shadow hover:scale-105 transition-all" style={{ backgroundColor: '#ffc46a' }}>
-                Socials
-              </Link>
-            </div>
-
-            <Link href="/history" className="absolute bottom-8 left-8 px-6 py-3 rounded-xl font-bold text-black shadow-lg hover:scale-105 transition-all" style={{ backgroundColor: '#ffc46a' }}>
-              Past Chats
-            </Link>
-
-            <Link href="/settings" className="absolute bottom-8 right-8 px-6 py-3 rounded-xl font-bold text-black shadow-lg hover:scale-105 transition-all" style={{ backgroundColor: '#ffc46a' }}>
-              Settings
-            </Link>
-          </div>
-
-          {/* Mobile Layout */}
-          <div className="md:hidden flex flex-col items-center gap-6">
-            <div className="flex justify-between w-full gap-4">
-              <DirectMatchInput onMatch={handleDirectMatch} />
-              <Link href="/refilm" className="px-4 py-2 rounded-lg font-medium text-black shadow" style={{ backgroundColor: '#ffc46a' }}>Profile</Link>
-            </div>
-            
-            <button onClick={() => setShowMatchmake(true)} className="w-full px-8 py-6 rounded-xl font-playfair text-3xl font-bold text-black shadow-xl" style={{ backgroundColor: '#ffc46a' }}>
-              Matchmake Now
-            </button>
-            
-            <Link href="/socials" className="px-4 py-2 rounded-lg text-sm font-medium text-black shadow" style={{ backgroundColor: '#ffc46a' }}>Socials</Link>
-            
-            <div className="flex gap-4 w-full">
-              <Link href="/history" className="flex-1 px-4 py-3 rounded-lg font-medium text-black shadow text-center" style={{ backgroundColor: '#ffc46a' }}>Past Chats</Link>
-              <Link href="/settings" className="flex-1 px-4 py-3 rounded-lg font-medium text-black shadow text-center" style={{ backgroundColor: '#ffc46a' }}>Settings</Link>
-            </div>
-          </div>
-        </div>
+    <main id="main" className="relative min-h-screen py-20">
+      {/* Background Image */}
+      <div className="fixed inset-0 -z-10">
+        <Image
+          src="/mainpage.png"
+          alt=""
+          fill
+          priority
+          className="object-cover"
+          quality={90}
+        />
+        {/* Dark overlay for readability */}
+        <div className="absolute inset-0 bg-black/40" />
+        
+        {/* Smooth vignette effect - gradient fade on edges */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/60" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-transparent to-black/50" />
       </div>
 
-      {/* Matchmaking Overlay */}
-      {showMatchmake && (
-        <MatchmakeOverlay
-          isOpen={showMatchmake}
-          onClose={() => {
-            setShowMatchmake(false);
-            setDirectMatchTarget(null);
-          }}
-          directMatchTarget={directMatchTarget}
-        />
-      )}
+      <Container>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7 }}
+          className="mx-auto max-w-4xl space-y-12 motion-reduce:opacity-100 motion-reduce:translate-y-0"
+        >
+          {/* Header - Hidden when matchmaking */}
+          <div className={`text-center transition-opacity duration-300 ${showMatchmake ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+            <h1 className="font-playfair text-6xl font-bold text-white sm:text-7xl lg:text-8xl drop-shadow-lg">
+              BUMPIn
+            </h1>
+          </div>
 
+          {/* Irregular Photo Collage Grid - Hidden when matchmaking */}
+          <div className={`relative mx-auto flex max-w-3xl flex-col items-center transition-opacity duration-300 ${showMatchmake ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+            {/* Row 1: Large tile (Matchmake Now) with gridimage1.png */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.4, delay: 0 }}
+              className="mb-4 w-full max-w-md"
+            >
+              <button
+                onClick={() => setShowMatchmake(true)}
+                className="focus-ring group relative w-full overflow-hidden rounded-md border-4 border-gray-400 shadow-2xl transition-all hover:scale-105 active:scale-95"
+              >
+                {/* Retro Window Title Bar */}
+                <div className={`${silverTitleBarClass} px-4 py-2 flex items-center justify-between border-b-2 border-gray-500`}>
+                  <span className="text-xs font-bold text-gray-800">Matchmake.exe</span>
+                  <div className="flex gap-1">
+                    <div className="w-3 h-3 bg-gray-500 rounded-sm" />
+                    <div className="w-3 h-3 bg-gray-500 rounded-sm" />
+                    <div className="w-3 h-3 bg-gray-500 rounded-sm" />
+                  </div>
+                </div>
+                {/* Window Content */}
+                <div className="bg-white p-1 flex items-center justify-center">
+                  <h2 className="font-playfair text-7xl font-bold tracking-tight text-gray-600 leading-none">
+                    Matchmake Now
+                  </h2>
+                </div>
+              </button>
+            </motion.div>
+
+            {/* Row 2: Two tiles (Past Chats, Settings) - offset left */}
+            <div className="mb-4 flex w-full gap-4 pl-0 sm:pl-8">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.4, delay: 0.1 }}
+                className="flex-1"
+              >
+                <Link
+                  href="/history"
+                  className="focus-ring group block h-full overflow-hidden rounded-md border-4 border-gray-400 shadow-2xl transition-all hover:scale-105 active:scale-95"
+                >
+                  {/* Retro Window Title Bar */}
+                  <div className={`${silverTitleBarClass} px-3 py-1.5 flex items-center justify-between border-b-2 border-gray-500`}>
+                    <span className="text-xs font-bold text-gray-800">History.exe</span>
+                    <div className="flex gap-1">
+                      <div className="w-2.5 h-2.5 bg-gray-500 rounded-sm" />
+                      <div className="w-2.5 h-2.5 bg-gray-500 rounded-sm" />
+                      <div className="w-2.5 h-2.5 bg-gray-500 rounded-sm" />
+                    </div>
+                  </div>
+                  {/* Window Content */}
+                  <div className="bg-white p-1 h-full flex items-center justify-center">
+                    <h3 className="font-playfair text-5xl font-bold tracking-tight text-gray-600 leading-none">
+                      Past Chats
+                    </h3>
+                  </div>
+                </Link>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.4, delay: 0.15 }}
+                className="flex-1"
+              >
+                <Link
+                  href="/settings"
+                  className="focus-ring group block h-full overflow-hidden rounded-md border-4 border-gray-400 shadow-2xl transition-all hover:scale-105 active:scale-95"
+                >
+                  {/* Retro Window Title Bar */}
+                  <div className={`${silverTitleBarClass} px-3 py-1.5 flex items-center justify-between border-b-2 border-gray-500`}>
+                    <span className="text-xs font-bold text-gray-800">Settings.exe</span>
+                    <div className="flex gap-1">
+                      <div className="w-2.5 h-2.5 bg-gray-500 rounded-sm" />
+                      <div className="w-2.5 h-2.5 bg-gray-500 rounded-sm" />
+                      <div className="w-2.5 h-2.5 bg-gray-500 rounded-sm" />
+                    </div>
+                  </div>
+                  {/* Window Content */}
+                  <div className="bg-white p-1 h-full flex items-center justify-center">
+                    <h3 className="font-playfair text-5xl font-bold tracking-tight text-gray-600 leading-none">
+                      Settings
+                    </h3>
+                  </div>
+                </Link>
+              </motion.div>
+            </div>
+
+            {/* Row 3: Two tiles (Socials, Intro Code Input) - offset right */}
+            <div className="mb-4 flex w-full gap-4 pr-0 sm:pr-12">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.4, delay: 0.2 }}
+                className="flex-1"
+              >
+                <Link
+                  href="/socials"
+                  className="focus-ring group block h-full overflow-hidden rounded-md border-4 border-gray-400 shadow-2xl transition-all hover:scale-105 active:scale-95"
+                >
+                  {/* Retro Window Title Bar */}
+                  <div className={`${silverTitleBarClass} px-3 py-1.5 flex items-center justify-between border-b-2 border-gray-500`}>
+                    <span className="text-xs font-bold text-gray-800">Socials.exe</span>
+                    <div className="flex gap-1">
+                      <div className="w-2.5 h-2.5 bg-gray-500 rounded-sm" />
+                      <div className="w-2.5 h-2.5 bg-gray-500 rounded-sm" />
+                      <div className="w-2.5 h-2.5 bg-gray-500 rounded-sm" />
+                    </div>
+                  </div>
+                  {/* Window Content */}
+                  <div className="bg-white p-1 h-full flex items-center justify-center">
+                    <h3 className="font-playfair text-4xl font-bold tracking-tight text-gray-600 leading-none">
+                      Socials
+                    </h3>
+                  </div>
+                </Link>
+              </motion.div>
+
+              {/* Direct Match Input - Integrated into Grid */}
+              {!showMatchmake && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.4, delay: 0.25 }}
+                  className="flex-1"
+                >
+                  <DirectMatchInput onMatch={handleDirectMatch} />
+                </motion.div>
+              )}
+            </div>
+
+            {/* Row 4: Large tile (Refilm) with girdimage6.png - centered */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.4, delay: 0.35 }}
+              className="w-full max-w-lg"
+            >
+              <Link
+                href="/refilm"
+                className="focus-ring group block overflow-hidden rounded-md border-4 border-gray-400 shadow-2xl transition-all hover:scale-105 active:scale-95"
+              >
+                {/* Retro Window Title Bar */}
+                <div className={`${silverTitleBarClass} px-4 py-2 flex items-center justify-between border-b-2 border-gray-500`}>
+                  <span className="text-xs font-bold text-gray-800">Refilm.exe</span>
+                  <div className="flex gap-1">
+                    <div className="w-3 h-3 bg-gray-500 rounded-sm" />
+                    <div className="w-3 h-3 bg-gray-500 rounded-sm" />
+                    <div className="w-3 h-3 bg-gray-500 rounded-sm" />
+                  </div>
+                </div>
+                {/* Window Content */}
+                <div className="bg-white p-1 flex items-center justify-center">
+                  <h2 className="font-playfair text-7xl font-bold tracking-tight text-gray-600 leading-none">
+                    Profile
+                  </h2>
+                </div>
+              </Link>
+            </motion.div>
+
+            {/* Bottom accent tiles - displaced */}
+            <div className="mt-4 flex w-full justify-end gap-3 pr-4">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.4, delay: 0.4 }}
+                className="h-16 w-24 rounded-lg bg-blue-500/10 shadow-inner"
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.4, delay: 0.45 }}
+                className="h-16 w-16 rounded-lg bg-purple-500/10 shadow-inner"
+              />
+            </div>
+          </div>
+
+          {/* Matchmaking Overlay - Only mount when actually opening */}
+          {showMatchmake && (
+            <MatchmakeOverlay
+              isOpen={showMatchmake}
+              onClose={() => {
+                setShowMatchmake(false);
+                setDirectMatchTarget(null);
+              }}
+              directMatchTarget={directMatchTarget}
+            />
+          )}
+        </motion.div>
+      </Container>
+
+      {/* Referral Notifications */}
       <ReferralNotifications />
     </main>
   );
@@ -197,9 +369,15 @@ function MainPageContent() {
 
 export default function MainPage() {
   return (
-    <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-white"><div className="text-black">Loading...</div></div>}>
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center bg-[#0a0a0c]">
+        <div className="text-center">
+          <div className="mb-4 text-4xl">⏳</div>
+          <p className="text-[#eaeaf0]/70">Loading...</p>
+        </div>
+      </div>
+    }>
       <MainPageContent />
     </Suspense>
   );
 }
-
