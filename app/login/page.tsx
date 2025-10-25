@@ -77,32 +77,38 @@ function LoginPageContent() {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6" name="login-form">
             <div>
-              <label className="mb-2 block text-sm font-medium text-[#eaeaf0]">
+              <label htmlFor="login-email" className="mb-2 block text-sm font-medium text-[#eaeaf0]">
                 Email
               </label>
               <input
+                id="login-email"
+                name="email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full rounded-xl bg-white/10 px-4 py-3 text-[#eaeaf0] placeholder-[#eaeaf0]/50 focus:outline-none focus:ring-2 focus:ring-[#ffc46a]"
                 placeholder="your@email.com"
-                autoComplete="email"
+                autoComplete="email username"
+                required
               />
             </div>
 
             <div>
-              <label className="mb-2 block text-sm font-medium text-[#eaeaf0]">
+              <label htmlFor="login-password" className="mb-2 block text-sm font-medium text-[#eaeaf0]">
                 Password
               </label>
               <input
+                id="login-password"
+                name="password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full rounded-xl bg-white/10 px-4 py-3 text-[#eaeaf0] placeholder-[#eaeaf0]/50 focus:outline-none focus:ring-2 focus:ring-[#ffc46a]"
                 placeholder="Enter your password"
                 autoComplete="current-password"
+                required
               />
             </div>
 
