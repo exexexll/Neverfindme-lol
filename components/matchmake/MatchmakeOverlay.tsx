@@ -1458,6 +1458,7 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
                         isActive={true}
                         chatMode={chatMode}
                         overlayOpen={isOpen}
+                        showingModeSelection={showModeSelection}
                       />
                     </motion.div>
                   </AnimatePresence>

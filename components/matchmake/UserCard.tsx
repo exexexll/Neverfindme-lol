@@ -26,9 +26,10 @@ interface UserCardProps {
   isActive: boolean;
   chatMode?: 'video' | 'text';
   overlayOpen?: boolean;
+  showingModeSelection?: boolean; // NEW: Don't play video during mode selection
 }
 
-export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', cooldownExpiry, isActive, chatMode = 'video', overlayOpen = true }: UserCardProps) {
+export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', cooldownExpiry, isActive, chatMode = 'video', overlayOpen = true, showingModeSelection = false }: UserCardProps) {
   const [seconds, setSeconds] = useState(300);
   const [showTimerModal, setShowTimerModal] = useState(false);
   const [tempSeconds, setTempSeconds] = useState('300');
@@ -162,7 +163,8 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
       videoSrc: video.src?.substring(video.src.lastIndexOf('/') + 1)
     });
     
-    if (isActive && !isVideoPaused && overlayOpen) {
+    // CRITICAL FIX: Don't play if mode selection is showing!
+    if (isActive && !isVideoPaused && overlayOpen && !showingModeSelection) {
       video.muted = false;
       video.volume = 1.0;
       video.play().catch(() => {
@@ -171,9 +173,8 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
           video.play().catch(() => {});
         }
       });
-    } else if (!isActive) {
-      // Only pause/mute when inactive, but DON'T reset currentTime
-      // This preserves user's manual pause position
+    } else if (!isActive || showingModeSelection) {
+      // Pause when inactive OR when mode selection showing
       video.pause();
       video.muted = true;
       video.volume = 0;
@@ -190,7 +191,7 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
         // DON'T RESET: video.currentTime = 0 (preserves progress)
       }
     };
-  }, [isActive, isVideoPaused, overlayOpen, user.name]);
+  }, [isActive, isVideoPaused, overlayOpen, showingModeSelection, user.name]);
 
   // TikTok-style controls: Mobile = center only, Desktop = 3 zones
   const handleVideoTap = (e: React.MouseEvent) => {
