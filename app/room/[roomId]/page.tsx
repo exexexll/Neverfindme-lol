@@ -1541,8 +1541,8 @@ export default function RoomPage() {
           </div>
         </div>
 
-        {/* Local Preview - Top left on mobile (buttons at bottom), bottom-right on desktop */}
-        <div className="absolute top-20 left-2 z-10 sm:top-auto sm:bottom-8 sm:left-auto sm:right-8">
+        {/* Local Preview - Bottom left on mobile (above controls), bottom-right on desktop */}
+        <div className="fixed bottom-24 left-2 z-20 sm:top-auto sm:bottom-8 sm:left-auto sm:right-8">
           <div className="h-32 w-24 overflow-hidden rounded-lg bg-black shadow-xl sm:h-40 sm:w-56 sm:rounded-2xl border-2 border-white/20">
             <video
               ref={localVideoRef}
@@ -1555,11 +1555,11 @@ export default function RoomPage() {
         </div>
       </div>
 
-      {/* Controls Footer - Centered, Not Blocking Cams */}
-      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 z-30" style={{
+      {/* Controls Footer - Centered, Above Local Preview on Mobile */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 flex justify-center" style={{
         paddingBottom: 'max(1rem, env(safe-area-inset-bottom))',
       }}>
-        <div className="flex items-center justify-center gap-2 sm:gap-3 px-4 pb-4">
+        <div className="flex items-center justify-center gap-3 px-4 pb-4 bg-gradient-to-t from-black/80 to-transparent pt-8 sm:pt-4 sm:bg-none">
           {/* Mic Toggle */}
           <button
             onClick={toggleMute}
