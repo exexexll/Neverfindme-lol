@@ -99,6 +99,8 @@ export default function RoomPage() {
   const [connectionQuality, setConnectionQuality] = useState<'good' | 'fair' | 'poor' | 'unknown'>('unknown');
   const statsMonitorRef = useRef<NodeJS.Timeout | null>(null);
   const partnerDisconnectCountdownRef = useRef<NodeJS.Timeout | null>(null); // CRITICAL: Track partner disconnect countdown
+  const poorConnectionStartRef = useRef<number | null>(null); // Track when poor connection started
+  const poorConnectionTimeoutRef = useRef<NodeJS.Timeout | null>(null); // Auto-disconnect timer
   
   // Refs
   const localVideoRef = useRef<HTMLVideoElement>(null);
@@ -129,6 +131,14 @@ export default function RoomPage() {
       clearInterval(partnerDisconnectCountdownRef.current);
       partnerDisconnectCountdownRef.current = null;
       console.log('[Room] ✅ Partner disconnect countdown cleared');
+    }
+    
+    // CRITICAL FIX: Clear poor connection timeout
+    if (poorConnectionTimeoutRef.current) {
+      clearTimeout(poorConnectionTimeoutRef.current);
+      poorConnectionTimeoutRef.current = null;
+      poorConnectionStartRef.current = null;
+      console.log('[Room] ✅ Poor connection timeout cleared');
     }
     
     // Stop all media tracks (camera/mic)
@@ -890,6 +900,13 @@ export default function RoomPage() {
         statsMonitorRef.current = null;
       }
       
+      // CRITICAL FIX: Clear poor connection timeout
+      if (poorConnectionTimeoutRef.current) {
+        clearTimeout(poorConnectionTimeoutRef.current);
+        poorConnectionTimeoutRef.current = null;
+        poorConnectionStartRef.current = null;
+      }
+      
       // CRITICAL FIX: Remove ALL socket event listeners to prevent memory leaks
       if (socketRef.current) {
         // Remove room-specific event listeners
@@ -1036,12 +1053,47 @@ export default function RoomPage() {
         if (lossRate > 0.1 || jitterMs > 100 || rttMs > 300) {
           setConnectionQuality('poor');
           console.warn('[Stats] ⚠️ Poor connection quality detected');
+          
+          // CRITICAL: Start poor connection timeout if not already started
+          if (!poorConnectionStartRef.current) {
+            poorConnectionStartRef.current = Date.now();
+            console.warn('[Stats] Poor connection timer started - will disconnect in 10s if not improved');
+            
+            // Auto-disconnect after 10 seconds of poor quality
+            poorConnectionTimeoutRef.current = setTimeout(() => {
+              console.error('[Stats] ❌ Poor connection for 10+ seconds - auto-disconnecting');
+              setConnectionFailureReason('Connection quality too poor - disconnected after 10 seconds');
+              setConnectionFailed(true);
+              setShowPermissionSheet(true);
+              handleEndCall();
+            }, 10000);
+          }
         } else if (lossRate > 0.05 || jitterMs > 50 || rttMs > 150) {
           setConnectionQuality('fair');
           console.log('[Stats] Fair connection quality');
+          
+          // Clear poor connection timeout if quality improved
+          if (poorConnectionStartRef.current) {
+            console.log('[Stats] ✅ Connection quality improved from poor to fair');
+            poorConnectionStartRef.current = null;
+            if (poorConnectionTimeoutRef.current) {
+              clearTimeout(poorConnectionTimeoutRef.current);
+              poorConnectionTimeoutRef.current = null;
+            }
+          }
         } else {
           setConnectionQuality('good');
           console.log('[Stats] ✅ Good connection quality');
+          
+          // Clear poor connection timeout if quality improved
+          if (poorConnectionStartRef.current) {
+            console.log('[Stats] ✅ Connection quality improved from poor to good');
+            poorConnectionStartRef.current = null;
+            if (poorConnectionTimeoutRef.current) {
+              clearTimeout(poorConnectionTimeoutRef.current);
+              poorConnectionTimeoutRef.current = null;
+            }
+          }
         }
       } catch (error) {
         console.error('[Stats] Error getting stats:', error);

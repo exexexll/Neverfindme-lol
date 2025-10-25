@@ -74,14 +74,14 @@ const storage = multer.diskStorage({
 const upload = multer({
   storage,
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB max (sufficient for optimized 60s video)
+    fileSize: 20 * 1024 * 1024, // INCREASED: 20MB max (was 10MB - too tight for 60s videos)
   },
   fileFilter: (req, file, cb) => {
-    console.log(`Upload attempt - Field: ${file.fieldname}, MIME: ${file.mimetype}, Original: ${file.originalname}`);
+    console.log(`[Upload] Attempt - Field: ${file.fieldname}, MIME: ${file.mimetype}, Size: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
     
     if (file.fieldname === 'selfie') {
       if (!file.mimetype.startsWith('image/')) {
-        console.error(`Rejected selfie - MIME type: ${file.mimetype}`);
+        console.error(`[Upload] ❌ Rejected selfie - MIME type: ${file.mimetype}`);
         return cb(new Error('Only images allowed for selfie'));
       }
     } else if (file.fieldname === 'video') {
@@ -91,7 +91,7 @@ const upload = multer({
                       file.originalname.match(/\.(webm|mp4|mov|avi)$/i);
       
       if (!isVideo) {
-        console.error(`Rejected video - MIME type: ${file.mimetype}, filename: ${file.originalname}`);
+        console.error(`[Upload] ❌ Rejected video - MIME type: ${file.mimetype}, filename: ${file.originalname}`);
         return cb(new Error('Only videos allowed for intro video'));
       }
     }
@@ -244,8 +244,24 @@ router.post('/video', requireAuth, (req: any, res) => {
         fs.unlinkSync(req.file.path);
       }
       
-      console.error('[Upload] Upload failed:', error);
-      res.status(500).json({ error: 'Failed to upload video' });
+      console.error('[Upload] ❌ Upload failed:', error);
+      console.error('[Upload] Error details:', {
+        message: error.message,
+        stack: error.stack?.split('\n')[0],
+        userId: req.userId?.substring(0, 8)
+      });
+      
+      // Better error message for user
+      const errorMsg = error.message?.includes('Cloudinary') 
+        ? 'Cloudinary upload failed - please try again'
+        : error.message?.includes('ENOENT')
+        ? 'File not found - please retry upload'
+        : 'Failed to upload video - please try again';
+      
+      res.status(500).json({ 
+        error: errorMsg,
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
     }
   });
 });
