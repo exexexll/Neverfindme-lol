@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { getSession } from '@/lib/session';
 import { MatchmakeOverlay } from '@/components/matchmake/MatchmakeOverlay';
 import { ReferralNotifications } from '@/components/ReferralNotifications';
-import { MainPageIcons } from '@/components/MainPageIcons';
+import { DVDScreensaver } from '@/components/DVDScreensaver';
 import { FloatingUserNames } from '@/components/FloatingUserNames';
 import DirectMatchInput from '@/components/DirectMatchInput';
 import { API_BASE } from '@/lib/config';
@@ -127,8 +127,8 @@ function MainPageContent() {
         zIndex: 0,
       }} />
 
-      {/* Animated Icons */}
-      <MainPageIcons />
+      {/* DVD Screensaver Animation */}
+      <DVDScreensaver />
 
       {/* Floating User Names (behind buttons) */}
       <FloatingUserNames />

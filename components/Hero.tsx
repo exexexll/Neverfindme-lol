@@ -9,7 +9,7 @@ import { Button } from './Button';
 import { ScrollHint } from './ScrollHint';
 import { API_BASE } from '@/lib/config';
 import { getSession } from '@/lib/session';
-import { AnimatedHearts } from './AnimatedHearts';
+import { DVDScreensaver } from './DVDScreensaver';
 
 export function Hero() {
   const ref = useRef<HTMLDivElement>(null);
@@ -112,8 +112,8 @@ export function Hero() {
       {/* Slight dim overlay */}
       <div className="absolute inset-0 pointer-events-none bg-black/10" />
 
-      {/* Animated Hearts */}
-      <AnimatedHearts />
+      {/* DVD Screensaver */}
+      <DVDScreensaver />
 
       {/* Content */}
       <div className="relative z-10 mx-auto w-full max-w-4xl px-4 text-center sm:px-6 lg:px-8">
