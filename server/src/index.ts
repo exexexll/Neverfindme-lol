@@ -12,6 +12,7 @@ import path from 'path';
 import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
 import { store } from './store';
+import { query } from './database'; // CRITICAL: Import for database operations
 import { createAuthRoutes } from './auth';
 import mediaRoutes, { deleteFromCloudinary } from './media';
 import chatFileUploadRoutes from './chat-file-upload';
@@ -217,7 +218,7 @@ const activeRooms = new Map<string, {
   gracePeriodExpires?: number;
   user1Connected: boolean;
   user2Connected: boolean;
-}>(); // roomId -> room data
+}>(); // roomId -> room data (DUAL STORAGE: memory PRIMARY, DB SECONDARY)
 
 // Text Mode "Torch Rule" - Activity tracking
 const textRoomActivity = new Map<string, {
@@ -228,6 +229,140 @@ const textRoomActivity = new Map<string, {
 
 // BEST-IN-CLASS: Track grace period timeouts for cancellation (prevent memory leaks)
 const gracePeriodTimeouts = new Map<string, NodeJS.Timeout>(); // roomId -> timeout
+
+// ===== DUAL-STORAGE PATTERN: Background Database Persistence =====
+// Keep memory as PRIMARY (fast, synchronous)
+// Use database as SECONDARY (persistence, fire-and-forget)
+
+async function syncRoomToDatabase(roomId: string, room: any): Promise<void> {
+  if (!process.env.DATABASE_URL) return; // Skip if no DB
+  
+  try {
+    await query(`
+      INSERT INTO active_rooms (room_id, user_1, user_2, started_at, duration_seconds, chat_mode, status, grace_period_expires, user_1_connected, user_2_connected, messages)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+      ON CONFLICT (room_id) DO UPDATE SET
+        status = EXCLUDED.status,
+        grace_period_expires = EXCLUDED.grace_period_expires,
+        user_1_connected = EXCLUDED.user_1_connected,
+        user_2_connected = EXCLUDED.user_2_connected,
+        messages = EXCLUDED.messages,
+        updated_at = NOW()
+    `, [
+      roomId,
+      room.user1,
+      room.user2,
+      new Date(room.startedAt),
+      room.duration,
+      room.chatMode || 'video',
+      room.status,
+      room.gracePeriodExpires ? new Date(room.gracePeriodExpires) : null,
+      room.user1Connected,
+      room.user2Connected,
+      JSON.stringify(room.messages || [])
+    ]);
+  } catch (err: any) {
+    console.error('[DB] Failed to sync room (non-critical):', err.message);
+  }
+}
+
+async function deleteRoomFromDatabase(roomId: string): Promise<void> {
+  if (!process.env.DATABASE_URL) return;
+  
+  try {
+    await query('DELETE FROM active_rooms WHERE room_id = $1', [roomId]);
+  } catch (err: any) {
+    console.error('[DB] Failed to delete room (non-critical):', err.message);
+  }
+}
+
+async function syncReferralMappingToDatabase(code: string, mapping: any): Promise<void> {
+  if (!process.env.DATABASE_URL) return;
+  
+  try {
+    await query(`
+      INSERT INTO referral_mappings (referral_code, target_user_id, target_name, created_by_user_id, created_by_name, created_at)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      ON CONFLICT (referral_code) DO NOTHING
+    `, [
+      code,
+      mapping.targetUserId,
+      mapping.targetName,
+      mapping.createdByUserId,
+      mapping.createdByName,
+      new Date(mapping.createdAt)
+    ]);
+  } catch (err: any) {
+    console.error('[DB] Failed to sync referral mapping (non-critical):', err.message);
+  }
+}
+
+// Load active rooms on startup
+async function recoverActiveRoomsFromDatabase(): Promise<void> {
+  if (!process.env.DATABASE_URL) {
+    console.log('[Recovery] No database - skipping active room recovery');
+    return;
+  }
+  
+  try {
+    const result = await query(`
+      SELECT * FROM active_rooms 
+      WHERE status IN ('active', 'grace_period')
+      AND updated_at > NOW() - INTERVAL '10 minutes'
+    `);
+    
+    console.log(`[Recovery] Found ${result.rows.length} active rooms in database`);
+    
+    result.rows.forEach((row: any) => {
+      const room = {
+        user1: row.user_1,
+        user2: row.user_2,
+        messages: row.messages || [],
+        startedAt: new Date(row.started_at).getTime(),
+        duration: row.duration_seconds,
+        chatMode: row.chat_mode,
+        status: row.status,
+        gracePeriodExpires: row.grace_period_expires ? new Date(row.grace_period_expires).getTime() : undefined,
+        user1Connected: row.user_1_connected,
+        user2Connected: row.user_2_connected,
+      };
+      
+      activeRooms.set(row.room_id, room);
+      console.log(`[Recovery] ✅ Restored room ${row.room_id.substring(0, 8)} (${room.chatMode})`);
+    });
+    
+    console.log(`[Recovery] Active rooms loaded: ${activeRooms.size}`);
+  } catch (err: any) {
+    console.error('[Recovery] ❌ Failed to load active rooms:', err.message);
+    // Non-fatal, continue with empty rooms
+  }
+}
+
+// Load referral mappings on startup
+async function recoverReferralMappingsFromDatabase(): Promise<void> {
+  if (!process.env.DATABASE_URL) return;
+  
+  try {
+    const result = await query('SELECT * FROM referral_mappings WHERE created_at > NOW() - INTERVAL \'90 days\'');
+    
+    result.rows.forEach((row: any) => {
+      const mapping = {
+        targetUserId: row.target_user_id,
+        targetName: row.target_name,
+        createdByUserId: row.created_by_user_id,
+        createdByName: row.created_by_name,
+        createdAt: new Date(row.created_at).getTime(),
+      };
+      
+      // Use internal method to set mapping directly
+      (store as any).referralMappings.set(row.referral_code, mapping);
+    });
+    
+    console.log(`[Recovery] Loaded ${result.rows.length} referral mappings`);
+  } catch (err: any) {
+    console.error('[Recovery] Failed to load referral mappings:', err.message);
+  }
+}
 
 // TORCH RULE: Background job to check text room inactivity
 setInterval(() => {
@@ -318,6 +453,7 @@ setInterval(() => {
             // Clean up
             activeRooms.delete(roomId);
             textRoomActivity.delete(roomId);
+            deleteRoomFromDatabase(roomId).catch(() => {}); // Background cleanup
           })();
         } else {
           // Update countdown
@@ -911,17 +1047,21 @@ io.on('connection', (socket) => {
     const chatMode = invite.chatMode || 'video'; // Default to video
 
     // Create room with chat mode and connection tracking
-    activeRooms.set(roomId, {
+    const newRoom = {
       user1: invite.fromUserId,
       user2: invite.toUserId,
       messages: [],
       startedAt: Date.now(),
       duration: agreedSeconds,
       chatMode: chatMode,
-      status: 'active',
+      status: 'active' as 'active' | 'grace_period' | 'ended', // Type assertion for TypeScript
       user1Connected: true,
       user2Connected: true,
-    });
+    };
+    activeRooms.set(roomId, newRoom);
+    
+    // DUAL STORAGE: Save to database (background, non-blocking)
+    syncRoomToDatabase(roomId, newRoom).catch(() => {}); // Fire-and-forget
 
     const user1 = await store.getUser(invite.fromUserId);
     const user2 = await store.getUser(invite.toUserId);
@@ -1066,6 +1206,7 @@ io.on('connection', (socket) => {
       room.status = 'active';
       if (room.user1 === currentUserId) room.user1Connected = true;
       if (room.user2 === currentUserId) room.user2Connected = true;
+      syncRoomToDatabase(roomId, room).catch(() => {}); // Sync reconnection
       
       // CRITICAL: Reset torch rule activity timestamps on reconnection
       if (room.chatMode === 'text') {
@@ -1201,6 +1342,7 @@ io.on('connection', (socket) => {
           activeRooms.delete(roomId);
           textRoomActivity.delete(roomId); // Clean up torch rule tracking
           gracePeriodTimeouts.delete(roomId); // Clean up timeout reference
+          deleteRoomFromDatabase(roomId).catch(() => {}); // Background cleanup
         }
       }, 10000); // 10 seconds grace period
       
@@ -1496,6 +1638,7 @@ io.on('connection', (socket) => {
       // Clean up the room and activity tracking since connection failed
       activeRooms.delete(roomId);
       textRoomActivity.delete(roomId); // Clean up torch rule tracking
+      deleteRoomFromDatabase(roomId).catch(() => {}); // Background cleanup
       console.log(`[Room] Room ${roomId} deleted due to connection failure`);
       
       // Mark both users as available again
@@ -1658,6 +1801,7 @@ io.on('connection', (socket) => {
       // Cleanup room and activity tracking
       activeRooms.delete(roomId);
       textRoomActivity.delete(roomId); // Clean up torch rule tracking
+      deleteRoomFromDatabase(roomId).catch(() => {}); // Background cleanup
     }
   });
 
@@ -1688,6 +1832,7 @@ io.on('connection', (socket) => {
       // Start grace period
       userRoom.status = 'grace_period';
       userRoom.gracePeriodExpires = Date.now() + 10000; // 10 seconds
+      syncRoomToDatabase(roomId, userRoom).catch(() => {}); // Sync status change
       
       // Notify partner
       const partnerSocketId = activeSockets.get(
@@ -1764,6 +1909,7 @@ io.on('connection', (socket) => {
           activeRooms.delete(roomId!);
           textRoomActivity.delete(roomId!); // Clean up torch rule tracking
           gracePeriodTimeouts.delete(roomId!); // Clean up timeout reference
+          deleteRoomFromDatabase(roomId!).catch(() => {}); // Background cleanup
           console.log(`[Room] ✅ Room cleaned up after grace period`);
         }
       }, 10000);
@@ -1917,6 +2063,7 @@ io.on('connection', (socket) => {
           // Clean up room and activity tracking from memory (critical fix for memory leak)
           activeRooms.delete(roomId);
           textRoomActivity.delete(roomId); // Clean up torch rule tracking
+          deleteRoomFromDatabase(roomId).catch(() => {}); // Background cleanup
           
           console.log(`[Disconnect] ✅ Cleaned up room ${roomId} and marked users available`);
         }
@@ -1939,10 +2086,18 @@ io.on('connection', (socket) => {
   }
 });
 
-server.listen(PORT, () => {
+server.listen(PORT, async () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`   API: http://localhost:${PORT}`);
   console.log(`   WebSocket: ws://localhost:${PORT}`);
   console.log(`   ⚠️  In-memory store active - migrate to PostgreSQL for production`);
   console.log(`   ℹ️  Production mode - ready for real users`);
+  
+  // DUAL STORAGE: Recover active rooms and referrals from database on startup
+  if (process.env.DATABASE_URL) {
+    console.log('[Recovery] Starting database recovery...');
+    await recoverActiveRoomsFromDatabase();
+    await recoverReferralMappingsFromDatabase();
+    console.log('[Recovery] ✅ Database recovery complete');
+  }
 });
