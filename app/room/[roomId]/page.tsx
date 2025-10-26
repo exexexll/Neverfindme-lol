@@ -582,20 +582,42 @@ export default function RoomPage() {
         });
         
         socket.on('room:partner-disconnected', ({ gracePeriodSeconds }: any) => {
-          setShowReconnecting(true);
-          setReconnectCountdown(gracePeriodSeconds);
+          console.log('[Room] ⚠️ Partner disconnected - starting grace period:', gracePeriodSeconds, 's');
           
           // CRITICAL FIX: Clear existing countdown to prevent duplicates
           if (partnerDisconnectCountdownRef.current) {
             clearInterval(partnerDisconnectCountdownRef.current);
+            partnerDisconnectCountdownRef.current = null;
           }
+          
+          // CRITICAL FIX: Only show if WebRTC is actually disconnected
+          // Don't show if connection is still active (prevents false popups)
+          const pc = peerConnectionRef.current;
+          if (!pc || pc.connectionState === 'connected' || pc.connectionState === 'connecting') {
+            console.log('[Room] WebRTC still connected, not showing disconnect modal');
+            return;
+          }
+          
+          setShowReconnecting(true);
+          setReconnectCountdown(gracePeriodSeconds);
           
           // Countdown timer
           const interval = setInterval(() => {
             setReconnectCountdown((prev: number) => {
+              // Auto-hide if partner reconnected (double-check)
+              const currentPc = peerConnectionRef.current;
+              if (currentPc && currentPc.connectionState === 'connected') {
+                console.log('[Room] Connection restored during countdown - hiding modal');
+                setShowReconnecting(false);
+                clearInterval(interval);
+                partnerDisconnectCountdownRef.current = null;
+                return 10;
+              }
+              
               if (prev <= 1) {
                 clearInterval(interval);
                 partnerDisconnectCountdownRef.current = null;
+                setShowReconnecting(false); // Hide when countdown ends
                 return 0;
               }
               return prev - 1;
@@ -607,22 +629,30 @@ export default function RoomPage() {
         });
         
         socket.on('room:partner-reconnected', () => {
-          console.log('[Room] Partner reconnected');
-          setShowReconnecting(false);
-          setPeerDisconnected(false);
-          setConnectionPhase('connected');
+          console.log('[Room] ✅ Partner reconnected via socket');
           
-          // CRITICAL FIX: Clear countdown interval when partner reconnects
+          // CRITICAL FIX: Clear countdown IMMEDIATELY
           if (partnerDisconnectCountdownRef.current) {
             clearInterval(partnerDisconnectCountdownRef.current);
             partnerDisconnectCountdownRef.current = null;
+            console.log('[Room] Countdown cleared immediately');
           }
           
-          // If we're in a disconnected state, attempt to renegotiate WebRTC
+          // Hide reconnecting UI immediately
+          setShowReconnecting(false);
+          setPeerDisconnected(false);
+          setReconnectCountdown(10); // Reset for next time
+          
+          // Only change connectionPhase if not already connected
+          if (connectionPhase !== 'connected') {
+            setConnectionPhase('connected');
+          }
+          
+          // If WebRTC is disconnected, attempt to renegotiate
           if (peerConnectionRef.current && 
               (peerConnectionRef.current.connectionState === 'disconnected' || 
                peerConnectionRef.current.connectionState === 'failed')) {
-            console.log('[Room] Partner reconnected, renegotiating WebRTC connection');
+            console.log('[Room] WebRTC still disconnected, renegotiating...');
             
             // Trigger ICE restart to re-establish connection
             if (isInitiator) {
