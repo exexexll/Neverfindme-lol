@@ -27,7 +27,7 @@ export function PixelizedTeamPhoto() {
   useEffect(() => {
     if (!containerRef.current) return;
 
-    // Photo configurations - scattered across BOTH sides, BARELY visible
+    // Photo configurations - scattered, NO overlap with center text
     const photoConfigs = [
       // Left side
       { src: '/team-photo.jpg', width: 240, height: 300, top: '8%', left: '2%', rotation: -8, zIndex: 3 },
@@ -35,10 +35,10 @@ export function PixelizedTeamPhoto() {
       
       // Right side  
       { src: '/team-photo3.jpg', width: 230, height: 290, top: '5%', right: '3%', left: 'auto', rotation: -10, zIndex: 4 },
-      { src: '/team-photo4.jpg', width: 250, height: 310, top: '50%', right: '8%', left: 'auto', rotation: 8, zIndex: 1 },
+      { src: '/team-photo4.jpg', width: 250, height: 310, top: '45%', right: '8%', left: 'auto', rotation: 8, zIndex: 1 },
       
-      // Middle/floating
-      { src: '/team-photo5.jpg', width: 210, height: 260, top: '30%', left: '20%', rotation: -4, zIndex: 5 },
+      // Bottom right (moved from center to avoid text overlap)
+      { src: '/team-photo5.jpg', width: 200, height: 250, top: '70%', right: '15%', left: 'auto', rotation: -6, zIndex: 5 },
     ];
 
     // Create regular Image elements (NO pixelation, just dim)
