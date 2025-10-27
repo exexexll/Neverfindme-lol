@@ -743,27 +743,6 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
               )}
             </AnimatePresence>
             
-            {/* CAROUSEL: Next Post button (dynamic positioning to avoid UI overlap) */}
-            {totalMedia > 1 && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleSwipeLeft(); // Always advance (loops back to start)
-                }}
-                className={`absolute z-20 rounded-xl bg-white/95 hover:bg-white shadow-lg flex items-center gap-2 transition-all hover:scale-105 active:scale-95 ${
-                  isMobile 
-                    ? 'bottom-[88px] right-4 px-3 py-1.5' // Mobile: Above bottom controls, compact
-                    : 'top-4 right-4 px-4 py-2' // Desktop: Top-right, out of way
-                }`}
-              >
-                <span className={`text-gray-800 font-semibold ${isMobile ? 'text-xs' : 'text-sm'}`}>
-                  Next
-                </span>
-                <svg className={isMobile ? 'w-3 h-3 text-gray-800' : 'w-4 h-4 text-gray-800'} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-            )}
           </div>
         ) : (
           <div className="flex h-full items-center justify-center bg-black/80">
@@ -775,6 +754,28 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
       {/* Video Progress Bar - Removed from UserCard, now in MatchmakeOverlay */}
 
       {/* Status Banner - Removed for minimal UI */}
+
+      {/* Next Post Button - Bottom, above controls */}
+      {totalMedia > 1 && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            handleSwipeLeft();
+          }}
+          className={`absolute z-25 rounded-xl bg-white/95 hover:bg-white shadow-lg flex items-center gap-2 transition-all hover:scale-105 active:scale-95 ${
+            isMobile 
+              ? 'bottom-24 left-1/2 -translate-x-1/2 px-4 py-2'
+              : 'bottom-20 left-1/2 -translate-x-1/2 px-6 py-3'
+          }`}
+        >
+          <span className={`text-gray-800 font-semibold ${isMobile ? 'text-sm' : 'text-base'}`}>
+            Next Post
+          </span>
+          <svg className={isMobile ? 'w-4 h-4 text-gray-800' : 'w-5 h-5 text-gray-800'} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+          </svg>
+        </button>
+      )}
 
       {/* Controls - Bottom (Animates based on hover) */}
       <motion.div 

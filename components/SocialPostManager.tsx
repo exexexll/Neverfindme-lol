@@ -18,7 +18,25 @@ export function SocialPostManager({ initialPosts = [], onSave }: SocialPostManag
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Validate Instagram URL (supports any alphanumeric post ID)
+  // Normalize and validate Instagram URL
+  const normalizeInstagramUrl = (url: string): string => {
+    // Remove trailing slashes and query parameters
+    let normalized = url.trim().replace(/\/+$/, '').split('?')[0];
+    
+    // Extract shortcode (everything before 3rd dash or end)
+    const match = normalized.match(/instagram\.com\/(p|reel)\/([\w-]+)/);
+    if (match) {
+      const shortcode = match[2];
+      // Instagram shortcodes are usually 11 chars, but can be longer
+      // Keep only the actual shortcode (before any tracking params)
+      const cleanShortcode = shortcode.split('-').slice(0, 3).join('-');
+      normalized = `https://www.instagram.com/${match[1]}/${cleanShortcode}/`;
+      console.log('[SocialPostManager] Normalized:', url, '→', normalized);
+    }
+    
+    return normalized;
+  };
+  
   const isValidInstagramUrl = (url: string): boolean => {
     const pattern = /^https?:\/\/(www\.)?instagram\.com\/(p|reel)\/[\w-]+\/?$/;
     const isValid = pattern.test(url);
@@ -34,7 +52,9 @@ export function SocialPostManager({ initialPosts = [], onSave }: SocialPostManag
       return;
     }
 
-    if (!isValidInstagramUrl(newPostUrl)) {
+    const normalizedUrl = normalizeInstagramUrl(newPostUrl);
+    
+    if (!isValidInstagramUrl(normalizedUrl)) {
       setError('Invalid Instagram URL. Must be like: https://www.instagram.com/p/ABC123/');
       return;
     }
@@ -44,14 +64,14 @@ export function SocialPostManager({ initialPosts = [], onSave }: SocialPostManag
       return;
     }
 
-    if (posts.includes(newPostUrl)) {
+    if (posts.includes(normalizedUrl)) {
       setError('This post is already added');
       return;
     }
 
-    setPosts([...posts, newPostUrl]);
+    setPosts([...posts, normalizedUrl]);
     setNewPostUrl('');
-    console.log('[Analytics] Instagram post added');
+    console.log('[Analytics] Instagram post added (normalized):', normalizedUrl);
   };
 
   const handleRemovePost = (index: number) => {
