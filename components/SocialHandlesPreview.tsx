@@ -33,25 +33,43 @@ export function SocialHandlesPreview({ socials }: SocialHandlesPreviewProps) {
 
   // Normalize URL based on platform (research-based best practices)
   const normalizeUrl = (platform: string, handle: string): string => {
-    // Remove common prefixes: @, http://, https://
-    const clean = handle.replace(/^(@|https?:\/\/(www\.)?)/i, '').trim();
+    if (!handle || handle.trim() === '') return '#';
+    
+    // Clean handle: remove @, spaces, URLs, special chars
+    let clean = handle.trim();
+    
+    // If it's already a URL, extract just the username
+    if (clean.includes('instagram.com/')) {
+      clean = clean.split('instagram.com/').pop()?.split('/')[0] || '';
+    } else if (clean.includes('tiktok.com/@')) {
+      clean = clean.split('tiktok.com/@').pop()?.split('/')[0] || '';
+    } else if (clean.includes('snapchat.com/')) {
+      clean = clean.split('snapchat.com/').pop()?.split('/')[0] || '';
+    } else if (clean.includes('twitter.com/') || clean.includes('x.com/')) {
+      clean = clean.split('.com/').pop()?.split('/')[0] || '';
+    }
+    
+    // Remove @ prefix, spaces, special chars
+    clean = clean.replace(/^@/, '').replace(/[^a-zA-Z0-9._]/g, '');
+    
+    if (!clean) return '#';
     
     switch (platform) {
       case 'instagram':
-        // Instagram: username only, lowercase recommended
+        // Instagram: always lowercase, trailing slash
         return `https://www.instagram.com/${clean.toLowerCase()}/`;
       
       case 'snapchat':
-        // Snapchat: add/ endpoint for public profiles
+        // Snapchat: add/ endpoint, case-sensitive
         return `https://www.snapchat.com/add/${clean}`;
       
       case 'tiktok':
-        // TikTok: @ prefix in URL, username as-is
+        // TikTok: @ prefix in URL, case-sensitive
         return `https://www.tiktok.com/@${clean}`;
       
       case 'twitter':
-        // Twitter/X: username only
-        return `https://twitter.com/${clean}`;
+        // Twitter/X: new domain, case-insensitive
+        return `https://x.com/${clean}`;
       
       default:
         return '#';

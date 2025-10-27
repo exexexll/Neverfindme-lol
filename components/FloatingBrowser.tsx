@@ -33,22 +33,29 @@ export function FloatingBrowser({ isOpen, url, onClose }: FloatingBrowserProps) 
   }, [url, currentUrl]);
 
   const handleLoad = () => {
-    setLoading(false);
-    setError(null);
+    console.log('[FloatingBrowser] iframe loaded');
     
-    // Try to get iframe URL (may fail due to CORS)
-    try {
-      if (iframeRef.current?.contentWindow?.location.href) {
-        setCurrentUrl(iframeRef.current.contentWindow.location.href);
+    // Check if iframe actually loaded content or if it's blocked
+    setTimeout(() => {
+      try {
+        // Try to access iframe document
+        const iframeDoc = iframeRef.current?.contentDocument;
+        if (!iframeDoc || iframeDoc.body?.innerText === '') {
+          // Empty or blocked - show error
+          setError('This site blocks embedding (X-Frame-Options). Click "Open in New Tab" to view.');
+          setLoading(false);
+        } else {
+          // Successfully loaded
+          setLoading(false);
+          setError(null);
+        }
+      } catch (e) {
+        // CORS error means site likely loaded but we can't access it
+        // This is actually OK - assume it loaded
+        setLoading(false);
+        setError(null);
       }
-    } catch (e) {
-      // CORS blocks this - that's OK
-    }
-  };
-
-  const handleError = () => {
-    setError('This site cannot be displayed in the browser. Some sites block embedding for security.');
-    setLoading(false);
+    }, 1000); // Wait 1 second to let iframe finish loading
   };
 
   const handleRefresh = () => {
@@ -227,10 +234,9 @@ export function FloatingBrowser({ isOpen, url, onClose }: FloatingBrowserProps) 
             <iframe
               ref={iframeRef}
               src={currentUrl}
-              className="w-full h-full border-none"
+              className="w-full h-full border-none bg-white"
               sandbox="allow-same-origin allow-scripts allow-popups allow-forms allow-popups-to-escape-sandbox"
               onLoad={handleLoad}
-              onError={handleError}
               title="In-app browser"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             />
