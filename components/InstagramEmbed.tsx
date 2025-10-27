@@ -9,64 +9,73 @@ interface InstagramEmbedProps {
 }
 
 /**
- * Instagram Official Embed
- * Uses Instagram's approved embedding method
- * Legal and safe - no ToS violations
+ * Instagram Official Embed - Edgeless Design
+ * Uses Instagram platform script for better rendering
  */
 export function InstagramEmbed({ postUrl, onLoad }: InstagramEmbedProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const scriptLoadedRef = useRef(false);
 
   useEffect(() => {
-    // When Instagram embed script loads, process embeds
-    if (scriptLoadedRef.current && containerRef.current) {
-      // Instagram's embed.js looks for .instagram-media elements
-      // and transforms them into rich embeds
-      if ((window as any).instgrm?.Embeds) {
-        (window as any).instgrm.Embeds.process();
-        console.log('[InstagramEmbed] Processed embed for:', postUrl);
-        onLoad?.();
+    console.log('[InstagramEmbed] Rendering post:', postUrl);
+    
+    // Delay to ensure DOM is ready
+    const timer = setTimeout(() => {
+      if (scriptLoadedRef.current && containerRef.current) {
+        if ((window as any).instgrm?.Embeds) {
+          console.log('[InstagramEmbed] 🔄 Processing embed...');
+          (window as any).instgrm.Embeds.process();
+          onLoad?.();
+        } else {
+          console.warn('[InstagramEmbed] ⚠️ Instagram script not loaded yet');
+        }
       }
-    }
+    }, 500);
+    
+    return () => clearTimeout(timer);
   }, [postUrl, onLoad]);
 
   const handleScriptLoad = () => {
     scriptLoadedRef.current = true;
+    console.log('[InstagramEmbed] 📜 Script loaded');
     
     // Process embeds when script loads
-    if ((window as any).instgrm?.Embeds) {
+    if ((window as any).instgrm?.Embeds && containerRef.current) {
       (window as any).instgrm.Embeds.process();
-      console.log('[InstagramEmbed] Script loaded, processing embeds');
+      console.log('[InstagramEmbed] ✅ Processing embeds');
       onLoad?.();
     }
   };
 
   return (
     <>
-      {/* Instagram Embed Script (official) */}
+      {/* Instagram Platform Script (official, better rendering) */}
       <Script
-        src="https://www.instagram.com/embed.js"
-        strategy="lazyOnload"
+        src="https://platform.instagram.com/en_US/embeds.js"
+        strategy="afterInteractive"
         onLoad={handleScriptLoad}
       />
 
-      {/* Instagram Embed Container */}
-      <div ref={containerRef} className="w-full h-full flex items-center justify-center overflow-auto">
+      {/* Edgeless Instagram Embed - Full height */}
+      <div 
+        ref={containerRef} 
+        className="w-full h-full flex items-center justify-center overflow-y-auto overflow-x-hidden bg-black"
+        style={{ padding: 0 }}
+      >
         <blockquote
           className="instagram-media"
-          data-instgrm-captioned
           data-instgrm-permalink={postUrl}
           data-instgrm-version="14"
           style={{
-            background: '#FFF',
-            border: '0',
-            borderRadius: '3px',
-            boxShadow: '0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15)',
-            margin: '1px',
+            background: '#000',
+            border: 'none',
+            borderRadius: '0',
+            boxShadow: 'none',
+            margin: '0 auto',
             maxWidth: '540px',
             minWidth: '326px',
             padding: '0',
-            width: 'calc(100% - 2px)',
+            width: '99%',
           }}
         >
           {/* Fallback content while embed loads */}

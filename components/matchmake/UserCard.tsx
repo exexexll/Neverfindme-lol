@@ -716,8 +716,8 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
                   </svg>
                 </button>
                 
-                {/* Carousel Dots */}
-                <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 flex gap-2">
+                {/* Carousel Dots - Moved to bottom for better visibility */}
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex gap-2 bg-black/40 backdrop-blur-sm px-3 py-2 rounded-full">
                   {mediaItems.map((_, index) => (
                     <button
                       key={index}
@@ -725,11 +725,12 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
                         e.stopPropagation();
                         setCurrentMediaIndex(index);
                       }}
-                      className={`w-2 h-2 rounded-full transition-all ${
+                      className={`transition-all rounded-full ${
                         index === currentMediaIndex
-                          ? 'bg-white w-6'
-                          : 'bg-white/40 hover:bg-white/60'
+                          ? 'bg-white w-8 h-2'
+                          : 'bg-white/40 hover:bg-white/60 w-2 h-2'
                       }`}
+                      title={index === 0 ? 'Video' : `Post ${index}`}
                     />
                   ))}
                 </div>
