@@ -1314,7 +1314,7 @@ io.on('connection', (socket) => {
         if (currentRoom && currentRoom.status === 'grace_period') {
           const disconnectDuration = Math.floor((Date.now() - (currentRoom.gracePeriodExpires! - 10000)) / 1000);
           console.log(`[Room] ⏰ Grace period EXPIRED for room ${roomId.substring(0, 8)} - ending session`);
-          console.log(`[Room] User ${currentUserId.substring(0, 8)} did NOT reconnect within 10 seconds (was gone ${disconnectDuration}s)`);
+          console.log(`[Room] Disconnected user did NOT reconnect within 10 seconds (was gone ${disconnectDuration}s)`);
           console.log(`[Room] Ending call - both users will be redirected`);
           currentRoom.status = 'ended';
           
