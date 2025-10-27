@@ -77,10 +77,10 @@ export function InstagramEmbed({ postUrl, onLoad }: InstagramEmbedProps) {
         onLoad={handleScriptLoad}
       />
 
-      {/* Edgeless Instagram Embed - Full height */}
+      {/* Image-Only Instagram Embed */}
       <div 
         ref={containerRef} 
-        className="w-full h-full flex items-center justify-center overflow-y-auto overflow-x-hidden bg-black"
+        className="w-full h-full flex items-center justify-center overflow-hidden bg-black relative"
         style={{ padding: 0 }}
       >
         <blockquote
@@ -92,11 +92,14 @@ export function InstagramEmbed({ postUrl, onLoad }: InstagramEmbedProps) {
             border: 'none',
             borderRadius: '0',
             boxShadow: 'none',
-            margin: '0 auto',
-            maxWidth: '540px',
-            minWidth: '326px',
+            margin: '0',
+            maxWidth: 'none',
+            minWidth: '100%',
             padding: '0',
-            width: '99%',
+            width: '100%',
+            height: '100%',
+            transform: 'scale(1.5)',
+            transformOrigin: 'center 35%',
           }}
         >
           {/* Fallback content while embed loads */}

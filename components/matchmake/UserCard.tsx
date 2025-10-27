@@ -687,37 +687,27 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
               )}
             </AnimatePresence>
             
-            {/* CAROUSEL: Navigation Arrows (only if multiple items) */}
+            {/* CAROUSEL: Single Navigation Button (simplified) */}
             {totalMedia > 1 && (
               <>
-                {/* Left Arrow */}
+                {/* Single "Next" Button - Cycles through all items */}
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleSwipeRight(); // Right swipe = previous
+                    handleSwipeLeft(); // Always go forward (cycles to beginning)
                   }}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 z-30 w-12 h-12 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-sm flex items-center justify-center transition-all hover:scale-110"
-                >
-                  <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  </svg>
-                </button>
-                
-                {/* Right Arrow */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleSwipeLeft(); // Left swipe = next
-                  }}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 z-30 w-12 h-12 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-sm flex items-center justify-center transition-all hover:scale-110"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 z-30 w-14 h-14 rounded-full bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 shadow-lg flex flex-col items-center justify-center transition-all hover:scale-110 active:scale-95"
                 >
                   <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
+                  <span className="text-[10px] text-white/80 font-medium mt-0.5">
+                    {currentMediaIndex + 1}/{totalMedia}
+                  </span>
                 </button>
                 
-                {/* Carousel Dots - Moved to bottom for better visibility */}
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex gap-2 bg-black/40 backdrop-blur-sm px-3 py-2 rounded-full">
+                {/* Carousel Dots - Bottom center, compact */}
+                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-10 flex gap-1.5 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
                   {mediaItems.map((_, index) => (
                     <button
                       key={index}
@@ -727,8 +717,8 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
                       }}
                       className={`transition-all rounded-full ${
                         index === currentMediaIndex
-                          ? 'bg-white w-8 h-2'
-                          : 'bg-white/40 hover:bg-white/60 w-2 h-2'
+                          ? 'bg-gradient-to-r from-pink-500 to-purple-600 w-6 h-1.5'
+                          : 'bg-white/30 hover:bg-white/50 w-1.5 h-1.5'
                       }`}
                       title={index === 0 ? 'Video' : `Post ${index}`}
                     />
