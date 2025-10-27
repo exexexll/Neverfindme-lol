@@ -116,25 +116,29 @@ export function InstagramEmbed({ postUrl, onLoad }: InstagramEmbedProps) {
             height: 100%;
           }
           
-          /* Hide Instagram's top white section (username/header) */
+          /* AGGRESSIVE: Hide white header with scale/crop */
           .instagram-embed-wrapper :global(.instagram-media) {
             background: #000 !important;
             border: none !important;
             box-shadow: none !important;
             margin: 0 auto !important;
             max-width: 540px !important;
-            padding-top: 0 !important;
+            transform: scale(1.3);
+            transform-origin: center 38%;
+            overflow: hidden !important;
           }
           
-          /* Hide username header bar */
-          .instagram-embed-wrapper :global(.instagram-media > div:first-child),
-          .instagram-embed-wrapper :global(header) {
-            display: none !important;
-          }
-          
-          /* Move content up to fill space */
-          .instagram-embed-wrapper :global(.instagram-media > div) {
-            margin-top: -56px !important;
+          /* Black overlay to cover any remaining white */
+          .instagram-embed-wrapper::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 100px;
+            background: linear-gradient(to bottom, #000 0%, #000 60%, transparent 100%);
+            z-index: 5;
+            pointer-events: none;
           }
           
           /* Ensure iframe is properly sized */

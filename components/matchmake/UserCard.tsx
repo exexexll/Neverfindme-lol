@@ -699,42 +699,44 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
             {/* CAROUSEL: Smart arrow system - shows ours when Instagram's disappear */}
             {totalMedia > 1 && (
               <>
-                {/* Our Arrows - EXACT Instagram positioning (42px circles) */}
+                {/* Our Arrows - Always visible as fallback/replacement */}
+                {/* Left Arrow - Show on video OR when Instagram doesn't have Previous */}
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     handleSwipeRight();
                   }}
-                  className={`absolute top-1/2 -translate-y-1/2 rounded-full bg-white/90 hover:bg-white flex items-center justify-center transition-all duration-200 ${
-                    isMobile ? 'left-3 w-9 h-9' : 'left-4 w-[42px] h-[42px]'
+                  className={`absolute top-1/2 -translate-y-1/2 rounded-full bg-white/95 hover:bg-white flex items-center justify-center transition-opacity duration-300 ${
+                    isMobile ? 'left-2 w-10 h-10' : 'left-3 w-11 h-11'
                   } ${
-                    mediaItems[currentMediaIndex]?.type === 'instagram' ? 'opacity-0 pointer-events-none z-10' : 'opacity-100 z-30 shadow-lg'
+                    mediaItems[currentMediaIndex]?.type === 'instagram' ? 'opacity-0 pointer-events-none z-10' : 'opacity-100 z-40'
                   }`}
                   style={{ 
-                    boxShadow: mediaItems[currentMediaIndex]?.type !== 'instagram' ? '0 2px 8px rgba(0,0,0,0.15)' : 'none'
+                    boxShadow: '0 2px 12px rgba(0,0,0,0.2)'
                   }}
                 >
-                  <svg className={isMobile ? 'w-5 h-5 text-gray-700' : 'w-6 h-6 text-gray-700'} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+                  <svg className={isMobile ? 'w-5 h-5 text-gray-800' : 'w-6 h-6 text-gray-800'} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
                   </svg>
                 </button>
                 
+                {/* Right Arrow - Show on video OR when Instagram doesn't have Next */}
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     handleSwipeLeft();
                   }}
-                  className={`absolute top-1/2 -translate-y-1/2 rounded-full bg-white/90 hover:bg-white flex items-center justify-center transition-all duration-200 ${
-                    isMobile ? 'right-3 w-9 h-9' : 'right-4 w-[42px] h-[42px]'
+                  className={`absolute top-1/2 -translate-y-1/2 rounded-full bg-white/95 hover:bg-white flex items-center justify-center transition-opacity duration-300 ${
+                    isMobile ? 'right-2 w-10 h-10' : 'right-3 w-11 h-11'
                   } ${
-                    mediaItems[currentMediaIndex]?.type === 'instagram' ? 'opacity-0 pointer-events-none z-10' : 'opacity-100 z-30 shadow-lg'
+                    mediaItems[currentMediaIndex]?.type === 'instagram' ? 'opacity-0 pointer-events-none z-10' : 'opacity-100 z-40'
                   }`}
                   style={{ 
-                    boxShadow: mediaItems[currentMediaIndex]?.type !== 'instagram' ? '0 2px 8px rgba(0,0,0,0.15)' : 'none'
+                    boxShadow: '0 2px 12px rgba(0,0,0,0.2)'
                   }}
                 >
-                  <svg className={isMobile ? 'w-5 h-5 text-gray-700' : 'w-6 h-6 text-gray-700'} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                  <svg className={isMobile ? 'w-5 h-5 text-gray-800' : 'w-6 h-6 text-gray-800'} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                   </svg>
                 </button>
                 
