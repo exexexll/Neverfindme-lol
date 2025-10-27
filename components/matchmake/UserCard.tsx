@@ -8,7 +8,7 @@ import { generateReferralLink } from '@/lib/api';
 import { getSession } from '@/lib/session';
 import { formatDistance } from '@/lib/distanceCalculation';
 import { SocialHandlesPreview } from '@/components/SocialHandlesPreview';
-import { InstagramEmbed } from '@/components/InstagramEmbed';
+import { getDirectPhotoUrl } from '@/lib/instagramPhotoExtractor';
 
 interface UserCardProps {
   user: {
@@ -49,14 +49,34 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
   const [isVideoPaused, setIsVideoPaused] = useState(false);
   const [videoOrientation, setVideoOrientation] = useState<'portrait' | 'landscape' | 'unknown'>('unknown');
   
-  // CAROUSEL: Media index (0 = video, 1+ = Social posts)
+  // CAROUSEL: Media index (0 = video, 1+ = Instagram photos)
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
   
-  // Build media items (video first, then Instagram posts)
-  const mediaItems = [
-    ...(user.videoUrl ? [{ type: 'video' as const, url: user.videoUrl }] : []),
-    ...(user.instagramPosts || []).map(url => ({ type: 'instagram' as const, url }))
-  ];
+  // Build flat photo array (each photo is a separate slide)
+  const buildPhotoSlides = () => {
+    const slides: Array<{ type: 'video' | 'instagram-photo'; url: string; postUrl?: string }> = [];
+    
+    // Video first (always)
+    if (user.videoUrl) {
+      slides.push({ type: 'video', url: user.videoUrl });
+    }
+    
+    // Then extract photos from each Instagram post
+    (user.instagramPosts || []).forEach((postUrl) => {
+      // For now: Each post = 1 slide with direct photo URL
+      // Instagram posts can have multiple photos but we show first one
+      const photoUrl = getDirectPhotoUrl(postUrl);
+      slides.push({
+        type: 'instagram-photo',
+        url: photoUrl,
+        postUrl: postUrl
+      });
+    });
+    
+    return slides;
+  };
+  
+  const mediaItems = buildPhotoSlides();
   const totalMedia = mediaItems.length;
   
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -685,64 +705,57 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
                 </motion.div>
               ) : (
                 <motion.div
-                  key={`instagram-${currentMediaIndex}`}
+                  key={`instagram-photo-${currentMediaIndex}`}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.3 }}
-                  className="absolute inset-0"
+                  className="absolute inset-0 flex items-center justify-center bg-black"
                 >
-                  <InstagramEmbed postUrl={mediaItems[currentMediaIndex].url} />
+                  {/* Full-screen Instagram photo - CONTENT ONLY */}
+                  <img
+                    src={mediaItems[currentMediaIndex].url}
+                    alt="Instagram photo"
+                    className="w-full h-full object-contain"
+                    style={{
+                      maxWidth: '100%',
+                      maxHeight: '100%',
+                      objectFit: 'contain',
+                      objectPosition: 'center'
+                    }}
+                    onLoad={() => {
+                      console.log('[Carousel] ✅ Instagram photo loaded');
+                    }}
+                    onError={(e) => {
+                      console.error('[Carousel] ❌ Photo failed to load:', mediaItems[currentMediaIndex].url);
+                      console.log('[Carousel] Fallback: Showing Instagram link');
+                    }}
+                  />
                 </motion.div>
               )}
             </AnimatePresence>
             
-            {/* CAROUSEL: Navigation Arrows (reverted to original) */}
+            {/* CAROUSEL: Single Arrow + Page Counter */}
             {totalMedia > 1 && (
               <>
-                {/* Left Arrow */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleSwipeRight();
-                  }}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 z-30 w-12 h-12 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-sm flex items-center justify-center transition-all hover:scale-110"
-                >
-                  <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  </svg>
-                </button>
-                
-                {/* Right Arrow */}
+                {/* Single Right Arrow - Navigates through ALL photos */}
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     handleSwipeLeft();
                   }}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 z-30 w-12 h-12 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-sm flex items-center justify-center transition-all hover:scale-110"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 z-30 w-16 h-16 rounded-full bg-black/70 hover:bg-black/90 backdrop-blur-md flex items-center justify-center transition-all hover:scale-105 active:scale-95 shadow-xl border-2 border-white/20"
                 >
-                  <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" />
                   </svg>
                 </button>
                 
-                {/* Carousel Dots */}
-                <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 flex gap-2">
-                  {mediaItems.map((_, index) => (
-                    <button
-                      key={index}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setCurrentMediaIndex(index);
-                      }}
-                      className={`w-2 h-2 rounded-full transition-all ${
-                        index === currentMediaIndex
-                          ? 'bg-white w-6'
-                          : 'bg-white/40 hover:bg-white/60'
-                      }`}
-                      title={index === 0 ? 'Video' : `Post ${index}`}
-                    />
-                  ))}
+                {/* Page Counter */}
+                <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 bg-black/70 backdrop-blur-md px-4 py-2 rounded-full border border-white/20">
+                  <span className="text-white font-medium text-sm">
+                    {currentMediaIndex + 1} / {totalMedia}
+                  </span>
                 </div>
               </>
             )}
