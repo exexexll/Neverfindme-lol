@@ -77,12 +77,31 @@ export function InstagramEmbed({ postUrl, onLoad }: InstagramEmbedProps) {
         onLoad={handleScriptLoad}
       />
 
-      {/* Instagram Embed - Centered, Full Photo Visible */}
+      {/* Instagram Embed - Hide Instagram's internal navigation */}
       <div 
         ref={containerRef} 
-        className="w-full h-full flex items-center justify-center overflow-auto bg-black"
+        className="w-full h-full flex items-center justify-center overflow-auto bg-black instagram-embed-wrapper"
         style={{ padding: 0 }}
       >
+        <style jsx>{`
+          .instagram-embed-wrapper :global(.instagram-media) {
+            background: #000 !important;
+            border: none !important;
+            border-radius: 0 !important;
+            box-shadow: none !important;
+          }
+          /* Hide Instagram's internal carousel arrows */
+          .instagram-embed-wrapper :global(button[aria-label*="Next"]),
+          .instagram-embed-wrapper :global(button[aria-label*="Previous"]),
+          .instagram-embed-wrapper :global(.coreSpriteLeftChevron),
+          .instagram-embed-wrapper :global(.coreSpriteRightChevron) {
+            display: none !important;
+          }
+          /* Hide Instagram's carousel dots */
+          .instagram-embed-wrapper :global([role="tablist"]) {
+            display: none !important;
+          }
+        `}</style>
         <blockquote
           className="instagram-media"
           data-instgrm-permalink={postUrl}

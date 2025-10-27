@@ -99,7 +99,8 @@ export function SocialPostManager({ initialPosts = [], onSave }: SocialPostManag
       {/* Header */}
       <div>
         <h2 className="text-3xl font-bold text-white mb-2 flex items-center gap-3">
-          📷 Instagram Posts
+          <img src="/instagram.png" alt="Instagram" className="w-8 h-8 object-contain" />
+          Instagram Posts
           <span className="text-sm font-normal px-3 py-1 bg-gradient-to-r from-pink-500 to-purple-600 rounded-full">
             {posts.length}/10
           </span>
