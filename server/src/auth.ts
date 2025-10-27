@@ -34,6 +34,19 @@ export function createAuthRoutes(
     return res.status(400).json({ error: 'Invalid gender' });
   }
 
+  // CRITICAL: Check if USC email already exists before creating user
+  if (email && email.toLowerCase().endsWith('@usc.edu')) {
+    const existingUser = await store.getUserByEmail(email.toLowerCase());
+    if (existingUser) {
+      console.warn(`[Auth] Duplicate USC email attempt: ${email}`);
+      return res.status(409).json({ 
+        error: 'This USC email is already registered',
+        hint: 'You may have already created an account. Try logging in.',
+        existingAccount: true
+      });
+    }
+  }
+
   const userId = uuidv4();
   const sessionToken = uuidv4();
 
@@ -248,7 +261,10 @@ router.post('/link', async (req, res) => {
   // Check if email already exists
   const existingUser = await store.getUserByEmail(email);
   if (existingUser && existingUser.userId !== user.userId) {
-    return res.status(409).json({ error: 'Email already registered' });
+    return res.status(409).json({ 
+      error: 'Email already registered',
+      hint: 'This email is already linked to another account. Try logging in instead.'
+    });
   }
 
   // CRITICAL SECURITY: Validate password strength
