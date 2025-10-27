@@ -34,37 +34,49 @@ export function SocialHandlesPreview({ socials }: SocialHandlesPreviewProps) {
 
   return (
     <div className="flex flex-wrap gap-2 mt-2">
-      {availableSocials.slice(0, 3).map(platform => { // Show max 3 to avoid clutter
+      {availableSocials.map(platform => { // Show ALL socials (not just 3)
         const handle = socials[platform.key];
-        const url = platform.key === 'phone' 
-          ? `tel:${handle}`
-          : platform.key === 'discord'
-          ? '#' // Discord shows but isn't clickable
-          : `${platform.baseUrl}${handle}`;
+        
+        // Normalize URLs properly
+        let url = '';
+        if (platform.key === 'phone') {
+          url = `tel:${handle}`;
+        } else if (platform.key === 'discord') {
+          url = '#'; // Discord has no public profile URL
+        } else if (platform.key === 'instagram') {
+          // Remove @ if present, normalize
+          const cleanHandle = handle.replace(/^@/, '');
+          url = `https://www.instagram.com/${cleanHandle}/`;
+        } else if (platform.key === 'snapchat') {
+          const cleanHandle = handle.replace(/^@/, '');
+          url = `https://www.snapchat.com/add/${cleanHandle}`;
+        } else if (platform.key === 'tiktok') {
+          const cleanHandle = handle.replace(/^@/, '');
+          url = `https://www.tiktok.com/@${cleanHandle}`;
+        }
 
         return (
           <a
             key={platform.key}
             href={url}
             onClick={(e) => {
-              if (platform.key === 'discord') {
-                e.preventDefault(); // Discord has no URL, just show handle
+              if (platform.key === 'discord' || platform.key === 'phone') {
+                // Discord has no URL, phone opens tel:
+                if (platform.key === 'discord') {
+                  e.preventDefault();
+                }
+                // tel: links are handled by OS
               }
+              // All other links will be intercepted by useLinkInterceptor
             }}
             className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1 text-xs font-medium text-[#eaeaf0] hover:bg-white/20 transition-colors border border-white/20"
             title={`${platform.label}: ${handle}`}
           >
             <span>{platform.icon}</span>
-            <span className="max-w-[80px] truncate">{handle}</span>
+            <span className="max-w-[100px] truncate">{handle}</span>
           </a>
         );
       })}
-      
-      {availableSocials.length > 3 && (
-        <span className="inline-flex items-center rounded-full bg-white/10 px-2.5 py-1 text-xs text-[#eaeaf0]/70">
-          +{availableSocials.length - 3} more
-        </span>
-      )}
     </div>
   );
 }

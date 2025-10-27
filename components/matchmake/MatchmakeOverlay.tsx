@@ -11,6 +11,8 @@ import { CalleeNotification } from './CalleeNotification';
 import { LocationPermissionModal } from '@/components/LocationPermissionModal';
 import { VideoProgressBar } from './VideoProgressBar';
 import { requestAndUpdateLocation } from '@/lib/locationAPI';
+import { FloatingBrowser } from '@/components/FloatingBrowser';
+import { useLinkInterceptor } from '@/lib/useLinkInterceptor';
 
 interface MatchmakeOverlayProps {
   isOpen: boolean;
@@ -47,10 +49,24 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
   const [modeLocked, setModeLocked] = useState(false); // Lock mode after user starts browsing
   const [showModeSelection, setShowModeSelection] = useState(true); // Show mode selection first
   
+  // Floating browser state
+  const [browserUrl, setBrowserUrl] = useState('');
+  const [browserOpen, setBrowserOpen] = useState(false);
+  
   const socketRef = useRef<any>(null);
   const prevIndexRef = useRef<number>(-1);
   const lastActivityRef = useRef<number>(Date.now());
   const inactivityCheckRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Link interceptor for social handles
+  useLinkInterceptor({
+    onLinkClick: (url) => {
+      console.log('[Matchmake] Opening link in browser:', url);
+      setBrowserUrl(url);
+      setBrowserOpen(true);
+    },
+    enabled: !browserOpen && !incomingInvite, // Disable when browser or invite modal open
+  });
 
   // Track user activity for inactivity detection
   const recordActivity = useCallback(() => {
@@ -1640,6 +1656,13 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Floating Browser for Social Handles */}
+      <FloatingBrowser
+        isOpen={browserOpen}
+        url={browserUrl}
+        onClose={() => setBrowserOpen(false)}
+      />
 
     </>
   );
