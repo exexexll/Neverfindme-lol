@@ -8,6 +8,8 @@ import { getSession } from '@/lib/session';
 import { connectSocket, disconnectSocket } from '@/lib/socket';
 import { reportUser } from '@/lib/api';
 import { getMediaConstraints, getIceServers, detectDevice } from '@/lib/webrtc-config';
+import { FloatingBrowser } from '@/components/FloatingBrowser';
+import { useLinkInterceptor } from '@/lib/useLinkInterceptor';
 
 type ViewState = 'room' | 'ended';
 
@@ -87,6 +89,10 @@ export default function RoomPage() {
   const [reportSubmitted, setReportSubmitted] = useState(false);
   const [reportError, setReportError] = useState('');
   
+  // Floating browser state
+  const [browserUrl, setBrowserUrl] = useState('');
+  const [browserOpen, setBrowserOpen] = useState(false);
+  
   // Connecting phase tracking
   const [connectionPhase, setConnectionPhase] = useState<'initializing' | 'gathering' | 'connecting' | 'connected' | 'reconnecting'>('initializing');
   const [connectionTimeout, setConnectionTimeout] = useState(false);
@@ -113,6 +119,16 @@ export default function RoomPage() {
   const iceCandidateQueue = useRef<RTCIceCandidate[]>([]);
   const remoteDescriptionSet = useRef(false);
   const timerStarted = useRef(false);
+
+  // Link interceptor - open external links in floating browser
+  useLinkInterceptor({
+    onLinkClick: (url) => {
+      console.log('[VideoRoom] Opening link in browser:', url);
+      setBrowserUrl(url);
+      setBrowserOpen(true);
+    },
+    enabled: !browserOpen, // Disable when browser is open
+  });
 
   // Cleanup function - stops all media and closes connections
   // DEFINED EARLY so it can be used in event listeners
@@ -2050,6 +2066,13 @@ export default function RoomPage() {
           </motion.div>
         </div>
       )}
+
+      {/* Floating Browser for External Links */}
+      <FloatingBrowser
+        isOpen={browserOpen}
+        url={browserUrl}
+        onClose={() => setBrowserOpen(false)}
+      />
     </main>
   );
 }

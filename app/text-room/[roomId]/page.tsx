@@ -9,6 +9,8 @@ import { connectSocket } from '@/lib/socket';
 import { MessageBubble } from '@/components/chat/MessageBubble';
 import { ChatInput } from '@/components/chat/ChatInput';
 import { GIFPicker } from '@/components/chat/GIFPicker';
+import { FloatingBrowser } from '@/components/FloatingBrowser';
+import { useLinkInterceptor } from '@/lib/useLinkInterceptor';
 
 interface Message {
   messageId: string;
@@ -53,6 +55,10 @@ export default function TextChatRoom() {
   const [partnerTyping, setPartnerTyping] = useState(false);
   const [showEndConfirm, setShowEndConfirm] = useState(false);
   
+  // Floating browser state
+  const [browserUrl, setBrowserUrl] = useState('');
+  const [browserOpen, setBrowserOpen] = useState(false);
+  
   // BEST-IN-CLASS: Offline detection and message queueing
   const [isOnline, setIsOnline] = useState(true);
   
@@ -76,6 +82,16 @@ export default function TextChatRoom() {
   const disconnectCountdownRef = useRef<NodeJS.Timeout | null>(null); // CRITICAL: Track disconnect countdown
   const partnerDisconnectCountdownRef = useRef<NodeJS.Timeout | null>(null); // CRITICAL: Track partner disconnect countdown
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+
+  // Link interceptor - open external links in floating browser
+  useLinkInterceptor({
+    onLinkClick: (url) => {
+      console.log('[TextRoom] Opening link in browser:', url);
+      setBrowserUrl(url);
+      setBrowserOpen(true);
+    },
+    enabled: !browserOpen, // Disable when browser is open
+  });
 
   // Initialize socket and load message history
   useEffect(() => {
@@ -1032,6 +1048,13 @@ export default function TextChatRoom() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Floating Browser for External Links */}
+      <FloatingBrowser
+        isOpen={browserOpen}
+        url={browserUrl}
+        onClose={() => setBrowserOpen(false)}
+      />
     </main>
   );
 }
