@@ -699,53 +699,42 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
             {/* CAROUSEL: Navigation (Instagram overlays when multi-photo) */}
             {totalMedia > 1 && (
               <>
-                {/* Our Arrows - Visual only, Instagram's arrows overlay for multi-photo */}
-                {/* Only show if NOT on Instagram or as visual guide */}
+                {/* Arrows - Instagram style (white semi-transparent) */}
                 {mediaItems[currentMediaIndex]?.type !== 'instagram' && (
                   <>
-                    {/* Left Arrow */}
+                    {/* Left Arrow - Instagram style */}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         handleSwipeRight();
                       }}
-                      className="absolute left-4 top-1/2 -translate-y-1/2 z-30 w-12 h-12 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-sm flex items-center justify-center transition-all hover:scale-110"
+                      className={`absolute top-1/2 -translate-y-1/2 z-30 rounded-full bg-white/90 hover:bg-white shadow-lg flex items-center justify-center transition-all hover:scale-110 active:scale-95 ${
+                        isMobile ? 'left-2 w-8 h-8' : 'left-4 w-10 h-10'
+                      }`}
                     >
-                      <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className={isMobile ? 'w-5 h-5 text-gray-800' : 'w-6 h-6 text-gray-800'} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                       </svg>
                     </button>
                     
-                    {/* Right Arrow */}
+                    {/* Right Arrow - Instagram style */}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         handleSwipeLeft();
                       }}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 z-30 w-12 h-12 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-sm flex items-center justify-center transition-all hover:scale-110"
+                      className={`absolute top-1/2 -translate-y-1/2 z-30 rounded-full bg-white/90 hover:bg-white shadow-lg flex items-center justify-center transition-all hover:scale-110 active:scale-95 ${
+                        isMobile ? 'right-2 w-8 h-8' : 'right-4 w-10 h-10'
+                      }`}
                     >
-                      <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className={isMobile ? 'w-5 h-5 text-gray-800' : 'w-6 h-6 text-gray-800'} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                       </svg>
                     </button>
                   </>
                 )}
                 
-                {/* Visual arrow overlays when on Instagram (show our SVG over Instagram buttons) */}
-                {mediaItems[currentMediaIndex]?.type === 'instagram' && (
-                  <>
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 z-40 w-12 h-12 flex items-center justify-center pointer-events-none">
-                      <svg className="w-6 h-6 text-white drop-shadow-lg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                      </svg>
-                    </div>
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 z-40 w-12 h-12 flex items-center justify-center pointer-events-none">
-                      <svg className="w-6 h-6 text-white drop-shadow-lg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </div>
-                  </>
-                )}
+                {/* When on Instagram: Let Instagram's arrows show (they match our style now) */}
                 
                 {/* Page Counter - Better position for mobile */}
                 <div className={`absolute z-10 bg-black/70 backdrop-blur-md rounded-full border border-white/20 ${
