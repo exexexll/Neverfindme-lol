@@ -81,17 +81,8 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
       setIsVideoPaused(true);
     }
     
-    // SYNC: If navigating TO Instagram, click its "Next" button
-    if (mediaItems[nextIndex]?.type === 'instagram') {
-      setTimeout(() => {
-        const instagramNextBtn = document.querySelector('.instagram-embed-wrapper iframe')?.contentWindow?.document
-          ?.querySelector('button[aria-label*="Next"]');
-        if (instagramNextBtn) {
-          (instagramNextBtn as HTMLElement).click();
-          console.log('[Carousel] 🔄 Synced with Instagram internal carousel');
-        }
-      }, 100);
-    }
+    // Note: Can't sync with Instagram's internal carousel (CORS blocks iframe access)
+    // Instagram's arrows are hidden via CSS instead
   };
 
   const handleSwipeRight = () => {
@@ -106,17 +97,8 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
       setIsVideoPaused(true);
     }
     
-    // SYNC: If navigating TO Instagram, click its "Previous" button
-    if (mediaItems[prevIndex]?.type === 'instagram') {
-      setTimeout(() => {
-        const instagramPrevBtn = document.querySelector('.instagram-embed-wrapper iframe')?.contentWindow?.document
-          ?.querySelector('button[aria-label*="Previous"]');
-        if (instagramPrevBtn) {
-          (instagramPrevBtn as HTMLElement).click();
-          console.log('[Carousel] 🔄 Synced with Instagram internal carousel');
-        }
-      }, 100);
-    }
+    // Note: Can't sync with Instagram's internal carousel (CORS blocks iframe access)
+    // Instagram's arrows are hidden via CSS instead
   };
   
   // ENHANCEMENT: Swipe gesture handlers (MUST be unconditional)
