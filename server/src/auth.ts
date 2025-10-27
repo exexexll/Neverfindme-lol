@@ -252,6 +252,25 @@ router.post('/link', async (req, res) => {
     return res.status(404).json({ error: 'User not found' });
   }
 
+  // SECURITY: Check if user has a pending USC email verification
+  if (user.pending_email && user.pending_email.endsWith('@usc.edu')) {
+    return res.status(403).json({ 
+      error: 'You signed up with a USC email. Please verify that email instead.',
+      hint: 'Complete the USC email verification you started during signup.',
+      pendingEmail: user.pending_email,
+      requiresEmailVerification: true
+    });
+  }
+
+  // SECURITY: Check if user already has a verified USC email
+  if (user.email && user.email.endsWith('@usc.edu') && user.email_verified) {
+    return res.status(403).json({ 
+      error: 'Your account is already linked to a USC email',
+      hint: 'USC accounts cannot be changed. Contact support if needed.',
+      email: user.email
+    });
+  }
+
   // CRITICAL: Check if email already exists
   const existingUser = await store.getUserByEmail(email);
   if (existingUser && existingUser.userId !== user.userId) {
