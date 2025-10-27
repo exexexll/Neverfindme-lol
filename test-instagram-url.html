@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instagram Embed Test</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #000;
+            color: #fff;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #fff;
+        }
+        .test-url {
+            background: #222;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 20px 0;
+            word-break: break-all;
+        }
+        .embed-container {
+            background: #000;
+            min-height: 600px;
+            padding: 20px;
+            border: 1px solid #333;
+            border-radius: 8px;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success { background: #0a4; }
+        .error { background: #a04; }
+        .info { background: #04a; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Instagram Embed Test</h1>
+        
+        <div class="test-url">
+            <strong>Test URL:</strong><br>
+            https://www.instagram.com/p/DN-AsYIDeL0QOKzDNBIln1Cb5uDIJR8zADOHHE0
+        </div>
+
+        <div id="status"></div>
+
+        <div class="embed-container">
+            <blockquote 
+                class="instagram-media" 
+                data-instgrm-permalink="https://www.instagram.com/p/DN-AsYIDeL0QOKzDNBIln1Cb5uDIJR8zADOHHE0"
+                data-instgrm-version="14"
+                style="background:#FFF; border:0; border-radius:3px; box-shadow:0 0 1px 0 rgba(0,0,0,0.5),0 1px 10px 0 rgba(0,0,0,0.15); margin: 1px; max-width:540px; min-width:326px; padding:0; width:99.375%; width:-webkit-calc(100% - 2px); width:calc(100% - 2px);">
+                <div style="padding:16px;">
+                    <a href="https://www.instagram.com/p/DN-AsYIDeL0QOKzDNBIln1Cb5uDIJR8zADOHHE0" 
+                       style="background:#FFFFFF; line-height:0; padding:0 0; text-align:center; text-decoration:none; width:100%;" 
+                       target="_blank">
+                        <div style="display: flex; flex-direction: row; align-items: center;">
+                            <div style="background-color: #F4F4F4; border-radius: 50%; flex-grow: 0; height: 40px; margin-right: 14px; width: 40px;"></div>
+                            <div style="display: flex; flex-direction: column; flex-grow: 1; justify-content: center;">
+                                <div style="background-color: #F4F4F4; border-radius: 4px; flex-grow: 0; height: 14px; margin-bottom: 6px; width: 100px;"></div>
+                                <div style="background-color: #F4F4F4; border-radius: 4px; flex-grow: 0; height: 14px; width: 60px;"></div>
+                            </div>
+                        </div>
+                        <div style="padding: 19% 0;"></div>
+                        <div style="display:block; height:50px; margin:0 auto 12px; width:50px;">
+                            <svg width="50px" height="50px" viewBox="0 0 60 60">
+                                <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+                                    <g transform="translate(-511.000000, -20.000000)" fill="#000000">
+                                        <path d="M570.82,37.631 C570.674,34.438 570.167,32.258 569.425,30.349 C568.659,28.377 567.633,26.702 565.965,25.035 C564.297,23.368 562.623,22.342 560.652,21.575 C558.743,20.834 556.562,20.326 553.369,20.18 C550.169,20.033 549.148,20 541,20 C532.853,20 531.831,20.033 528.631,20.18 C525.438,20.326 523.257,20.834 521.349,21.575 C519.376,22.342 517.703,23.368 516.035,25.035 C514.368,26.702 513.342,28.377 512.574,30.349 C511.834,32.258 511.326,34.438 511.181,37.631 C511.035,40.831 511,41.851 511,50 C511,58.147 511.035,59.17 511.181,62.369 C511.326,65.562 511.834,67.743 512.574,69.651 C513.342,71.625 514.368,73.296 516.035,74.965 C517.703,76.634 519.376,77.658 521.349,78.425 C523.257,79.167 525.438,79.673 528.631,79.82 C531.831,79.965 532.853,80.001 541,80.001 C549.148,80.001 550.169,79.965 553.369,79.82 C556.562,79.673 558.743,79.167 560.652,78.425 C562.623,77.658 564.297,76.634 565.965,74.965 C567.633,73.296 568.659,71.625 569.425,69.651 C570.167,67.743 570.674,65.562 570.82,62.369 C570.966,59.17 571,58.147 571,50 C571,41.851 570.966,40.831 570.82,37.631"></path>
+                                    </g>
+                                </g>
+                            </svg>
+                        </div>
+                        <div style="padding-top: 8px;">
+                            <div style="color:#3897f0; font-family:Arial,sans-serif; font-size:14px; font-style:normal; font-weight:550; line-height:18px;">
+                                View this post on Instagram
+                            </div>
+                        </div>
+                    </a>
+                </div>
+            </blockquote>
+        </div>
+    </div>
+
+    <script async src="https://platform.instagram.com/en_US/embeds.js"></script>
+    
+    <script>
+        const status = document.getElementById('status');
+        
+        function addStatus(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `status ${type}`;
+            div.textContent = message;
+            status.appendChild(div);
+        }
+
+        window.addEventListener('load', () => {
+            addStatus('✅ Page loaded', 'success');
+            
+            // Check if script loaded
+            setTimeout(() => {
+                if (window.instgrm) {
+                    addStatus('✅ Instagram script loaded', 'success');
+                    addStatus('Processing embeds...', 'info');
+                    
+                    if (window.instgrm.Embeds) {
+                        window.instgrm.Embeds.process();
+                        addStatus('✅ Embed processing called', 'success');
+                        
+                        // Check again after 3 seconds
+                        setTimeout(() => {
+                            const embed = document.querySelector('.instagram-media iframe');
+                            if (embed) {
+                                addStatus('✅ Instagram embed transformed successfully!', 'success');
+                            } else {
+                                addStatus('⚠️ Still showing fallback - may be normal', 'info');
+                                addStatus('Click "View this post on Instagram" to verify URL works', 'info');
+                            }
+                        }, 3000);
+                    }
+                } else {
+                    addStatus('❌ Instagram script failed to load', 'error');
+                    addStatus('Check network tab for blocked requests', 'error');
+                }
+            }, 2000);
+        });
+    </script>
+</body>
+</html>
+

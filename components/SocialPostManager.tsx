@@ -18,10 +18,12 @@ export function SocialPostManager({ initialPosts = [], onSave }: SocialPostManag
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Validate Instagram URL
+  // Validate Instagram URL (supports any alphanumeric post ID)
   const isValidInstagramUrl = (url: string): boolean => {
-    const pattern = /^https?:\/\/(www\.)?instagram\.com\/(p|reel)\/[A-Za-z0-9_-]+\/?$/;
-    return pattern.test(url);
+    const pattern = /^https?:\/\/(www\.)?instagram\.com\/(p|reel)\/[\w-]+\/?$/;
+    const isValid = pattern.test(url);
+    console.log('[SocialPostManager] URL validation:', url, '→', isValid);
+    return isValid;
   };
 
   const handleAddPost = () => {
