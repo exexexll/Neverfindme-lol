@@ -86,7 +86,42 @@ export function SocialHandlesPreview({ socials }: SocialHandlesPreviewProps) {
           <a
             key={platform.key}
             href={url}
-            className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 transition-all flex items-center justify-center border border-white/20 hover:scale-110 active:scale-95"
+            onClick={(e) => {
+              // CRITICAL: Skip FloatingBrowser for social media
+              // These sites block iframes (X-Frame-Options)
+              // Open directly instead
+              e.preventDefault();
+              e.stopPropagation();
+              
+              console.log(`[Social] Opening ${platform.label} directly:`, url);
+              
+              // Try deep link on mobile (opens native app if installed)
+              if (typeof window !== 'undefined' && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+                const deepLinks: Record<string, string> = {
+                  'instagram': `instagram://user?username=${clean}`,
+                  'tiktok': `tiktok://user?username=${clean}`,
+                  'twitter': `twitter://user?screen_name=${clean}`,
+                  'snapchat': `snapchat://add/${clean}`,
+                };
+                
+                if (deepLinks[platform.key]) {
+                  // Try deep link
+                  window.location.href = deepLinks[platform.key];
+                  
+                  // Fallback to web after 500ms if app not installed
+                  setTimeout(() => {
+                    window.open(url, '_blank', 'noopener,noreferrer');
+                  }, 500);
+                } else {
+                  // No deep link, open web
+                  window.open(url, '_blank', 'noopener,noreferrer');
+                }
+              } else {
+                // Desktop: Open in new tab
+                window.open(url, '_blank', 'noopener,noreferrer');
+              }
+            }}
+            className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 transition-all flex items-center justify-center border border-white/20 hover:scale-110 active:scale-95 cursor-pointer"
             title={`${platform.label}: ${handle}`}
           >
             {/* Official app icon - use PNG with transparent background */}
