@@ -1,13 +1,15 @@
 import sgMail from '@sendgrid/mail';
 
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
-const FROM_EMAIL = process.env.FROM_EMAIL || 'noreply@bumpin.com';
+const FROM_EMAIL = process.env.EMAIL_FROM || process.env.FROM_EMAIL || 'everything@napalmsky.com';
 
 if (SENDGRID_API_KEY) {
   sgMail.setApiKey(SENDGRID_API_KEY);
-  console.log('[Email] SendGrid configured');
+  console.log('[Email] ✅ SendGrid configured');
+  console.log('[Email] From email:', FROM_EMAIL);
 } else {
-  console.warn('[Email] SendGrid not configured');
+  console.warn('[Email] ⚠️ SENDGRID_API_KEY not configured - emails will NOT send');
+  console.warn('[Email] Set SENDGRID_API_KEY in Railway Variables tab');
 }
 
 export async function sendVerificationEmail(
