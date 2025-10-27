@@ -137,7 +137,7 @@ CREATE INDEX idx_cooldowns_user_id_2 ON cooldowns(user_id_2);
 -- ===== INVITE CODES TABLE =====
 CREATE TABLE invite_codes (
   code VARCHAR(20) PRIMARY KEY,
-  created_by UUID REFERENCES users(user_id) ON DELETE SET NULL,
+  created_by VARCHAR(255) NOT NULL, -- Changed to VARCHAR to allow 'admin' identifier (no FK constraint)
   created_by_name VARCHAR(255),
   created_at TIMESTAMP DEFAULT NOW(),
   type VARCHAR(20) NOT NULL CHECK (type IN ('user', 'admin')),
