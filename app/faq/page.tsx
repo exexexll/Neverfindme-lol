@@ -60,12 +60,12 @@ const faqs: FAQItem[] = [
   {
     category: 'features',
     question: 'What is the Torch Rule in text mode?',
-    answer: "Text mode has unlimited duration but requires activity. If neither user sends a message for 2 minutes, you get a 60-second warning. Send any message to \"relight the torch\" and continue. If the full 3 minutes of inactivity passes, the chat ends automatically."
+    answer: 'Text mode has unlimited duration but requires activity. If neither user sends a message for 2 minutes, you get a 60-second warning. Send any message to &ldquo;relight the torch&rdquo; and continue. If the full 3 minutes of inactivity passes, the chat ends automatically.'
   },
   {
     category: 'features',
     question: 'What is the 24-hour cooldown?',
-    answer: 'After completing a call with someone, you can\'t match with them again for 24 hours. This encourages meeting new people and prevents spam. The cooldown is automatic and applies to both video and text chats.'
+    answer: 'After completing a call with someone, you can&apos;t match with them again for 24 hours. This encourages meeting new people and prevents spam. The cooldown is automatic and applies to both video and text chats.'
   },
   {
     category: 'features',
@@ -75,12 +75,12 @@ const faqs: FAQItem[] = [
   {
     category: 'features',
     question: 'What is the Intro/Wingperson feature?',
-    answer: 'See someone you think your friend would like? Click "Introduce Friend" to generate a unique link. Share it with your friend. When they sign up, the person you introduced them to gets notified. It\'s a matchmaker feature!'
+    answer: 'See someone you think your friend would like? Click &ldquo;Introduce Friend&rdquo; to generate a unique link. Share it with your friend. When they sign up, the person you introduced them to gets notified. It&apos;s a matchmaker feature!'
   },
   {
     category: 'features',
     question: 'Can I share my social media during a call?',
-    answer: 'Yes! Click the "Share Socials" button during video or text chat. This shares the handles you\'ve set up in your Socials page (Instagram, Snapchat, TikTok, Discord, phone number). Both users can exchange socials to continue the conversation off-platform.'
+    answer: 'Yes! Click the &ldquo;Share Socials&rdquo; button during video or text chat. This shares the handles you&apos;ve set up in your Socials page (Instagram, Snapchat, TikTok, Discord, phone number). Both users can exchange socials to continue the conversation off-platform.'
   },
   
   // SAFETY

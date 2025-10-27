@@ -31,7 +31,7 @@ export default function HomePage() {
                 <div className="border-l-4 border-[#ffc46a] pl-6 my-6">
                   <h3 className="font-bold text-[#eaeaf0] mb-2">No AI.</h3>
                   <p className="text-[#e6e6e9]/80">
-                    BUMPIN swore by the principle and movement of Saying NO to AI, especially using it as a matchmaker. AI shouldn't come in between human affairs, for privacy and practical reasons.
+                    BUMPIN swore by the principle and movement of Saying NO to AI, especially using it as a matchmaker. AI shouldn&apos;t come in between human affairs, for privacy and practical reasons.
                   </p>
                 </div>
               </div>
