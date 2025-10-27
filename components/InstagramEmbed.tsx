@@ -15,34 +15,55 @@ interface InstagramEmbedProps {
 export function InstagramEmbed({ postUrl, onLoad }: InstagramEmbedProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const scriptLoadedRef = useRef(false);
+  const processedRef = useRef(false);
 
   useEffect(() => {
-    console.log('[InstagramEmbed] Rendering post:', postUrl);
+    console.log('[InstagramEmbed] 🎬 Rendering post:', postUrl);
+    console.log('[InstagramEmbed] Container exists:', !!containerRef.current);
+    console.log('[InstagramEmbed] Script loaded:', scriptLoadedRef.current);
     
-    // Delay to ensure DOM is ready
-    const timer = setTimeout(() => {
-      if (scriptLoadedRef.current && containerRef.current) {
-        if ((window as any).instgrm?.Embeds) {
-          console.log('[InstagramEmbed] 🔄 Processing embed...');
-          (window as any).instgrm.Embeds.process();
-          onLoad?.();
-        } else {
-          console.warn('[InstagramEmbed] ⚠️ Instagram script not loaded yet');
+    // Reset processed flag when URL changes
+    processedRef.current = false;
+    
+    // Multiple attempts to process embed
+    let attempts = 0;
+    const maxAttempts = 5;
+    
+    const tryProcess = () => {
+      attempts++;
+      console.log(`[InstagramEmbed] 🔄 Attempt ${attempts}/${maxAttempts}`);
+      
+      if (containerRef.current && (window as any).instgrm?.Embeds) {
+        console.log('[InstagramEmbed] ✅ Processing NOW...');
+        (window as any).instgrm.Embeds.process();
+        processedRef.current = true;
+        onLoad?.();
+      } else {
+        console.warn(`[InstagramEmbed] ⚠️ Not ready yet - Script loaded: ${!!((window as any).instgrm)}, Container: ${!!containerRef.current}`);
+        
+        if (attempts < maxAttempts) {
+          setTimeout(tryProcess, 1000); // Try again in 1 second
         }
       }
-    }, 500);
+    };
+    
+    // Start trying after 500ms
+    const timer = setTimeout(tryProcess, 500);
     
     return () => clearTimeout(timer);
   }, [postUrl, onLoad]);
 
   const handleScriptLoad = () => {
     scriptLoadedRef.current = true;
-    console.log('[InstagramEmbed] 📜 Script loaded');
+    console.log('[InstagramEmbed] 📜 Script loaded from Instagram CDN');
+    console.log('[InstagramEmbed] window.instgrm:', !!(window as any).instgrm);
+    console.log('[InstagramEmbed] window.instgrm.Embeds:', !!(window as any).instgrm?.Embeds);
     
-    // Process embeds when script loads
-    if ((window as any).instgrm?.Embeds && containerRef.current) {
+    // Process immediately when script loads
+    if ((window as any).instgrm?.Embeds && containerRef.current && !processedRef.current) {
+      console.log('[InstagramEmbed] 🚀 Processing on script load...');
       (window as any).instgrm.Embeds.process();
-      console.log('[InstagramEmbed] ✅ Processing embeds');
+      processedRef.current = true;
       onLoad?.();
     }
   };
