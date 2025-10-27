@@ -53,8 +53,9 @@ export function PixelizedTeamPhoto() {
       photoDiv.style.transform = `rotate(${config.rotation}deg)`;
       photoDiv.style.zIndex = String(config.zIndex);
       photoDiv.style.animation = `fadeInBounce 0.6s ease-out ${index * 0.1}s both`;
+      photoDiv.style.mixBlendMode = 'normal'; // Allows layering visibility
 
-      // Polaroid frame (responsive opacity)
+      // Polaroid frame (responsive opacity, semi-transparent for layering)
       const frame = document.createElement('div');
       frame.className = 'w-full h-full p-2.5';
       // Almost invisible on mobile
@@ -62,9 +63,10 @@ export function PixelizedTeamPhoto() {
         frame.style.backgroundColor = 'rgba(255, 255, 255, 0.15)'; // Very dim on mobile
         frame.style.boxShadow = '0 4px 12px rgba(0,0,0,0.1)';
       } else {
-        frame.style.backgroundColor = 'rgba(255, 255, 255, 0.9)'; // Visible on desktop
-        frame.style.boxShadow = '0 8px 24px rgba(0,0,0,0.4), 0 2px 6px rgba(0,0,0,0.2)';
+        frame.style.backgroundColor = 'rgba(255, 255, 255, 0.75)'; // Semi-transparent for layering
+        frame.style.boxShadow = '0 8px 24px rgba(0,0,0,0.3), 0 2px 6px rgba(0,0,0,0.15)';
       }
+      frame.style.backdropFilter = 'blur(4px)'; // Subtle blur for depth
 
       // Image container (regular image, very dim)
       const imgContainer = document.createElement('div');
