@@ -16,33 +16,47 @@ export async function sendVerificationEmail(
   userName: string
 ): Promise<boolean> {
   if (!SENDGRID_API_KEY) {
-    console.error('[Email] SendGrid not configured');
+    console.error('[Email] ❌ SENDGRID_API_KEY not set in environment variables');
+    console.error('[Email] Set SENDGRID_API_KEY in Railway dashboard or .env file');
+    console.error('[Email] See: SENDGRID-EMAIL-VERIFICATION-TUTORIAL.md');
     return false;
   }
 
   try {
     await sgMail.send({
       to: email,
-      from: FROM_EMAIL,
-      subject: 'Verify your BUMPIn account',
+      from: {
+        email: FROM_EMAIL,
+        name: 'BUMPIN'
+      },
+      subject: 'Verify your BUMPIN account',
+      text: `Hi ${userName},\n\nYour verification code is: ${code}\n\nThis code expires in 15 minutes.\n\nIf you didn't request this, please ignore this email.\n\n- BUMPIN Team`,
       html: `
-        <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;">
-          <h1 style="color:#ff9b6b;text-align:center;">Verify Your Email</h1>
-          <p>Hi ${userName},</p>
-          <p>Your verification code is:</p>
-          <div style="background:#f5f5f5;padding:30px;text-align:center;margin:20px 0;border-radius:10px;">
-            <div style="font-size:36px;font-weight:bold;letter-spacing:8px;color:#333;">${code}</div>
+        <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;background:#f9f9f9;">
+          <div style="background:white;border-radius:10px;padding:30px;box-shadow:0 2px 10px rgba(0,0,0,0.1);">
+            <h1 style="color:#ffc46a;text-align:center;margin-bottom:10px;">BUMPIN</h1>
+            <h2 style="color:#333;text-align:center;margin-top:0;">Verify Your Email</h2>
+            <p style="color:#666;font-size:16px;">Hi <strong>${userName}</strong>,</p>
+            <p style="color:#666;font-size:16px;">Your verification code is:</p>
+            <div style="background:linear-gradient(135deg,#ffc46a,#ff7b4b);padding:30px;text-align:center;margin:30px 0;border-radius:10px;">
+              <div style="font-size:42px;font-weight:bold;letter-spacing:12px;color:white;text-shadow:2px 2px 4px rgba(0,0,0,0.2);">${code}</div>
+            </div>
+            <p style="color:#666;font-size:14px;">This code expires in <strong>15 minutes</strong>.</p>
+            <hr style="border:none;border-top:1px solid #eee;margin:30px 0;">
+            <p style="color:#999;font-size:12px;text-align:center;">If you didn't request this, please ignore this email.</p>
+            <p style="color:#999;font-size:12px;text-align:center;">- BUMPIN Team</p>
           </div>
-          <p>Expires in <strong>10 minutes</strong>.</p>
-          <p style="color:#666;font-size:14px;">Ignore if you didn't request this.</p>
         </div>
       `,
     });
     
-    console.log('[Email] Sent to:', email);
+    console.log(`[Email] ✅ Verification code sent to: ${email}`);
     return true;
   } catch (error: any) {
-    console.error('[Email] Failed:', error.message);
+    console.error('[Email] ❌ SendGrid error:', error.message);
+    if (error.response) {
+      console.error('[Email] Response body:', JSON.stringify(error.response.body, null, 2));
+    }
     return false;
   }
 }

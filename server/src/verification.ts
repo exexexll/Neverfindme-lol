@@ -57,10 +57,15 @@ router.post('/send', requireAuth, async (req: any, res) => {
   
   const sent = await sendVerificationEmail(email, code, user.name);
   if (!sent) {
-    return res.status(500).json({ error: 'Failed to send email' });
+    console.error(`[Verification] ❌ Email send failed for ${email} - check SENDGRID_API_KEY`);
+    return res.status(500).json({ 
+      error: 'Failed to send verification email',
+      hint: 'SendGrid may not be configured. Contact support.',
+      sendgridConfigured: !!process.env.SENDGRID_API_KEY
+    });
   }
   
-  console.log(`[Verification] Code sent to ${email} for user ${user.userId.substring(0, 8)} (not saved until verified)`);
+  console.log(`[Verification] ✅ Code sent to ${email} for user ${user.userId.substring(0, 8)} (not saved until verified)`);
   
   res.json({ success: true, expiresAt, email }); // Return email so frontend can display it
 });
