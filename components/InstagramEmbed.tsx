@@ -84,45 +84,54 @@ export function InstagramEmbed({ postUrl, onLoad }: InstagramEmbedProps) {
         style={{ padding: 0 }}
       >
         <style jsx>{`
+          /* Container styling */
+          .instagram-embed-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+          }
+          
+          /* Make Instagram embed fill container */
           .instagram-embed-wrapper :global(.instagram-media) {
             background: #000 !important;
             border: none !important;
             border-radius: 0 !important;
             box-shadow: none !important;
+            max-width: 100% !important;
+            min-width: 100% !important;
+            width: 100% !important;
+            height: 100% !important;
+            margin: 0 !important;
           }
           
-          /* Hide Instagram's white header/footer UI */
+          /* Hide EVERYTHING except the photo */
+          .instagram-embed-wrapper :global(.instagram-media > div) {
+            position: relative;
+            width: 100%;
+            height: 100%;
+          }
+          
+          /* Transform embed to show only photo area */
+          .instagram-embed-wrapper :global(.instagram-media) {
+            transform: scale(1.8);
+            transform-origin: center 40%;
+          }
+          
+          /* Hide Instagram's UI elements */
           .instagram-embed-wrapper :global(header),
+          .instagram-embed-wrapper :global(footer),
           .instagram-embed-wrapper :global(.instagram-media header),
+          .instagram-embed-wrapper :global(.instagram-media a),
           .instagram-embed-wrapper :global([role="button"]),
-          .instagram-embed-wrapper :global(.instagram-media a[href*="instagram.com"]:first-child) {
+          .instagram-embed-wrapper :global(button) {
             display: none !important;
           }
           
-          /* Hide white background sections */
-          .instagram-embed-wrapper :global(.instagram-media > div:first-child),
-          .instagram-embed-wrapper :global(.instagram-media > div:last-child) {
-            background: transparent !important;
-          }
-          
-          /* Hide Instagram's internal carousel arrows */
-          .instagram-embed-wrapper :global(button[aria-label*="Next"]),
-          .instagram-embed-wrapper :global(button[aria-label*="Previous"]),
-          .instagram-embed-wrapper :global(.coreSpriteLeftChevron),
-          .instagram-embed-wrapper :global(.coreSpriteRightChevron),
-          .instagram-embed-wrapper :global(button.wpO6b) {
-            display: none !important;
-          }
-          
-          /* Hide Instagram's carousel indicator dots */
-          .instagram-embed-wrapper :global([role="tablist"]),
-          .instagram-embed-wrapper :global(.JSZAJ) {
-            display: none !important;
-          }
-          
-          /* Show only the photo/video content */
-          .instagram-embed-wrapper :global(.instagram-media iframe) {
-            min-height: 600px !important;
+          /* Ensure iframe is properly sized */
+          .instagram-embed-wrapper :global(iframe) {
+            width: 100% !important;
+            height: 100% !important;
+            min-height: 100% !important;
           }
         `}</style>
         <blockquote

@@ -8,7 +8,7 @@ import { generateReferralLink } from '@/lib/api';
 import { getSession } from '@/lib/session';
 import { formatDistance } from '@/lib/distanceCalculation';
 import { SocialHandlesPreview } from '@/components/SocialHandlesPreview';
-import { getDirectPhotoUrl } from '@/lib/instagramPhotoExtractor';
+import { InstagramEmbed } from '@/components/InstagramEmbed';
 
 interface UserCardProps {
   user: {
@@ -52,31 +52,14 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
   // CAROUSEL: Media index (0 = video, 1+ = Instagram photos)
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
   
-  // Build flat photo array (each photo is a separate slide)
-  const buildPhotoSlides = () => {
-    const slides: Array<{ type: 'video' | 'instagram-photo'; url: string; postUrl?: string }> = [];
-    
-    // Video first (always)
-    if (user.videoUrl) {
-      slides.push({ type: 'video', url: user.videoUrl });
-    }
-    
-    // Then extract photos from each Instagram post
-    (user.instagramPosts || []).forEach((postUrl) => {
-      // For now: Each post = 1 slide with direct photo URL
-      // Instagram posts can have multiple photos but we show first one
-      const photoUrl = getDirectPhotoUrl(postUrl);
-      slides.push({
-        type: 'instagram-photo',
-        url: photoUrl,
-        postUrl: postUrl
-      });
-    });
-    
-    return slides;
-  };
-  
-  const mediaItems = buildPhotoSlides();
+  // Build media items (video first, then Instagram posts)
+  const mediaItems = [
+    ...(user.videoUrl ? [{ type: 'video' as const, url: user.videoUrl }] : []),
+    ...(user.instagramPosts || []).map(postUrl => ({ 
+      type: 'instagram' as const, 
+      url: postUrl 
+    }))
+  ];
   const totalMedia = mediaItems.length;
   
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -705,32 +688,14 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
                 </motion.div>
               ) : (
                 <motion.div
-                  key={`instagram-photo-${currentMediaIndex}`}
+                  key={`instagram-${currentMediaIndex}`}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.3 }}
-                  className="absolute inset-0 flex items-center justify-center bg-black"
+                  className="absolute inset-0"
                 >
-                  {/* Full-screen Instagram photo - CONTENT ONLY */}
-                  <img
-                    src={mediaItems[currentMediaIndex].url}
-                    alt="Instagram photo"
-                    className="w-full h-full object-contain"
-                    style={{
-                      maxWidth: '100%',
-                      maxHeight: '100%',
-                      objectFit: 'contain',
-                      objectPosition: 'center'
-                    }}
-                    onLoad={() => {
-                      console.log('[Carousel] ✅ Instagram photo loaded');
-                    }}
-                    onError={(e) => {
-                      console.error('[Carousel] ❌ Photo failed to load:', mediaItems[currentMediaIndex].url);
-                      console.log('[Carousel] Fallback: Showing Instagram link');
-                    }}
-                  />
+                  <InstagramEmbed postUrl={mediaItems[currentMediaIndex].url} />
                 </motion.div>
               )}
             </AnimatePresence>
