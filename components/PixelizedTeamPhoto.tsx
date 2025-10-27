@@ -47,8 +47,8 @@ export function PixelizedTeamPhoto() {
       const ctx = canvas.getContext('2d', { alpha: false });
       if (!ctx) return;
 
-      // Medium pixelation (48x48 grid - less blocky, contours visible)
-      const pixelSize = 48; // Sweet spot between detail and pixel art
+      // Slightly more pixelated (40x40 grid - more blocky, visible faces)
+      const pixelSize = 40; // Balance: pixelated but recognizable
       canvas.width = pixelSize;
       canvas.height = pixelSize;
 
@@ -84,9 +84,9 @@ export function PixelizedTeamPhoto() {
         photoDiv.style.zIndex = String(config.zIndex);
         photoDiv.style.animation = `fadeInBounce 0.6s ease-out ${index * 0.1}s both`;
 
-        // Polaroid frame (dimmer)
+        // Polaroid frame (85% opacity)
         const frame = document.createElement('div');
-        frame.className = 'w-full h-full bg-white/70 p-3'; // Reduced from /90 to /70
+        frame.className = 'w-full h-full bg-white/85 p-3';
         frame.style.boxShadow = '0 10px 30px rgba(0,0,0,0.6), 0 1px 8px rgba(0,0,0,0.4)';
 
         // Canvas container
@@ -119,7 +119,7 @@ export function PixelizedTeamPhoto() {
 
         containerRef.current?.appendChild(photoDiv);
         
-        console.log(`[PixelArt] Photo ${index + 1} pixelized (48x48 - visible contours)`);
+        console.log(`[PixelArt] Photo ${index + 1} pixelized (40x40 grid)`);
       };
 
       img.onerror = () => {
