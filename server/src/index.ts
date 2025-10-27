@@ -1208,12 +1208,15 @@ io.on('connection', (socket) => {
         return socket.emit('room:ended', { message: 'Session ended - grace period expired' });
       }
       
-      // BEST-IN-CLASS: Cancel grace period timeout (prevent memory leak)
+      // CRITICAL: Cancel grace period timeout IMMEDIATELY (prevents call from ending)
       const timeout = gracePeriodTimeouts.get(roomId);
       if (timeout) {
         clearTimeout(timeout);
         gracePeriodTimeouts.delete(roomId);
-        console.log(`[Room] ✅ Grace period timeout cancelled for room ${roomId.substring(0, 8)} (user reconnected)`);
+        console.log(`[Room] ⚡ CRITICAL: Grace period timeout CANCELLED - call will NOT end`);
+        console.log(`[Room] Timeout cleared for room ${roomId.substring(0, 8)}`);
+      } else {
+        console.warn(`[Room] ⚠️ WARNING: No timeout found for room ${roomId.substring(0, 8)} - may have already fired!`);
       }
       
       // CRITICAL: Mark user as reconnected and change status back to active
@@ -1221,6 +1224,8 @@ io.on('connection', (socket) => {
       if (room.user2 === currentUserId) room.user2Connected = true;
       room.status = 'active';
       room.gracePeriodExpires = undefined;
+      
+      console.log(`[Room] 🔄 Room status changed: grace_period → active`);
       
       console.log(`[Room] ✅ Reconnection successful - room back to ACTIVE status`);
       console.log(`[Room] User ${currentUserId.substring(0, 8)} reconnected to room ${roomId.substring(0, 8)}`);
@@ -1310,8 +1315,16 @@ io.on('connection', (socket) => {
       
       // BEST-IN-CLASS: Schedule room end if no reconnection (store timeout for cancellation)
       const gracePeriodTimeout = setTimeout(async () => {
+        console.log(`[Room] ⏰ TIMEOUT FIRED for room ${roomId.substring(0, 8)} - checking status...`);
+        
         const currentRoom = activeRooms.get(roomId);
-        if (currentRoom && currentRoom.status === 'grace_period') {
+        if (!currentRoom) {
+          console.log(`[Room] Room already deleted - timeout cleanup skipped`);
+          gracePeriodTimeouts.delete(roomId);
+          return;
+        }
+        
+        if (currentRoom.status === 'grace_period') {
           const disconnectDuration = Math.floor((Date.now() - (currentRoom.gracePeriodExpires! - 10000)) / 1000);
           console.log(`[Room] ⏰ Grace period EXPIRED for room ${roomId.substring(0, 8)} - ending session`);
           console.log(`[Room] Disconnected user did NOT reconnect within 10 seconds (was gone ${disconnectDuration}s)`);
@@ -1367,11 +1380,16 @@ io.on('connection', (socket) => {
           textRoomActivity.delete(roomId); // Clean up torch rule tracking
           gracePeriodTimeouts.delete(roomId); // Clean up timeout reference
           deleteRoomFromDatabase(roomId).catch(() => {}); // Background cleanup
+        } else {
+          console.log(`[Room] ✅ Room status is '${currentRoom.status}' (not grace_period) - skipping end`);
+          console.log(`[Room] User likely reconnected - timeout cleanup only`);
+          gracePeriodTimeouts.delete(roomId);
         }
       }, 10000); // 10 seconds grace period
       
       // BEST-IN-CLASS: Store timeout reference for cancellation on reconnect
       gracePeriodTimeouts.set(roomId, gracePeriodTimeout);
+      console.log(`[Room] ✅ Timeout scheduled - will check status in 10s (cancellable on reconnect)`);
     }
   });
 
