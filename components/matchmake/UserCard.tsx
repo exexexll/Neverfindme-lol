@@ -696,45 +696,65 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
               )}
             </AnimatePresence>
             
-            {/* CAROUSEL: Navigation (Instagram overlays when multi-photo) */}
+            {/* CAROUSEL: Instagram-exact positioning */}
             {totalMedia > 1 && (
               <>
-                {/* Arrows - Instagram style (white semi-transparent) */}
+                {/* Our Arrows - EXACT same position/size as Instagram's (for video/non-Instagram) */}
                 {mediaItems[currentMediaIndex]?.type !== 'instagram' && (
                   <>
-                    {/* Left Arrow - Instagram style */}
+                    {/* Left Arrow - Matches Instagram exactly */}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         handleSwipeRight();
                       }}
-                      className={`absolute top-1/2 -translate-y-1/2 z-30 rounded-full bg-white/90 hover:bg-white shadow-lg flex items-center justify-center transition-all hover:scale-110 active:scale-95 ${
+                      className={`absolute top-1/2 -translate-y-1/2 z-30 rounded-full bg-white/90 hover:bg-white shadow-lg flex items-center justify-center transition-all ${
                         isMobile ? 'left-2 w-8 h-8' : 'left-4 w-10 h-10'
                       }`}
                     >
-                      <svg className={isMobile ? 'w-5 h-5 text-gray-800' : 'w-6 h-6 text-gray-800'} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                      <svg className={isMobile ? 'w-4 h-4 text-gray-800' : 'w-5 h-5 text-gray-800'} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
                       </svg>
                     </button>
                     
-                    {/* Right Arrow - Instagram style */}
+                    {/* Right Arrow - Matches Instagram exactly */}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         handleSwipeLeft();
                       }}
-                      className={`absolute top-1/2 -translate-y-1/2 z-30 rounded-full bg-white/90 hover:bg-white shadow-lg flex items-center justify-center transition-all hover:scale-110 active:scale-95 ${
+                      className={`absolute top-1/2 -translate-y-1/2 z-30 rounded-full bg-white/90 hover:bg-white shadow-lg flex items-center justify-center transition-all ${
                         isMobile ? 'right-2 w-8 h-8' : 'right-4 w-10 h-10'
                       }`}
                     >
-                      <svg className={isMobile ? 'w-5 h-5 text-gray-800' : 'w-6 h-6 text-gray-800'} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      <svg className={isMobile ? 'w-4 h-4 text-gray-800' : 'w-5 h-5 text-gray-800'} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
                       </svg>
                     </button>
                   </>
                 )}
                 
-                {/* When on Instagram: Let Instagram's arrows show (they match our style now) */}
+                {/* On Instagram: Instagram's own arrows show (hidden ours), plus "Next Post" button */}
+                {mediaItems[currentMediaIndex]?.type === 'instagram' && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSwipeLeft(); // Always go to next post
+                    }}
+                    className={`absolute z-30 rounded-full bg-white/90 hover:bg-white shadow-lg flex items-center gap-2 transition-all hover:scale-105 ${
+                      isMobile 
+                        ? 'bottom-24 right-4 px-4 py-2' 
+                        : 'bottom-8 right-6 px-5 py-3'
+                    }`}
+                  >
+                    <span className={`text-gray-800 font-medium ${isMobile ? 'text-xs' : 'text-sm'}`}>
+                      Next Post
+                    </span>
+                    <svg className={isMobile ? 'w-4 h-4 text-gray-800' : 'w-5 h-5 text-gray-800'} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                )}
                 
                 {/* Page Counter - Better position for mobile */}
                 <div className={`absolute z-10 bg-black/70 backdrop-blur-md rounded-full border border-white/20 ${
