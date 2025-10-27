@@ -2,6 +2,7 @@ import { Hero } from '@/components/Hero';
 import { Container } from '@/components/Container';
 import { Button } from '@/components/Button';
 import Link from 'next/link';
+import { PixelizedTeamPhoto } from '@/components/PixelizedTeamPhoto';
 
 export default function HomePage() {
   return (
@@ -10,9 +11,12 @@ export default function HomePage() {
         <Hero />
 
         {/* More Section */}
-        <section id="more" className="bg-[#0a0a0c] py-20 sm:py-24 lg:py-32">
+        <section id="more" className="relative bg-[#0a0a0c] py-20 sm:py-24 lg:py-32 overflow-hidden">
+          {/* Pixelized Team Photo Background */}
+          <PixelizedTeamPhoto />
+          
           <Container>
-            <div className="mx-auto max-w-3xl">
+            <div className="relative z-10 mx-auto max-w-3xl">
               <h2 className="mb-6 font-playfair text-3xl font-bold tracking-tight sm:text-4xl">
                 Meet people near you. Make friends IRL.
               </h2>
