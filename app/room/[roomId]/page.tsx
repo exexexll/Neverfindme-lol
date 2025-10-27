@@ -1608,11 +1608,11 @@ export default function RoomPage() {
         </div>
       </div>
 
-      {/* Controls Footer - Always Visible, High Z-Index */}
-      <div className="fixed bottom-0 left-0 right-0 z-[100] pointer-events-none" style={{
-        paddingBottom: 'env(safe-area-inset-bottom, 1rem)',
+      {/* Controls Footer - Always Visible, Highest Z-Index, Touch-Friendly */}
+      <div className="fixed bottom-0 left-0 right-0 z-[200] pointer-events-none" style={{
+        paddingBottom: 'max(env(safe-area-inset-bottom), 1.5rem)',
       }}>
-        <div className="flex items-center justify-center gap-3 px-4 pb-6 pt-8 pointer-events-auto bg-gradient-to-t from-black via-black/50 to-transparent">
+        <div className="flex items-center justify-center gap-4 px-6 pb-8 pt-12 pointer-events-auto bg-gradient-to-t from-black via-black/80 to-transparent">
           {/* Mic Toggle */}
           <button
             onClick={toggleMute}

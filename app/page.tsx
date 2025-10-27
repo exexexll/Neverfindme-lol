@@ -28,7 +28,7 @@ export default function HomePage() {
                 <div className="border-l-4 border-[#ffc46a] pl-6 my-6">
                   <h3 className="font-bold text-[#eaeaf0] mb-2">Up to 500 seconds.</h3>
                   <p className="text-[#e6e6e9]/80">
-                    Most conversations should happen offline. Omegle made the mistake of allowing endless hours of chatting with strangers who often lived across states or even countries—that&apos;s time wasted. BUMPIN is strictly a meet-and-greet space, made for people looking to find friends nearby.
+                    Most conversations should happen offline. Omegle made the mistake of allowing endless hours of chatting with strangers—that&apos;s time wasted. BUMPIN is strictly a meet-and-greet space, made for people looking to find friends nearby.
                   </p>
                 </div>
 

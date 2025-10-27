@@ -855,14 +855,14 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
         )}
       </AnimatePresence>
 
-      {/* Waiting Overlay - Locks Screen for 20 Seconds */}
+      {/* Waiting Overlay - Locks Screen for 20 Seconds, Video Plays in Background */}
       <AnimatePresence>
         {inviteStatus === 'waiting' && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-lg"
+            className="absolute inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md"
           >
             <div className="text-center space-y-4 md:space-y-6 px-4 md:px-8 w-full max-w-md mx-auto">
               {/* Countdown Circle */}
