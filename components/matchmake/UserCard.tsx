@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { generateReferralLink } from '@/lib/api';
 import { getSession } from '@/lib/session';
 import { formatDistance } from '@/lib/distanceCalculation';
+import { SocialHandlesPreview } from '@/components/SocialHandlesPreview';
 
 interface UserCardProps {
   user: {
@@ -544,6 +545,9 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
                       <span className="text-sm text-green-300">Online</span>
                     </div>
                   </div>
+                  
+                  {/* Social Handles (if user has shared them) */}
+                  <SocialHandlesPreview socials={(user as any).socials} />
                 </motion.div>
               )}
             </AnimatePresence>

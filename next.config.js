@@ -54,7 +54,7 @@ const nextConfig = {
               "font-src 'self' data: https://fonts.gstatic.com",
               "connect-src 'self' https://*.railway.app https://*.cloudinary.com https://api.stripe.com wss://*.railway.app https://klipy-gif-api.p.rapidapi.com https://api.klipy.com https://media.klipy.com https://tenor.googleapis.com",
               "media-src 'self' https: blob:",
-              "frame-src 'self' https://js.stripe.com",
+              "frame-src 'self' https: http:", // Allow all HTTPS/HTTP iframes for floating browser
             ].join('; ')
           },
         ],
