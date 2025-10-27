@@ -133,8 +133,8 @@ export function PixelizedTeamPhoto() {
       {/* Photo Container */}
       <div ref={containerRef} className="absolute inset-0 pointer-events-none overflow-hidden" />
       
-      {/* Responsive gradient: heavier on mobile, lighter on desktop */}
-      <div className="absolute inset-0 bg-gradient-to-r from-[#0a0a0c]/50 via-[#0a0a0c]/70 to-[#0a0a0c]/85 md:from-[#0a0a0c]/15 md:via-[#0a0a0c]/40 md:to-[#0a0a0c]/70 pointer-events-none" />
+      {/* Desktop only gradient (mobile has no photos, no gradient needed) */}
+      <div className="absolute inset-0 hidden md:block bg-gradient-to-r from-[#0a0a0c]/15 via-[#0a0a0c]/40 to-[#0a0a0c]/70 pointer-events-none" />
     </>
   );
 }
