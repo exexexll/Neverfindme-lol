@@ -34,26 +34,12 @@ export function createAuthRoutes(
     return res.status(400).json({ error: 'Invalid gender' });
   }
 
-  // CRITICAL: Check if USC email already exists before creating user
-  if (email && email.toLowerCase().endsWith('@usc.edu')) {
-    const existingUser = await store.getUserByEmail(email.toLowerCase());
-    if (existingUser) {
-      console.warn(`[Auth] Duplicate USC email attempt: ${email}`);
-      return res.status(409).json({ 
-        error: 'This USC email is already registered',
-        hint: 'You may have already created an account. Try logging in.',
-        existingAccount: true
-      });
-    }
-  }
-
   const userId = uuidv4();
   const sessionToken = uuidv4();
 
   // PAYWALL CHECK: Validate invite code if provided
   let codeVerified = false;
   let codeUsed: string | undefined;
-  let uscEmail: string | undefined;
   
   if (inviteCode) {
     const sanitizedCode = inviteCode.trim().toUpperCase();
@@ -78,10 +64,7 @@ export function createAuthRoutes(
     codeVerified = true;
     codeUsed = sanitizedCode;
     
-    // Store USC email if validated (for admin codes)
-    uscEmail = (email && email.toLowerCase().endsWith('@usc.edu')) ? email.toLowerCase() : undefined;
-    
-    console.log(`[Auth] ✅ User ${name} verified via ${result.codeType} code: ${sanitizedCode}${uscEmail ? ` (USC: ${uscEmail})` : ''}`);
+    console.log(`[Auth] ✅ User ${name} verified via ${result.codeType} code: ${sanitizedCode}`);
   }
 
   // Generate invite code for new user (if they used an invite code or paid)
@@ -149,7 +132,8 @@ export function createAuthRoutes(
     accountType: 'guest',
     createdAt: Date.now(),
     banStatus: 'none',
-    email: uscEmail, // Store USC email if provided (for admin code users)
+    // CRITICAL: Email is NOT stored here - only after verification
+    // This prevents duplicate email errors and ensures proper verification flow
     paidStatus,
     inviteCodeUsed: codeUsed,
     // New user's own invite code (if they were verified)
@@ -258,7 +242,7 @@ router.post('/link', async (req, res) => {
     return res.status(404).json({ error: 'User not found' });
   }
 
-  // Check if email already exists
+  // CRITICAL: Check if email already exists
   const existingUser = await store.getUserByEmail(email);
   if (existingUser && existingUser.userId !== user.userId) {
     return res.status(409).json({ 
