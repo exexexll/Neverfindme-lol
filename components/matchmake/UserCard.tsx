@@ -755,7 +755,7 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
 
       {/* Status Banner - Removed for minimal UI */}
 
-      {/* Next Post Button - Bottom, above controls */}
+      {/* Next Post Button - Positioned to not overlap */}
       {totalMedia > 1 && (
         <button
           onClick={(e) => {
@@ -764,14 +764,14 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
           }}
           className={`absolute z-25 rounded-xl bg-white/95 hover:bg-white shadow-lg flex items-center gap-2 transition-all hover:scale-105 active:scale-95 ${
             isMobile 
-              ? 'bottom-24 left-1/2 -translate-x-1/2 px-4 py-2'
-              : 'bottom-20 left-1/2 -translate-x-1/2 px-6 py-3'
+              ? 'top-4 right-4 px-3 py-1.5'
+              : 'bottom-8 left-1/2 -translate-x-1/2 px-6 py-3'
           }`}
         >
-          <span className={`text-gray-800 font-semibold ${isMobile ? 'text-sm' : 'text-base'}`}>
-            Next Post
+          <span className={`text-gray-800 font-semibold ${isMobile ? 'text-xs' : 'text-base'}`}>
+            Next
           </span>
-          <svg className={isMobile ? 'w-4 h-4 text-gray-800' : 'w-5 h-5 text-gray-800'} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <svg className={isMobile ? 'w-3 h-3 text-gray-800' : 'w-5 h-5 text-gray-800'} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
           </svg>
         </button>
