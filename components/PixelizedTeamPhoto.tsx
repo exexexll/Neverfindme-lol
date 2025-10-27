@@ -61,8 +61,13 @@ export function PixelizedTeamPhoto() {
       ctx.fillRect(0, 0, pixelGrid, pixelGrid);
     };
 
-    // Load team photo (no crossOrigin for same-domain)
-    img.src = '/team-photo.jpg';
+    // Load team photo - try both production and dev paths
+    const imagePath = process.env.NODE_ENV === 'production' 
+      ? '/team-photo.jpg'
+      : '/team-photo.jpg';
+    
+    console.log('[PixelArt] Attempting to load:', imagePath);
+    img.src = imagePath;
   }, []);
 
   return (
