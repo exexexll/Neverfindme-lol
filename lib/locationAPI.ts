@@ -7,19 +7,23 @@ import { API_BASE } from './config';
 import { formatDistance, roundCoordinates } from './distanceCalculation';
 
 // Client-side rate limiting to prevent 429 errors
-const lastLocationUpdate = { timestamp: 0 };
 const LOCATION_UPDATE_COOLDOWN = 1800000; // 30 minutes (match server)
+const LOCATION_TIMESTAMP_KEY = 'bumpin_location_last_update';
 
 /**
  * Request browser location permission and update on server
  */
 export async function requestAndUpdateLocation(sessionToken: string): Promise<boolean> {
   // CLIENT-SIDE RATE LIMIT CHECK: Prevent 429 errors
-  const timeSinceLastUpdate = Date.now() - lastLocationUpdate.timestamp;
+  // Use localStorage to persist across sessions/page reloads
+  const lastUpdateStr = localStorage.getItem(LOCATION_TIMESTAMP_KEY);
+  const lastUpdate = lastUpdateStr ? parseInt(lastUpdateStr) : 0;
+  const timeSinceLastUpdate = Date.now() - lastUpdate;
+  
   if (timeSinceLastUpdate < LOCATION_UPDATE_COOLDOWN) {
     const minutesRemaining = Math.ceil((LOCATION_UPDATE_COOLDOWN - timeSinceLastUpdate) / 60000);
-    console.log(`[Location] ⏱️ Skipping update - already updated ${Math.round(timeSinceLastUpdate/60000)} min ago (wait ${minutesRemaining} more min)`);
-    return false; // Return false but don't show error (silent skip)
+    console.log(`[Location] ⏱️ Skipping update - already updated ${Math.round(timeSinceLastUpdate/60000)} min ago (${minutesRemaining} min remaining)`);
+    return true; // Return TRUE to not show error - location is still valid
   }
   
   return new Promise((resolve) => {
@@ -53,8 +57,14 @@ export async function requestAndUpdateLocation(sessionToken: string): Promise<bo
           
           if (response.ok) {
             console.log('[Location] ✅ Updated successfully');
-            lastLocationUpdate.timestamp = Date.now(); // Update timestamp on success
+            localStorage.setItem(LOCATION_TIMESTAMP_KEY, Date.now().toString());
             resolve(true);
+          } else if (response.status === 429) {
+            // Rate limited - store timestamp anyway to prevent repeated 429s
+            const errorData = await response.json().catch(() => ({}));
+            console.warn('[Location] ⏱️ Rate limited by server:', errorData);
+            localStorage.setItem(LOCATION_TIMESTAMP_KEY, Date.now().toString());
+            resolve(true); // Return true - location is still active on server
           } else {
             const errorData = await response.json().catch(() => ({}));
             console.error('[Location] ❌ Update failed:', response.status, errorData);

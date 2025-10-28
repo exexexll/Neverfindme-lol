@@ -127,30 +127,28 @@ export function InstagramEmbed({ postUrl, onLoad }: InstagramEmbedProps) {
             touch-action: auto !important;
           }
           
-          /* CRITICAL: Enable ALL interactive elements inside the embed */
+          /* CRITICAL: Enable ALL elements inside iframe - maximum specificity */
+          .instagram-embed-wrapper :global(*) {
+            pointer-events: auto !important;
+          }
+          
+          /* Specifically enable video and all controls */
+          .instagram-embed-wrapper :global(video),
           .instagram-embed-wrapper :global(button),
           .instagram-embed-wrapper :global([role="button"]),
-          .instagram-embed-wrapper :global(a),
-          .instagram-embed-wrapper :global(video),
-          .instagram-embed-wrapper :global([aria-label]),
-          .instagram-embed-wrapper :global(.playButton),
-          .instagram-embed-wrapper :global([class*="play"]),
-          .instagram-embed-wrapper :global([class*="arrow"]),
-          .instagram-embed-wrapper :global([class*="next"]),
-          .instagram-embed-wrapper :global([class*="prev"]) {
+          .instagram-embed-wrapper :global(a) {
             pointer-events: auto !important;
             cursor: pointer !important;
-            opacity: 1 !important;
-            visibility: visible !important;
-            z-index: 100 !important;
             touch-action: auto !important;
           }
           
-          /* IMPORTANT: Override any transform/positioning that hides controls */
-          .instagram-embed-wrapper :global(button[aria-label]),
-          .instagram-embed-wrapper :global([role="button"][aria-label]) {
-            display: block !important;
-            position: relative !important;
+          /* Ensure video controls are visible */
+          .instagram-embed-wrapper :global(video::-webkit-media-controls),
+          .instagram-embed-wrapper :global(video::-webkit-media-controls-panel),
+          .instagram-embed-wrapper :global(video::-webkit-media-controls-play-button) {
+            display: flex !important;
+            opacity: 1 !important;
+            visibility: visible !important;
           }
         `}</style>
         <blockquote
