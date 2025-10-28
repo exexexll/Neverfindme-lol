@@ -755,20 +755,16 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
 
       {/* Status Banner - Removed for minimal UI */}
 
-      {/* Next Post Button - Clean positioning */}
+      {/* Next Post Button - Bottom-right, always visible */}
       {totalMedia > 1 && (
         <button
           onClick={(e) => {
             e.stopPropagation();
             handleSwipeLeft();
           }}
-          className={`absolute z-25 rounded-full bg-white/95 hover:bg-white shadow-lg flex items-center gap-2 transition-all hover:scale-105 active:scale-95 ${
-            isMobile 
-              ? 'bottom-28 right-4 px-4 py-2'
-              : 'top-20 right-6 px-5 py-2.5'
-          }`}
+          className="absolute bottom-28 right-4 z-25 rounded-full bg-white/95 hover:bg-white shadow-lg px-4 py-2 flex items-center gap-2 transition-all hover:scale-105 active:scale-95"
         >
-          <span className={`text-gray-800 font-semibold ${isMobile ? 'text-sm' : 'text-sm'}`}>
+          <span className="text-gray-800 font-semibold text-sm">
             Next
           </span>
           <svg className="w-4 h-4 text-gray-800" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
