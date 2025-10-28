@@ -65,6 +65,16 @@ export function InstagramEmbed({ postUrl, onLoad }: InstagramEmbedProps) {
       (window as any).instgrm.Embeds.process();
       processedRef.current = true;
       onLoad?.();
+      
+      // Debug: Check if iframe loaded after processing
+      setTimeout(() => {
+        const iframe = containerRef.current?.querySelector('iframe');
+        console.log('[InstagramEmbed] 🔍 Iframe found:', !!iframe);
+        if (iframe) {
+          console.log('[InstagramEmbed] 🔍 Iframe src:', iframe.src?.substring(0, 50));
+          console.log('[InstagramEmbed] 🔍 Iframe loaded:', iframe.contentWindow !== null);
+        }
+      }, 2000);
     }
   };
 
@@ -85,10 +95,10 @@ export function InstagramEmbed({ postUrl, onLoad }: InstagramEmbedProps) {
       <div 
         ref={containerRef} 
         className="w-full h-full flex items-center justify-center overflow-hidden bg-black instagram-embed-wrapper relative"
-        style={{ padding: 0 }}
+        style={{ padding: 0, pointerEvents: 'auto' }}
       >
-        {/* Black bar covers Instagram's white header (username/profile) */}
-        <div className="absolute top-0 left-0 right-0 h-14 bg-black z-[15] pointer-events-none" />
+        {/* Black bar covers Instagram's white header (username/profile) - explicitly allow clicks through */}
+        <div className="absolute top-0 left-0 right-0 h-14 bg-black z-[15]" style={{ pointerEvents: 'none' }} />
         
         <style jsx>{`
           /* Container styling */
@@ -121,18 +131,35 @@ export function InstagramEmbed({ postUrl, onLoad }: InstagramEmbedProps) {
           .instagram-embed-wrapper :global([role="button"]),
           .instagram-embed-wrapper :global([aria-label*="arrow"]),
           .instagram-embed-wrapper :global([aria-label*="Next"]),
-          .instagram-embed-wrapper :global([aria-label*="Previous"]) {
+          .instagram-embed-wrapper :global([aria-label*="Previous"]),
+          .instagram-embed-wrapper :global([aria-label*="Play"]),
+          .instagram-embed-wrapper :global([aria-label*="play"]),
+          .instagram-embed-wrapper :global([aria-label*="Pause"]),
+          .instagram-embed-wrapper :global([aria-label*="pause"]) {
             pointer-events: auto !important;
             cursor: pointer !important;
             opacity: 1 !important;
             visibility: visible !important;
             z-index: 100 !important;
           }
+          
+          /* Ensure video elements are interactive and visible */
+          .instagram-embed-wrapper :global(video) {
+            pointer-events: auto !important;
+          }
+          
+          /* Make all clickable elements inside iframe accessible */
+          .instagram-embed-wrapper :global(*[role="button"]),
+          .instagram-embed-wrapper :global(a),
+          .instagram-embed-wrapper :global(video) {
+            pointer-events: auto !important;
+          }
         `}</style>
         <blockquote
           className="instagram-media"
           data-instgrm-permalink={postUrl}
           data-instgrm-version="14"
+          data-instgrm-captioned
           style={{
             background: '#000',
             border: 'none',
@@ -143,6 +170,7 @@ export function InstagramEmbed({ postUrl, onLoad }: InstagramEmbedProps) {
             minWidth: '326px',
             padding: '0',
             width: '100%',
+            pointerEvents: 'auto',
           }}
         >
           {/* Fallback content while embed loads */}
