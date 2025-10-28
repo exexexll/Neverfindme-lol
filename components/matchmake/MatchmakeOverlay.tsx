@@ -1069,9 +1069,12 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
       return;
     }
 
-    // Clean up
-    if (socketRef.current) {
+    // CRITICAL FIX: Leave BOTH queue and presence when closing
+    if (socketRef.current && socketRef.current.connected) {
+      console.log('[Matchmake] 🚪 Closing overlay - leaving queue and presence');
       socketRef.current.emit('queue:leave');
+      socketRef.current.emit('presence:leave');
+      console.log('[Matchmake] ✅ Left queue and presence');
     }
 
     // Clear reel state for fresh load next time

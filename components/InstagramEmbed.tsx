@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Script from 'next/script';
 
 interface InstagramEmbedProps {
@@ -108,7 +108,7 @@ export function InstagramEmbed({ postUrl, onLoad }: InstagramEmbedProps) {
             height: 100%;
           }
           
-          /* AGGRESSIVE SCALE to hide ALL white content */
+          /* AGGRESSIVE SCALE to hide white header while keeping content visible */
           .instagram-embed-wrapper :global(.instagram-media) {
             background: #000 !important;
             border: none !important;
@@ -118,41 +118,39 @@ export function InstagramEmbed({ postUrl, onLoad }: InstagramEmbedProps) {
             transform: scale(1.5) translateY(-60px) !important;
           }
           
-          /* Ensure iframe is properly sized and clickable */
+          /* Ensure iframe is properly sized and FULLY INTERACTIVE */
           .instagram-embed-wrapper :global(iframe) {
             width: 100% !important;
             height: 100% !important;
             min-height: 100% !important;
             pointer-events: auto !important;
+            touch-action: auto !important;
           }
           
-          /* Make Instagram's carousel arrows visible and clickable */
+          /* CRITICAL: Enable ALL interactive elements inside the embed */
           .instagram-embed-wrapper :global(button),
           .instagram-embed-wrapper :global([role="button"]),
-          .instagram-embed-wrapper :global([aria-label*="arrow"]),
-          .instagram-embed-wrapper :global([aria-label*="Next"]),
-          .instagram-embed-wrapper :global([aria-label*="Previous"]),
-          .instagram-embed-wrapper :global([aria-label*="Play"]),
-          .instagram-embed-wrapper :global([aria-label*="play"]),
-          .instagram-embed-wrapper :global([aria-label*="Pause"]),
-          .instagram-embed-wrapper :global([aria-label*="pause"]) {
+          .instagram-embed-wrapper :global(a),
+          .instagram-embed-wrapper :global(video),
+          .instagram-embed-wrapper :global([aria-label]),
+          .instagram-embed-wrapper :global(.playButton),
+          .instagram-embed-wrapper :global([class*="play"]),
+          .instagram-embed-wrapper :global([class*="arrow"]),
+          .instagram-embed-wrapper :global([class*="next"]),
+          .instagram-embed-wrapper :global([class*="prev"]) {
             pointer-events: auto !important;
             cursor: pointer !important;
             opacity: 1 !important;
             visibility: visible !important;
             z-index: 100 !important;
+            touch-action: auto !important;
           }
           
-          /* Ensure video elements are interactive and visible */
-          .instagram-embed-wrapper :global(video) {
-            pointer-events: auto !important;
-          }
-          
-          /* Make all clickable elements inside iframe accessible */
-          .instagram-embed-wrapper :global(*[role="button"]),
-          .instagram-embed-wrapper :global(a),
-          .instagram-embed-wrapper :global(video) {
-            pointer-events: auto !important;
+          /* IMPORTANT: Override any transform/positioning that hides controls */
+          .instagram-embed-wrapper :global(button[aria-label]),
+          .instagram-embed-wrapper :global([role="button"][aria-label]) {
+            display: block !important;
+            position: relative !important;
           }
         `}</style>
         <blockquote

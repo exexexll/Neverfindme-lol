@@ -6,10 +6,22 @@
 import { API_BASE } from './config';
 import { formatDistance, roundCoordinates } from './distanceCalculation';
 
+// Client-side rate limiting to prevent 429 errors
+const lastLocationUpdate = { timestamp: 0 };
+const LOCATION_UPDATE_COOLDOWN = 1800000; // 30 minutes (match server)
+
 /**
  * Request browser location permission and update on server
  */
 export async function requestAndUpdateLocation(sessionToken: string): Promise<boolean> {
+  // CLIENT-SIDE RATE LIMIT CHECK: Prevent 429 errors
+  const timeSinceLastUpdate = Date.now() - lastLocationUpdate.timestamp;
+  if (timeSinceLastUpdate < LOCATION_UPDATE_COOLDOWN) {
+    const minutesRemaining = Math.ceil((LOCATION_UPDATE_COOLDOWN - timeSinceLastUpdate) / 60000);
+    console.log(`[Location] ⏱️ Skipping update - already updated ${Math.round(timeSinceLastUpdate/60000)} min ago (wait ${minutesRemaining} more min)`);
+    return false; // Return false but don't show error (silent skip)
+  }
+  
   return new Promise((resolve) => {
     if (!navigator.geolocation) {
       console.error('[Location] Geolocation not supported');
@@ -40,10 +52,13 @@ export async function requestAndUpdateLocation(sessionToken: string): Promise<bo
           });
           
           if (response.ok) {
-            console.log('[Location] Updated successfully');
+            console.log('[Location] ✅ Updated successfully');
+            lastLocationUpdate.timestamp = Date.now(); // Update timestamp on success
             resolve(true);
           } else {
-            console.error('[Location] Update failed');
+            const errorData = await response.json().catch(() => ({}));
+            console.error('[Location] ❌ Update failed:', response.status, errorData);
+            // Don't update timestamp on failure (allow retry)
             resolve(false);
           }
         } catch (error) {
