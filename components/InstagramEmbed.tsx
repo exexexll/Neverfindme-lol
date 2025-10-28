@@ -108,11 +108,25 @@ export function InstagramEmbed({ postUrl, onLoad }: InstagramEmbedProps) {
             transform: scale(1.5) translateY(-60px) !important;
           }
           
-          /* Ensure iframe is properly sized */
+          /* Ensure iframe is properly sized and clickable */
           .instagram-embed-wrapper :global(iframe) {
             width: 100% !important;
             height: 100% !important;
             min-height: 100% !important;
+            pointer-events: auto !important;
+          }
+          
+          /* Make Instagram's carousel arrows visible and clickable */
+          .instagram-embed-wrapper :global(button),
+          .instagram-embed-wrapper :global([role="button"]),
+          .instagram-embed-wrapper :global([aria-label*="arrow"]),
+          .instagram-embed-wrapper :global([aria-label*="Next"]),
+          .instagram-embed-wrapper :global([aria-label*="Previous"]) {
+            pointer-events: auto !important;
+            cursor: pointer !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+            z-index: 100 !important;
           }
         `}</style>
         <blockquote

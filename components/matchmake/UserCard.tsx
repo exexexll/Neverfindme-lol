@@ -758,7 +758,7 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
         transition={hasMounted ? { duration: 0.3, ease: 'easeOut' } : { duration: 0 }}
       >
         <div className="space-y-3">
-          {/* Next Post Button - Above Introduce Friend */}
+          {/* More Posts Button - Above Introduce Friend */}
           {totalMedia > 1 && (
             <div className="flex justify-end mb-3">
               <button
@@ -768,7 +768,7 @@ export function UserCard({ user, onInvite, onRescind, inviteStatus = 'idle', coo
                 }}
                 className="rounded-xl bg-white/95 hover:bg-white px-4 py-2 text-sm font-semibold text-gray-800 shadow-lg transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
               >
-                <span>Next</span>
+                <span>More Posts</span>
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                 </svg>

@@ -635,7 +635,19 @@ export default function RoomPage() {
             
             // Start countdown
             const interval = setInterval(() => {
+              // Safety check: if interval was cleared, don't update state
+              if (!partnerDisconnectCountdownRef.current) {
+                console.log('[Room] Countdown interval already cleared, skipping update');
+                return;
+              }
+              
               setReconnectCountdown((prev: number) => {
+                // Double-check: if interval was cleared during state update, return current value
+                if (!partnerDisconnectCountdownRef.current) {
+                  console.log('[Room] Interval cleared during state update');
+                  return 10;
+                }
+                
                 // Auto-hide if WebRTC reconnects during countdown
                 const currentPc = peerConnectionRef.current;
                 if (currentPc && currentPc.connectionState === 'connected') {
@@ -663,17 +675,19 @@ export default function RoomPage() {
         socket.on('room:partner-reconnected', () => {
           console.log('[Room] ✅ Partner reconnected via socket');
           
-          // CRITICAL FIX: Clear countdown IMMEDIATELY
+          // CRITICAL FIX: Clear countdown IMMEDIATELY and reset state
           if (partnerDisconnectCountdownRef.current) {
             clearInterval(partnerDisconnectCountdownRef.current);
             partnerDisconnectCountdownRef.current = null;
-            console.log('[Room] Countdown cleared immediately');
+            console.log('[Room] Countdown interval cleared');
           }
           
-          // Hide reconnecting UI immediately
+          // Reset countdown state IMMEDIATELY (before hiding UI to prevent flicker)
+          setReconnectCountdown(10);
+          
+          // Hide reconnecting UI
           setShowReconnecting(false);
-          setPeerDisconnected(false);
-          setReconnectCountdown(10); // Reset for next time
+          setPeerDisconnected(false)
           
           // Only change connectionPhase if not already connected
           if (connectionPhase !== 'connected') {
@@ -1625,10 +1639,13 @@ export default function RoomPage() {
       </div>
 
       {/* Controls Footer - Always Visible, Highest Z-Index, Touch-Friendly */}
-      <div className="fixed bottom-0 left-0 right-0 z-[200] pointer-events-none" style={{
-        paddingBottom: 'max(env(safe-area-inset-bottom), 1.5rem)',
-      }}>
-        <div className="flex items-center justify-center gap-4 px-6 pb-8 pt-12 pointer-events-auto bg-gradient-to-t from-black via-black/80 to-transparent">
+      <div className="fixed bottom-0 left-0 right-0 z-[200] pointer-events-none">
+        <div 
+          className="flex items-center justify-center gap-4 px-6 pt-12 pointer-events-auto bg-gradient-to-t from-black via-black/80 to-transparent"
+          style={{
+            paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 2rem)',
+          }}
+        >
           {/* Mic Toggle */}
           <button
             onClick={toggleMute}
