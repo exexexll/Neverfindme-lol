@@ -85,10 +85,10 @@ export function USCCardScanner({ onSuccess, onSkipToEmail }: USCCardScannerProps
           },
           locate: true, // Auto-locate barcodes
           locator: {
-            patchSize: 'large', // Better detection for various sizes
-            halfSample: false, // Better quality (slower but more accurate)
+            patchSize: 'medium', // Medium = faster, still accurate
+            halfSample: true, // Performance optimization (2x faster)
           },
-          frequency: 5, // 5 scans per second (better accuracy than 10)
+          frequency: 10, // 10 scans per second for faster detection
         }, (err) => {
           if (err) {
             console.error('[Quagga] Init error:', err);
@@ -373,34 +373,13 @@ export function USCCardScanner({ onSuccess, onSkipToEmail }: USCCardScannerProps
           </ul>
         </div>
 
-        {/* Fallback Options */}
-        <div className="space-y-2">
-          <button
-            onClick={() => {
-              // Quick manual entry if scanner not working
-              const manualId = prompt('Scanner not working? Enter your 10-digit USC ID manually:\n\nExample: 1268306021');
-              if (manualId) {
-                const digits = manualId.replace(/\D/g, '');
-                if (digits.length === 10) {
-                  processingRef.current = true;
-                  processConfirmedScan(digits);
-                } else {
-                  alert('Invalid USC ID. Must be exactly 10 digits.');
-                }
-              }
-            }}
-            className="w-full py-3 rounded-xl bg-yellow-500/20 text-yellow-300 hover:bg-yellow-500/30 transition-all text-sm border border-yellow-500/30"
-          >
-            📝 Enter USC ID Manually
-          </button>
-          
-          <button
-            onClick={onSkipToEmail}
-            className="w-full py-3 rounded-xl bg-white/10 text-[#eaeaf0] hover:bg-white/20 transition-all text-sm"
-          >
-            Skip - Use Email Verification Instead
-          </button>
-        </div>
+        {/* Fallback Option */}
+        <button
+          onClick={onSkipToEmail}
+          className="mt-4 w-full py-3 rounded-xl bg-white/10 text-[#eaeaf0] hover:bg-white/20 transition-all text-sm"
+        >
+          Skip - Use Email Verification Instead
+        </button>
       </div>
     </main>
   );

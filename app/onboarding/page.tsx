@@ -840,21 +840,22 @@ function OnboardingPageContent() {
             {step === 'usc-scan' && (
               <USCCardScanner
                 onSuccess={(scannedUSCId, rawValue) => {
-                  console.log('[Onboarding] ✅ USC Card scanned successfully: ******' + scannedUSCId.slice(-4));
+                  console.log('[Onboarding] ✅ USC Card scanned: ******' + scannedUSCId.slice(-4));
                   
-                  // CRITICAL: Set all state immediately to prevent email requirement
+                  // CRITICAL: Set all state immediately
                   setUscId(scannedUSCId);
-                  setNeedsUSCEmail(false);  // Turn OFF email requirement
-                  setNeedsUSCCard(false);   // Card scan complete
-                  setUscEmail('');          // Clear any email input
+                  setNeedsUSCEmail(false);
+                  setNeedsUSCCard(false);
+                  setUscEmail('');
                   
-                  // Store temp (will save to DB after onboarding)
+                  // Store temp
                   sessionStorage.setItem('temp_usc_id', scannedUSCId);
                   sessionStorage.setItem('temp_usc_barcode', rawValue);
+                  sessionStorage.setItem('usc_card_verified', 'true'); // Flag for later checks
                   
-                  console.log('[Onboarding] State: uscId=' + (scannedUSCId ? 'SET' : 'NULL') + ', needsUSCEmail=false');
+                  console.log('[Onboarding] ✅✅✅ STATE SET: uscId=SET, needsUSCEmail=FALSE, needsUSCCard=FALSE');
                   
-                  setStep('name'); // Proceed to name/gender
+                  setStep('name');
                 }}
                 onSkipToEmail={() => {
                   // Fallback to email verification
@@ -950,7 +951,7 @@ function OnboardingPageContent() {
                   </div>
                   
                   {/* USC Email (Only for Admin QR Codes WITHOUT card scan) */}
-                  {needsUSCEmail && !uscId && (
+                  {needsUSCEmail && !uscId && !sessionStorage.getItem('usc_card_verified') && (
                     <div className="rounded-xl border-2 border-blue-500/30 bg-blue-500/10 p-4">
                       <div className="mb-3">
                         <div className="flex items-center gap-2 mb-2">
