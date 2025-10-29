@@ -492,29 +492,15 @@
             try {
                 document.getElementById('scanStatus').textContent = 'Initializing camera...';
                 
-                // Request camera with high resolution for barcode reading
-                videoStream = await navigator.mediaDevices.getUserMedia({
-                    video: {
-                        facingMode: 'environment', // Back camera
-                        width: { ideal: 1920, min: 1280 },
-                        height: { ideal: 1080, min: 720 },
-                        focusMode: 'continuous',
-                    }
-                });
-                
-                const video = document.getElementById('video');
-                video.srcObject = videoStream;
-                await video.play();
-                
-                document.getElementById('scanStatus').textContent = 'Camera active';
                 document.getElementById('scanGuide').classList.add('active');
                 document.getElementById('startBtn').disabled = true;
                 document.getElementById('stopBtn').disabled = false;
                 
-                // Start ZXing barcode detection
+                // Let ZXing handle camera initialization completely
+                // It will request camera and start video automatically
                 startBarcodeDetection();
                 
-                console.log('✅ Camera started successfully');
+                console.log('✅ Starting ZXing camera...');
             } catch (err) {
                 console.error('❌ Camera error:', err);
                 document.getElementById('scanStatus').textContent = 'Camera error';
@@ -555,28 +541,34 @@
             console.log('⏹ Camera stopped');
         }
         
-        function startBarcodeDetection() {
-            const video = document.getElementById('video');
-            const canvas = document.getElementById('canvas');
-            const ctx = canvas.getContext('2d', { willReadFrequently: true });
-            
+        async function startBarcodeDetection() {
             codeReader = new BrowserMultiFormatReader();
             
             console.log('🔍 ZXing BrowserMultiFormatReader initialized');
             console.log('📹 Starting continuous decode from video...');
             
-            // Use ZXing's built-in continuous decode method
+            // Configure video constraints
+            const constraints = {
+                video: {
+                    facingMode: 'environment', // Back camera
+                    width: { ideal: 1920, min: 1280 },
+                    height: { ideal: 1080, min: 720 },
+                }
+            };
+            
             try {
-                codeReader.decodeFromVideoDevice(
-                    undefined, // Use default camera (already started)
-                    'video',
+                // ZXing handles everything: camera request, video start, and continuous scanning
+                await codeReader.decodeFromConstraints(
+                    constraints,
+                    'video', // Video element ID
                     (result, error) => {
                         if (result) {
                             // Success - barcode detected
+                            console.log('📊 Barcode detected:', result.text);
                             handleBarcodeDetected(result);
                         }
-                        // Errors are normal (no barcode in view)
-                        // ZXing handles this internally
+                        // Errors are normal when no barcode in view
+                        // Don't log NotFoundException spam
                     }
                 );
                 
@@ -586,7 +578,12 @@
                 
             } catch (err) {
                 console.error('❌ ZXing scan error:', err);
-                document.getElementById('scanStatus').textContent = 'Scanner error';
+                document.getElementById('scanStatus').textContent = 'Scanner error: ' + err.message;
+                alert(`Scanner Error: ${err.message}\n\nPlease allow camera permission and try again.`);
+                
+                // Re-enable start button
+                document.getElementById('startBtn').disabled = false;
+                document.getElementById('stopBtn').disabled = true;
             }
         }
         
