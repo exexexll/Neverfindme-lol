@@ -1158,7 +1158,7 @@ class DataStore {
   }
 
   // Validate and use an invite code (with optional USC email for admin codes)
-  async useInviteCode(code: string, userId: string, userName: string, email?: string): Promise<{ success: boolean; error?: string; codeType?: 'user' | 'admin' }> {
+  async useInviteCode(code: string, userId: string, userName: string, email?: string, skipEmailCheck?: boolean): Promise<{ success: boolean; error?: string; codeType?: 'user' | 'admin' }> {
     // CRITICAL FIX: Use getInviteCode which checks both memory AND database
     const inviteCode = await this.getInviteCode(code);
     
@@ -1170,8 +1170,8 @@ class DataStore {
       return { success: false, error: 'This invite code has been deactivated' };
     }
     
-    // USC EMAIL VALIDATION: Admin codes require @usc.edu email
-    if (inviteCode.type === 'admin') {
+    // USC EMAIL VALIDATION: Admin codes require @usc.edu email OR USC card scan
+    if (inviteCode.type === 'admin' && !skipEmailCheck) {
       if (!email || typeof email !== 'string') {
         return { success: false, error: 'USC email required for this code' };
       }
@@ -1190,6 +1190,8 @@ class DataStore {
       }
       
       console.log(`[InviteCode] ✅ Admin code validated with USC email: ${email}`);
+    } else if (inviteCode.type === 'admin' && skipEmailCheck) {
+      console.log(`[InviteCode] ✅ Admin code validated with USC card scan (email check skipped)`);
     }
 
     // Check if user already used this code (prevent reuse)

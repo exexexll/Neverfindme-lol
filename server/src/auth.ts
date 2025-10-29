@@ -452,7 +452,7 @@ router.post('/link', async (req, res) => {
         return res.status(400).json({ error: 'Invalid invite code format' });
       }
 
-      const result = await store.useInviteCode(sanitizedCode, userId, name.trim(), undefined);
+      const result = await store.useInviteCode(sanitizedCode, userId, name.trim(), undefined, true); // skipEmailCheck=true for USC card users
       
       if (!result.success) {
         return res.status(400).json({ 
