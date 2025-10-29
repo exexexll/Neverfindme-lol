@@ -226,16 +226,56 @@ export function USCCardScanner({ onSuccess, onSkipToEmail }: USCCardScannerProps
       return;
     }
 
+    // CRITICAL: Validate with backend and log to database
+    try {
+      console.log('[Scanner] Validating USC ID with backend...');
+      const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3001';
+      
+      const validateRes = await fetch(`${API_BASE}/usc/verify-card`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          rawBarcodeValue: rawValue,
+          barcodeFormat: 'CODABAR',
+        }),
+      });
+      
+      if (!validateRes.ok) {
+        const errorData = await validateRes.json();
+        throw new Error(errorData.error || 'Validation failed');
+      }
+      
+      const validateData = await validateRes.json();
+      console.log('[Scanner] ✅ Backend validation passed:', validateData.message);
+      
+    } catch (err: any) {
+      console.error('[Scanner] Backend validation failed:', err.message);
+      setError(err.message || 'Failed to validate USC card');
+      setScanState('error');
+      processingRef.current = false;
+      
+      setTimeout(async () => {
+        if (mountedRef.current) {
+          const Quagga = (await import('@ericblade/quagga2')).default;
+          setScanState('initializing');
+          setError(null);
+          Quagga.start();
+          setScanState('scanning');
+        }
+      }, 2000);
+      return;
+    }
+
     // Success!
     setScanState('success');
     setDetectedUSCId(uscId); // Show confirmation
-    console.log('[Quagga] ✅ Valid USC ID: ******' + uscId.slice(-4));
+    console.log('[Scanner] ✅ USC ID verified: ******' + uscId.slice(-4));
     
     // CRITICAL: Release camera before moving to next step
     const QuaggaCleanup = (await import('@ericblade/quagga2')).default;
     QuaggaCleanup.offDetected(handleDetected);
     QuaggaCleanup.CameraAccess.release();
-    console.log('[Quagga] Camera released for selfie step');
+    console.log('[Scanner] Camera released for selfie step');
     
     setTimeout(() => {
       if (mountedRef.current) {

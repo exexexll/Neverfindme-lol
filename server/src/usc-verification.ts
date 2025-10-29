@@ -94,23 +94,48 @@ async function logScanAttempt(data: {
 /**
  * POST /usc/verify-card
  * Verify scanned USC card is valid and not already registered
+ * Multi-layer fraud prevention
  */
 router.post('/verify-card', async (req: any, res) => {
   const { rawBarcodeValue, barcodeFormat } = req.body;
   const ip = req.ip || req.socket?.remoteAddress || 'unknown';
   const userAgent = req.headers['user-agent'] || '';
   
-  // SECURITY: Input validation
+  // SECURITY LAYER 1: Input validation
   if (!rawBarcodeValue || typeof rawBarcodeValue !== 'string') {
+    await logScanAttempt({
+      rawValue: String(rawBarcodeValue),
+      uscId: null,
+      valid: false,
+      ip,
+      userAgent,
+      error: 'Invalid input type',
+    });
     return res.status(400).json({ error: 'Barcode value is required' });
   }
   
-  if (rawBarcodeValue.length > 50) {
+  if (rawBarcodeValue.length > 50 || rawBarcodeValue.length < 10) {
+    await logScanAttempt({
+      rawValue: rawBarcodeValue,
+      uscId: null,
+      valid: false,
+      ip,
+      userAgent,
+      error: 'Invalid barcode length',
+    });
     return res.status(400).json({ error: 'Invalid barcode length' });
   }
   
-  // Rate limiting
+  // SECURITY LAYER 2: Rate limiting (prevent brute force)
   if (!checkScanRateLimit(ip)) {
+    await logScanAttempt({
+      rawValue: rawBarcodeValue,
+      uscId: null,
+      valid: false,
+      ip,
+      userAgent,
+      error: 'Rate limited',
+    });
     return res.status(429).json({ 
       error: 'Too many scan attempts. Please wait 10 minutes.' 
     });
@@ -118,7 +143,7 @@ router.post('/verify-card', async (req: any, res) => {
   
   console.log('[USC] Verify card request (redacted):', { length: rawBarcodeValue.length, format: barcodeFormat, ip });
   
-  // Extract USC ID
+  // SECURITY LAYER 3: Extract and validate USC ID
   const uscId = extractUSCId(rawBarcodeValue);
   
   if (!uscId) {
@@ -136,7 +161,7 @@ router.post('/verify-card', async (req: any, res) => {
     });
   }
   
-  // Validate format
+  // SECURITY LAYER 4: Validate USC ID format
   if (!/^[0-9]{10}$/.test(uscId)) {
     await logScanAttempt({
       rawValue: rawBarcodeValue,
@@ -152,7 +177,40 @@ router.post('/verify-card', async (req: any, res) => {
     });
   }
   
-  // Check if card already registered
+  // SECURITY LAYER 5: Validate USC ID range (real USC IDs start with 1 or 2)
+  const firstDigit = uscId[0];
+  if (firstDigit !== '1' && firstDigit !== '2') {
+    await logScanAttempt({
+      rawValue: rawBarcodeValue,
+      uscId,
+      valid: false,
+      ip,
+      userAgent,
+      error: 'USC ID out of valid range',
+    });
+    
+    return res.status(400).json({ 
+      error: 'Invalid USC ID - not in valid range' 
+    });
+  }
+  
+  // SECURITY LAYER 6: Check for suspicious patterns (sequential IDs, test IDs)
+  if (uscId === '1234567890' || uscId === '0000000000' || uscId === '9999999999') {
+    await logScanAttempt({
+      rawValue: rawBarcodeValue,
+      uscId,
+      valid: false,
+      ip,
+      userAgent,
+      error: 'Suspicious USC ID pattern',
+    });
+    
+    return res.status(400).json({ 
+      error: 'Invalid USC ID' 
+    });
+  }
+  
+  // SECURITY LAYER 7: Check duplicate registration
   const existing = await query(
     'SELECT user_id FROM usc_card_registrations WHERE usc_id = $1',
     [uscId]
@@ -172,6 +230,33 @@ router.post('/verify-card', async (req: any, res) => {
     return res.status(409).json({ 
       error: 'USC Card already registered to another account'
       // Intentionally not including registeredAt or registeredName (privacy)
+    });
+  }
+  
+  // SECURITY LAYER 8: Check for suspicious activity (multiple different cards from same IP)
+  const ipHistory = await query(
+    `SELECT COUNT(DISTINCT extracted_usc_id) as unique_cards
+     FROM usc_scan_attempts
+     WHERE ip_address = $1
+     AND scanned_at > NOW() - INTERVAL '24 hours'
+     AND passed_validation = true`,
+    [ip]
+  );
+  
+  if (ipHistory.rows.length > 0 && ipHistory.rows[0].unique_cards >= 3) {
+    await logScanAttempt({
+      rawValue: rawBarcodeValue,
+      uscId,
+      valid: false,
+      ip,
+      userAgent,
+      error: 'Suspicious activity - multiple cards from same IP',
+    });
+    
+    console.warn(`[USC] ⚠️ Suspicious: IP ${ip} scanned ${ipHistory.rows[0].unique_cards} different cards in 24h`);
+    
+    return res.status(429).json({ 
+      error: 'Suspicious activity detected. Please contact support.' 
     });
   }
   
