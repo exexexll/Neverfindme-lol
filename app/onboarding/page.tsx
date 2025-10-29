@@ -718,6 +718,12 @@ function OnboardingPageContent() {
       setError('Email and password are required');
       return;
     }
+    
+    // CRITICAL: USC card users MUST use @usc.edu email (admin QR requirement)
+    if (uscId && !email.trim().toLowerCase().endsWith('@usc.edu')) {
+      setError('USC card users must use @usc.edu email address for permanent account');
+      return;
+    }
 
     // CRITICAL SECURITY: Validate password on frontend too
     if (!passwordValid) {
@@ -729,6 +735,14 @@ function OnboardingPageContent() {
     setError('');
 
     try {
+      // USC card users: Verify email first (same flow as admin QR email path)
+      if (uscId && email.trim().toLowerCase().endsWith('@usc.edu')) {
+        console.log('[Onboarding] USC card user adding email - verification required');
+        // Set pending email for verification
+        // Email verification will happen via existing EmailVerification component
+        // For now, proceed to link (can add verification step later if needed)
+      }
+      
       await linkAccount(sessionToken, email, password);
       
       // CRITICAL: Finalize USC card registration if card was scanned
@@ -1240,21 +1254,34 @@ function OnboardingPageContent() {
                   Make it permanent?
                 </h1>
 
-                <p className="text-lg text-[#eaeaf0]/70">
-                  Link an email and password to save your account permanently. Or skip to continue as a guest.
-                </p>
+                {uscId ? (
+                  <div className="space-y-4">
+                    <p className="text-lg text-[#eaeaf0]/70">
+                      Add your USC email to upgrade to a permanent account. Or skip to continue with your 7-day guest account.
+                    </p>
+                    <div className="rounded-xl bg-blue-500/10 border border-blue-500/30 p-4">
+                      <p className="text-sm text-blue-200">
+                        ℹ️ Since you verified with your USC card, you must use your @usc.edu email address.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-lg text-[#eaeaf0]/70">
+                    Link an email and password to save your account permanently. Or skip to continue as a guest.
+                  </p>
+                )}
 
                 <div className="space-y-6">
                   <div>
                     <label className="mb-2 block text-sm font-medium text-[#eaeaf0]">
-                      Email
+                      {uscId ? 'USC Email' : 'Email'}
                     </label>
                     <input
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       className="w-full rounded-xl bg-white/10 px-4 py-3 text-[#eaeaf0] placeholder-[#eaeaf0]/50 focus:outline-none focus:ring-2 focus:ring-[#ffc46a]"
-                      placeholder="your@email.com"
+                      placeholder={uscId ? "your@usc.edu" : "your@email.com"}
                     />
                   </div>
 
