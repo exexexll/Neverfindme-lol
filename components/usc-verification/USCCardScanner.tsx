@@ -71,12 +71,7 @@ export function USCCardScanner({ onSuccess, onSkipToEmail }: USCCardScannerProps
           },
           decoder: {
             readers: [
-              {
-                format: 'codabar',
-                config: {
-                  supplements: [],
-                }
-              },
+              'codabar_reader',    // PRIMARY: USC cards use Codabar
               'code_128_reader',   // Fallback
               'code_39_reader',    // Fallback
             ],
