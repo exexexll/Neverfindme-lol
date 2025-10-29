@@ -159,6 +159,7 @@ function OnboardingPageContent() {
           if (data.valid && data.type === 'admin') {
             console.log('[Onboarding] Admin code detected - USC card scan required');
             setNeedsUSCCard(true);
+            setNeedsUSCEmail(false); // CRITICAL: Turn OFF email requirement for card path
             setStep('usc-welcome'); // Show welcome popup first
           }
         })
