@@ -309,20 +309,35 @@ router.post('/finalize-registration', async (req: any, res) => {
   }
   
   try {
-    // CRITICAL: Check if user exists in database first
-    const userCheck = await query(
-      'SELECT user_id, name, paid_status FROM users WHERE user_id = $1',
-      [userId]
-    );
+    // CRITICAL: Check BOTH memory and database for user
+    let userInDb = null;
     
-    if (userCheck.rows.length === 0) {
-      console.error('[USC] User not found in database:', userId);
+    try {
+      const userCheck = await query(
+        'SELECT user_id, name, paid_status FROM users WHERE user_id = $1',
+        [userId]
+      );
+      userInDb = userCheck.rows[0] || null;
+    } catch (dbErr) {
+      console.warn('[USC] Database query failed, checking memory store');
+    }
+    
+    // Check memory store as fallback
+    const userInMemory = await store.getUser(userId);
+    
+    if (!userInDb && !userInMemory) {
+      console.error('[USC] User not found anywhere:', userId);
       return res.status(404).json({ 
         error: 'User not found. Please complete onboarding first.'
       });
     }
     
-    console.log('[USC] User exists:', userCheck.rows[0].name, 'paidStatus:', userCheck.rows[0].paid_status);
+    if (!userInDb && userInMemory) {
+      console.warn('[USC] User found in MEMORY but NOT in database - memory-only mode');
+      console.log('[USC] Proceeding with memory-only user:', userInMemory.name);
+    } else {
+      console.log('[USC] User exists in database:', userInDb.name, 'paidStatus:', userInDb.paid_status);
+    }
     
     // ATOMIC: Check duplicate and insert in transaction
     await query('BEGIN');
