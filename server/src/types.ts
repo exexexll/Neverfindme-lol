@@ -45,6 +45,12 @@ export interface User {
   qrUnlocked?: boolean; // QR code unlocked after 4 sessions
   successfulSessions?: number; // Count of completed video calls
   qrUnlockedAt?: number; // When QR was unlocked
+  // USC Card Verification
+  uscId?: string; // 10-digit USC student ID
+  uscVerifiedAt?: number; // When USC card was scanned
+  accountType?: 'guest' | 'permanent'; // guest = 7-day expiry, permanent = no expiry
+  accountExpiresAt?: number | null; // When guest account expires (null for permanent)
+  verificationMethod?: 'payment' | 'qr_code' | 'usc_email' | 'usc_card';
   // Event mode VIP access
   canAccessOutsideEvents?: boolean; // VIP users can bypass event restrictions
   // Email/phone verification (Phase 2)

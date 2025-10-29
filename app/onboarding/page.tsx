@@ -10,8 +10,10 @@ import { saveSession, getSession } from '@/lib/session';
 import { PasswordInput } from '@/components/PasswordInput';
 import { EmailVerification } from '@/components/EmailVerification';
 import { compressImage } from '@/lib/imageCompression';
+import { USCWelcomePopup } from '@/components/usc-verification/USCWelcomePopup';
+import { USCCardScanner } from '@/components/usc-verification/USCCardScanner';
 
-type Step = 'name' | 'email-verify' | 'selfie' | 'video' | 'permanent' | 'introduction';
+type Step = 'usc-welcome' | 'usc-scan' | 'name' | 'email-verify' | 'selfie' | 'video' | 'permanent' | 'introduction';
 type Gender = 'female' | 'male' | 'nonbinary' | 'unspecified';
 
 function OnboardingPageContent() {
@@ -30,6 +32,10 @@ function OnboardingPageContent() {
   const [targetOnline, setTargetOnline] = useState(false);
   const [inviteCode, setInviteCode] = useState<string | null>(null); // QR code from URL
   const [agreedToTerms, setAgreedToTerms] = useState(false); // Legal consent
+  
+  // USC Card verification
+  const [uscId, setUscId] = useState<string | null>(null); // From card scan
+  const [needsUSCCard, setNeedsUSCCard] = useState(false); // Admin QR requires card scan
 
   // Step 2: Selfie
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -151,8 +157,9 @@ function OnboardingPageContent() {
         .then(res => res.json())
         .then(data => {
           if (data.valid && data.type === 'admin') {
-            console.log('[Onboarding] Admin code detected - USC email will be required');
-            setNeedsUSCEmail(true);
+            console.log('[Onboarding] Admin code detected - USC card scan required');
+            setNeedsUSCCard(true);
+            setStep('usc-welcome'); // Show welcome popup first
           }
         })
         .catch(err => {
@@ -291,14 +298,41 @@ function OnboardingPageContent() {
     setError('');
 
     try {
-      // Call API with USC email if provided
-      const response = await createGuestAccount(
-        name, 
-        gender, 
-        referralCode || undefined, 
-        inviteCode || undefined,
-        uscEmail || undefined // Pass USC email for admin code validation
-      );
+      let response;
+      
+      // USC CARD PATH: Use USC card guest account endpoint
+      if (uscId) {
+        console.log('[Onboarding] Creating USC card guest account...');
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3001'}/auth/guest-usc`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: name.trim(),
+            gender,
+            uscId,
+            rawBarcodeValue: uscId, // We only have the extracted ID at this point
+            barcodeFormat: 'CODABAR',
+            inviteCode: inviteCode || undefined,
+          }),
+        });
+        
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.error || 'Failed to create USC account');
+        }
+        
+        response = await res.json();
+        console.log('[Onboarding] USC guest account created:', response);
+      } else {
+        // NORMAL PATH: Call API with USC email if provided
+        response = await createGuestAccount(
+          name, 
+          gender, 
+          referralCode || undefined, 
+          inviteCode || undefined,
+          uscEmail || undefined // Pass USC email for admin code validation
+        );
+      }
       setSessionToken(response.sessionToken);
       setUserId(response.userId);
       
@@ -716,7 +750,31 @@ function OnboardingPageContent() {
       <Container>
         <div className="mx-auto max-w-2xl">
           <AnimatePresence mode="wait">
-            {/* Step 1: Name + Gender */}
+            {/* Step 0: USC Welcome Popup (Admin QR Only) */}
+            {step === 'usc-welcome' && (
+              <USCWelcomePopup
+                onContinue={() => setStep('usc-scan')}
+              />
+            )}
+
+            {/* Step 1: USC Card Scanner (Admin QR Only) */}
+            {step === 'usc-scan' && (
+              <USCCardScanner
+                onSuccess={(scannedUSCId, rawValue) => {
+                  console.log('[Onboarding] USC Card scanned:', scannedUSCId);
+                  setUscId(scannedUSCId);
+                  setStep('name'); // Proceed to name/gender
+                }}
+                onSkipToEmail={() => {
+                  // Fallback to email verification
+                  setNeedsUSCEmail(true);
+                  setNeedsUSCCard(false);
+                  setStep('name'); // Go to name, will show email input
+                }}
+              />
+            )}
+
+            {/* Step 2: Name + Gender */}
             {step === 'name' && (
               <motion.div
                 key="name"
@@ -736,6 +794,21 @@ function OnboardingPageContent() {
                     </div>
                     <p className="text-sm text-[#eaeaf0]/80">
                       After signup, click <span className="font-bold">Matchmake Now</span> to find {referrerName || 'them'} in the queue and call!
+                    </p>
+                  </div>
+                )}
+                
+                {/* Guest Account Notice (USC Card Scan) */}
+                {uscId && (
+                  <div className="rounded-2xl border-2 border-yellow-500/30 bg-yellow-500/10 p-6">
+                    <div className="flex items-center gap-3 mb-2">
+                      <span className="text-2xl">⏰</span>
+                      <h3 className="font-playfair text-xl font-bold text-yellow-300">
+                        Guest Account - 7 Day Trial
+                      </h3>
+                    </div>
+                    <p className="text-sm text-[#eaeaf0]/80">
+                      Your account expires in 7 days. Add your USC email in Settings later to upgrade to a permanent account.
                     </p>
                   </div>
                 )}

@@ -420,6 +420,128 @@ router.post('/link', async (req, res) => {
   });
 });
 
+  /**
+   * POST /auth/guest-usc
+   * Create guest account using USC campus card scan
+   * Guest accounts expire in 7 days unless upgraded with email
+   */
+  router.post('/guest-usc', async (req: any, res) => {
+    const { name, gender, uscId, rawBarcodeValue, barcodeFormat, inviteCode } = req.body;
+    const ip = req.userIp;
+
+    if (!name || !name.trim()) {
+      return res.status(400).json({ error: 'Name is required' });
+    }
+
+    if (!['female', 'male', 'nonbinary', 'unspecified'].includes(gender)) {
+      return res.status(400).json({ error: 'Invalid gender' });
+    }
+
+    if (!uscId || !/^[0-9]{10}$/.test(uscId)) {
+      return res.status(400).json({ error: 'Invalid USC ID' });
+    }
+
+    // Check if USC card already registered
+    const existing = await store.query(
+      'SELECT user_id FROM usc_card_registrations WHERE usc_id = $1',
+      [uscId]
+    );
+
+    if (existing.rows.length > 0) {
+      return res.status(409).json({ 
+        error: 'USC Card already registered to another account' 
+      });
+    }
+
+    const userId = uuidv4();
+    const sessionToken = uuidv4();
+
+    // Validate invite code if provided (admin QR codes)
+    let codeVerified = false;
+    if (inviteCode) {
+      const sanitizedCode = inviteCode.trim().toUpperCase();
+      
+      if (!/^[A-Z0-9]{16}$/.test(sanitizedCode)) {
+        return res.status(400).json({ error: 'Invalid invite code format' });
+      }
+
+      const result = await store.useInviteCode(sanitizedCode, userId, name.trim(), null);
+      
+      if (!result.success) {
+        return res.status(400).json({ 
+          error: result.error || 'Invalid or expired invite code' 
+        });
+      }
+
+      codeVerified = true;
+    }
+
+    try {
+      // Create guest user (expires in 7 days)
+      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+      
+      const user: User = {
+        userId,
+        name: name.trim(),
+        gender,
+        email: null,
+        password: null,
+        createdAt: Date.now(),
+        timerTotalSeconds: 0,
+        sessionCount: 0,
+        lastSessions: [],
+        paidStatus: codeVerified ? 'qr_verified' : 'unpaid',
+        selfieUrl: null,
+        videoUrl: null,
+        socials: {},
+        instagramPosts: [],
+        bannedUntil: null,
+        reportCount: 0,
+        uscId,
+        uscVerifiedAt: Date.now(),
+        accountType: 'guest',
+        accountExpiresAt: expiresAt.getTime(),
+        verificationMethod: 'usc_card',
+      };
+
+      // Save user
+      await store.saveUser(user);
+
+      // Register USC card
+      await store.query(`
+        INSERT INTO usc_card_registrations (
+          usc_id, usc_id_hash, user_id, first_scanned_ip,
+          raw_barcode_value, barcode_format
+        ) VALUES ($1, $2, $3, $4, $5, $6)
+      `, [
+        uscId,
+        require('crypto').createHash('sha256').update(uscId + (process.env.USC_ID_SALT || 'salt')).digest('hex'),
+        userId,
+        ip,
+        rawBarcodeValue,
+        barcodeFormat,
+      ]);
+
+      // Create session
+      await store.createSession(sessionToken, userId, 'guest');
+
+      console.log(`[Auth] USC guest account created: ${name} (USC ID: ******${uscId.slice(-4)}), expires: ${expiresAt.toISOString()}`);
+
+      res.json({
+        sessionToken,
+        userId,
+        accountType: 'guest',
+        expiresAt: expiresAt.toISOString(),
+        paidStatus: user.paidStatus,
+        inviteCodeUsed: codeVerified,
+        uscId: '******' + uscId.slice(-4),
+      });
+    } catch (err: any) {
+      console.error('[Auth] USC guest creation failed:', err);
+      res.status(500).json({ error: 'Failed to create account' });
+    }
+  });
+
   return router;
 }
 
