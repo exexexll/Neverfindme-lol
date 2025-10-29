@@ -335,21 +335,7 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          {/* Make Permanent (Guest accounts only) */}
-          {session?.accountType === 'guest' && (
-            <div className="rounded-2xl bg-gradient-to-br from-green-500/10 to-emerald-500/10 border border-green-500/30 p-6">
-              <h2 className="mb-3 text-xl font-bold text-green-300">Upgrade to Permanent</h2>
-              <p className="mb-4 text-sm text-[#eaeaf0]/70">
-                Guest accounts are deleted after 7 days of inactivity. Upgrade to permanent to keep your data forever.
-              </p>
-              <button
-                onClick={() => setShowMakePermanent(true)}
-                className="focus-ring w-full rounded-xl bg-green-500 px-6 py-3 font-medium text-white transition-opacity hover:opacity-90"
-              >
-                Make Account Permanent
-              </button>
-            </div>
-          )}
+          {/* Duplicate removed - using better version above with expiry countdown */}
 
           {/* Location Sharing Toggle */}
           <div className="rounded-2xl bg-white/5 p-6 shadow-inner border border-white/10">
