@@ -275,17 +275,20 @@ function OnboardingPageContent() {
       return;
     }
     
-    // If USC email is needed and not provided, show error
-    if (needsUSCEmail && !uscEmail.trim()) {
-      setError('USC email is required for this QR code');
-      return;
-    }
-    
-    // Validate USC email format if provided
-    if (needsUSCEmail && uscEmail.trim()) {
-      if (!/^[^\s@]+@usc\.edu$/i.test(uscEmail.trim())) {
-        setError('Please enter a valid @usc.edu email address');
+    // CRITICAL: If USC card was scanned, SKIP all USC email checks
+    if (!uscId) {
+      // Only check USC email if NO card was scanned
+      if (needsUSCEmail && !uscEmail.trim()) {
+        setError('USC email is required for this QR code');
         return;
+      }
+      
+      // Validate USC email format if provided
+      if (needsUSCEmail && uscEmail.trim()) {
+        if (!/^[^\s@]+@usc\.edu$/i.test(uscEmail.trim())) {
+          setError('Please enter a valid @usc.edu email address');
+          return;
+        }
       }
     }
 
@@ -839,14 +842,16 @@ function OnboardingPageContent() {
                   console.log('[Onboarding] USC Card scanned successfully');
                   // Store USC ID temporarily (will save to DB after onboarding complete)
                   setUscId(scannedUSCId);
+                  setNeedsUSCEmail(false); // CRITICAL: Turn off email requirement
+                  setNeedsUSCCard(false);  // Card scan complete
                   sessionStorage.setItem('temp_usc_id', scannedUSCId);
                   sessionStorage.setItem('temp_usc_barcode', rawValue);
                   setStep('name'); // Proceed to name/gender
                 }}
                 onSkipToEmail={() => {
                   // Fallback to email verification
-                  setNeedsUSCEmail(true);
-                  setNeedsUSCCard(false);
+                  setNeedsUSCEmail(true);  // Switch to email path
+                  setNeedsUSCCard(false);   // No longer need card
                   setUscId(null);
                   sessionStorage.removeItem('temp_usc_id');
                   sessionStorage.removeItem('temp_usc_barcode');
@@ -936,8 +941,8 @@ function OnboardingPageContent() {
                     </div>
                   </div>
                   
-                  {/* USC Email (Only for Admin QR Codes) */}
-                  {needsUSCEmail && (
+                  {/* USC Email (Only for Admin QR Codes WITHOUT card scan) */}
+                  {needsUSCEmail && !uscId && (
                     <div className="rounded-xl border-2 border-blue-500/30 bg-blue-500/10 p-4">
                       <div className="mb-3">
                         <div className="flex items-center gap-2 mb-2">
