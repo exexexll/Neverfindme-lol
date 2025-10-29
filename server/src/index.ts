@@ -31,6 +31,7 @@ import verificationRoutes from './verification';
 import locationRoutes from './location';
 import uscVerificationRoutes from './usc-verification';
 import instagramRoutes from './instagram';
+import { startGuestAccountCleanup } from './guest-account-cleanup';
 import { securityHeaders, httpsRedirect } from './security-headers';
 import { memoryManager } from './memory-manager';
 import { 
@@ -2138,6 +2139,9 @@ server.listen(PORT, async () => {
   console.log(`   WebSocket: ws://localhost:${PORT}`);
   console.log(`   ⚠️  In-memory store active - migrate to PostgreSQL for production`);
   console.log(`   ℹ️  Production mode - ready for real users`);
+  
+  // Start guest account cleanup job (deletes expired accounts every 6 hours)
+  startGuestAccountCleanup();
   
   // DUAL STORAGE: Recover active rooms and referrals from database on startup
   if (process.env.DATABASE_URL) {
