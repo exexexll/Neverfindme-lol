@@ -2,7 +2,9 @@ import express from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { Server as SocketServer } from 'socket.io';
 import bcrypt from 'bcrypt';
+import crypto from 'crypto';
 import { store } from './store';
+import { query } from './database';
 import { User, Session } from './types';
 import { validatePassword, getPasswordErrorMessage } from './password-validator';
 
@@ -440,23 +442,22 @@ router.post('/link', async (req, res) => {
     if (!uscId || !/^[0-9]{10}$/.test(uscId)) {
       return res.status(400).json({ error: 'Invalid USC ID' });
     }
-
-    // Check if USC card already registered
-    const existing = await store.query(
-      'SELECT user_id FROM usc_card_registrations WHERE usc_id = $1',
-      [uscId]
-    );
-
-    if (existing.rows.length > 0) {
-      return res.status(409).json({ 
-        error: 'USC Card already registered to another account' 
-      });
+    
+    // SECURITY: Sanitize rawBarcodeValue (prevent injection)
+    if (!rawBarcodeValue || rawBarcodeValue.length > 50) {
+      return res.status(400).json({ error: 'Invalid barcode value' });
+    }
+    
+    // SECURITY: Validate barcodeFormat
+    const validFormats = ['CODABAR', 'CODE_128', 'CODE_39', 'CODE_93', 'ITF'];
+    if (barcodeFormat && !validFormats.includes(barcodeFormat)) {
+      return res.status(400).json({ error: 'Invalid barcode format' });
     }
 
     const userId = uuidv4();
     const sessionToken = uuidv4();
-
-    // Validate invite code if provided (admin QR codes)
+    
+    // Validate invite code BEFORE transaction (admin QR codes)
     let codeVerified = false;
     if (inviteCode) {
       const sanitizedCode = inviteCode.trim().toUpperCase();
@@ -465,7 +466,7 @@ router.post('/link', async (req, res) => {
         return res.status(400).json({ error: 'Invalid invite code format' });
       }
 
-      const result = await store.useInviteCode(sanitizedCode, userId, name.trim(), null);
+      const result = await store.useInviteCode(sanitizedCode, userId, name.trim(), undefined);
       
       if (!result.success) {
         return res.status(400).json({ 
@@ -476,7 +477,23 @@ router.post('/link', async (req, res) => {
       codeVerified = true;
     }
 
+    // CRITICAL: All database operations in one transaction
     try {
+      await query('BEGIN');
+      
+      // Check duplicate with row lock
+      const existing = await query(
+        'SELECT user_id FROM usc_card_registrations WHERE usc_id = $1 FOR UPDATE',
+        [uscId]
+      );
+
+      if (existing.rows.length > 0) {
+        await query('ROLLBACK');
+        return res.status(409).json({ 
+          error: 'USC Card already registered'
+        });
+      }
+
       // Create guest user (expires in 7 days)
       const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
       
@@ -484,46 +501,55 @@ router.post('/link', async (req, res) => {
         userId,
         name: name.trim(),
         gender,
-        email: null,
-        password: null,
+        accountType: 'guest',
         createdAt: Date.now(),
-        timerTotalSeconds: 0,
-        sessionCount: 0,
-        lastSessions: [],
+        banStatus: 'none',
         paidStatus: codeVerified ? 'qr_verified' : 'unpaid',
-        selfieUrl: null,
-        videoUrl: null,
-        socials: {},
-        instagramPosts: [],
-        bannedUntil: null,
-        reportCount: 0,
+        inviteCodeUsed: inviteCode || undefined,
+        qrUnlocked: false,
+        successfulSessions: 0,
         uscId,
         uscVerifiedAt: Date.now(),
-        accountType: 'guest',
         accountExpiresAt: expiresAt.getTime(),
         verificationMethod: 'usc_card',
       };
 
       // Save user
-      await store.saveUser(user);
+      await store.createUser(user);
 
       // Register USC card
-      await store.query(`
+      const uscIdHash = crypto.createHash('sha256')
+        .update(uscId + (process.env.USC_ID_SALT || 'default-salt-change-in-production'))
+        .digest('hex');
+        
+      await query(`
         INSERT INTO usc_card_registrations (
           usc_id, usc_id_hash, user_id, first_scanned_ip,
           raw_barcode_value, barcode_format
         ) VALUES ($1, $2, $3, $4, $5, $6)
       `, [
         uscId,
-        require('crypto').createHash('sha256').update(uscId + (process.env.USC_ID_SALT || 'salt')).digest('hex'),
+        uscIdHash,
         userId,
         ip,
         rawBarcodeValue,
         barcodeFormat,
       ]);
 
-      // Create session
-      await store.createSession(sessionToken, userId, 'guest');
+      // Create session (proper format)
+      const session: Session = {
+        sessionToken,
+        userId,
+        createdAt: Date.now(),
+        expiresAt: Date.now() + (30 * 24 * 60 * 60 * 1000), // 30 days
+        ipAddress: ip,
+        isActive: true,
+        lastActiveAt: Date.now(),
+      };
+      await store.createSession(session);
+      
+      // COMMIT transaction (atomic operation complete)
+      await query('COMMIT');
 
       console.log(`[Auth] USC guest account created: ${name} (USC ID: ******${uscId.slice(-4)}), expires: ${expiresAt.toISOString()}`);
 
@@ -537,6 +563,13 @@ router.post('/link', async (req, res) => {
         uscId: '******' + uscId.slice(-4),
       });
     } catch (err: any) {
+      // ROLLBACK on any error
+      try {
+        await query('ROLLBACK');
+      } catch (rollbackErr) {
+        console.error('[Auth] Rollback failed:', rollbackErr);
+      }
+      
       console.error('[Auth] USC guest creation failed:', err);
       res.status(500).json({ error: 'Failed to create account' });
     }

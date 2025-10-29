@@ -302,7 +302,12 @@ function OnboardingPageContent() {
       
       // USC CARD PATH: Use USC card guest account endpoint
       if (uscId) {
-        console.log('[Onboarding] Creating USC card guest account...');
+        // SECURITY: Frontend validation
+        if (!/^[0-9]{10}$/.test(uscId)) {
+          throw new Error('Invalid USC ID format');
+        }
+        
+        console.log('[Onboarding] Creating USC card guest account (USC ID: ******' + uscId.slice(-4) + ')');
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3001'}/auth/guest-usc`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -322,7 +327,7 @@ function OnboardingPageContent() {
         }
         
         response = await res.json();
-        console.log('[Onboarding] USC guest account created:', response);
+        console.log('[Onboarding] USC guest account created');
       } else {
         // NORMAL PATH: Call API with USC email if provided
         response = await createGuestAccount(

@@ -100,6 +100,15 @@ router.post('/verify-card', async (req: any, res) => {
   const ip = req.ip || req.socket?.remoteAddress || 'unknown';
   const userAgent = req.headers['user-agent'] || '';
   
+  // SECURITY: Input validation
+  if (!rawBarcodeValue || typeof rawBarcodeValue !== 'string') {
+    return res.status(400).json({ error: 'Barcode value is required' });
+  }
+  
+  if (rawBarcodeValue.length > 50) {
+    return res.status(400).json({ error: 'Invalid barcode length' });
+  }
+  
   // Rate limiting
   if (!checkScanRateLimit(ip)) {
     return res.status(429).json({ 
@@ -107,7 +116,7 @@ router.post('/verify-card', async (req: any, res) => {
     });
   }
   
-  console.log('[USC] Verify card request:', { rawBarcodeValue, format: barcodeFormat, ip });
+  console.log('[USC] Verify card request (redacted):', { length: rawBarcodeValue.length, format: barcodeFormat, ip });
   
   // Extract USC ID
   const uscId = extractUSCId(rawBarcodeValue);
@@ -145,7 +154,7 @@ router.post('/verify-card', async (req: any, res) => {
   
   // Check if card already registered
   const existing = await query(
-    'SELECT user_id, first_scanned_at, u.name FROM usc_card_registrations r JOIN users u ON r.user_id = u.user_id WHERE usc_id = $1',
+    'SELECT user_id FROM usc_card_registrations WHERE usc_id = $1',
     [uscId]
   );
   
@@ -159,10 +168,10 @@ router.post('/verify-card', async (req: any, res) => {
       error: 'Card already registered',
     });
     
+    // SECURITY: Don't leak user data (name, registration date)
     return res.status(409).json({ 
-      error: 'USC Card already registered to another account',
-      registeredAt: existing.rows[0].first_scanned_at,
-      registeredName: existing.rows[0].name,
+      error: 'USC Card already registered to another account'
+      // Intentionally not including registeredAt or registeredName (privacy)
     });
   }
   
@@ -189,6 +198,11 @@ router.post('/verify-card', async (req: any, res) => {
 router.post('/login-card', async (req: any, res) => {
   const { rawBarcodeValue } = req.body;
   const ip = req.ip || req.socket?.remoteAddress || 'unknown';
+  
+  // SECURITY: Input validation
+  if (!rawBarcodeValue || typeof rawBarcodeValue !== 'string' || rawBarcodeValue.length > 50) {
+    return res.status(400).json({ error: 'Invalid barcode' });
+  }
   
   // Rate limiting
   if (!checkScanRateLimit(ip)) {
@@ -235,9 +249,18 @@ router.post('/login-card', async (req: any, res) => {
     return res.status(403).json({ error: 'Account suspended' });
   }
   
-  // Create session
+  // Create session (proper Session object)
   const sessionToken = crypto.randomBytes(32).toString('hex');
-  await store.createSession(sessionToken, user.user_id, user.account_type);
+  const session = {
+    sessionToken,
+    userId: user.user_id,
+    createdAt: Date.now(),
+    expiresAt: Date.now() + (30 * 24 * 60 * 60 * 1000), // 30 days
+    ipAddress: ip,
+    isActive: true,
+    lastActiveAt: Date.now(),
+  };
+  await store.createSession(session);
   
   // Update login time
   await query('UPDATE users SET last_login = NOW() WHERE user_id = $1', [user.user_id]);

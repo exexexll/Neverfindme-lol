@@ -21,15 +21,39 @@ export function USCCardScanner({ onSuccess, onSkipToEmail }: USCCardScannerProps
   const [error, setError] = useState<string | null>(null);
   const [consecutiveReads, setConsecutiveReads] = useState<string[]>([]);
   const scannerRef = useRef<Html5Qrcode | null>(null);
-  const [detectedValue, setDetectedValue] = useState<string>('');
+  const processingRef = useRef(false); // Prevent duplicate processing
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    startScanner();
+    let mounted = true;
+    
+    const initScanner = async () => {
+      if (!mounted) return;
+      await startScanner();
+      
+      // OPTIMIZATION: Timeout after 2 minutes of no success
+      if (mounted) {
+        timeoutRef.current = setTimeout(() => {
+          if (scanState !== 'success' && scanState !== 'processing') {
+            setError('Scan timeout. Please try again or use email verification.');
+            setScanState('error');
+            stopScanner();
+          }
+        }, 120000); // 2 minutes
+      }
+    };
+    
+    initScanner();
     
     return () => {
+      mounted = false;
       stopScanner();
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
     };
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount
 
   const startScanner = async () => {
     try {
@@ -39,8 +63,14 @@ export function USCCardScanner({ onSuccess, onSkipToEmail }: USCCardScannerProps
       scannerRef.current = scanner;
 
       const config = {
-        fps: 5, // Scans per second
-        qrbox: { width: 350, height: 120 }, // Scanning area for horizontal barcode
+        fps: 10, // Scan 10 times per second for faster detection
+        qrbox: function(viewfinderWidth: number, viewfinderHeight: number) {
+          // Use 90% of viewfinder for scanning (much larger area)
+          // This allows card to be anywhere in frame, not just a small box
+          const boxWidth = Math.floor(viewfinderWidth * 0.9);
+          const boxHeight = Math.floor(viewfinderHeight * 0.7);
+          return { width: boxWidth, height: boxHeight };
+        },
         aspectRatio: 1.777778, // 16:9
         formatsToSupport: [
           Html5QrcodeSupportedFormats.CODABAR,      // USC CARD FORMAT
@@ -80,8 +110,13 @@ export function USCCardScanner({ onSuccess, onSkipToEmail }: USCCardScannerProps
   };
 
   const handleScanSuccess = (decodedText: string, decodedResult: any) => {
-    console.log('[USCScanner] Detected:', decodedText);
-    setDetectedValue(decodedText);
+    // CRITICAL: Prevent processing if already processing
+    if (processingRef.current) {
+      console.log('[USCScanner] Already processing, ignoring scan');
+      return;
+    }
+    
+    console.log('[USCScanner] Detected barcode');
 
     // Multi-read validation (require 3 consecutive identical reads)
     setConsecutiveReads((prev) => {
@@ -90,6 +125,7 @@ export function USCCardScanner({ onSuccess, onSkipToEmail }: USCCardScannerProps
       // Check if all 3 match
       if (newReads.length === 3 && newReads.every(r => r === newReads[0])) {
         console.log('[USCScanner] ✅ Confirmed after 3 reads');
+        processingRef.current = true; // Lock processing
         processConfirmedScan(decodedText);
         return [];
       }
@@ -105,30 +141,47 @@ export function USCCardScanner({ onSuccess, onSkipToEmail }: USCCardScannerProps
     }
   };
 
-  const processConfirmedScan = (rawValue: string) => {
+  const processConfirmedScan = async (rawValue: string) => {
     setScanState('processing');
+    
+    // CRITICAL: Stop scanner immediately to prevent duplicate processing
+    await stopScanner();
     
     // Extract USC ID from 14-digit barcode
     const uscId = extractUSCId(rawValue);
     
     if (!uscId) {
       setError('Invalid barcode. Please try again.');
-      setScanState('scanning');
+      setScanState('error');
       setConsecutiveReads([]);
+      processingRef.current = false; // CRITICAL: Reset lock
+      // Restart scanner after 2 seconds
+      setTimeout(() => {
+        setScanState('initializing');
+        setError(null);
+        startScanner();
+      }, 2000);
       return;
     }
     
     // Validate USC ID format
     if (!/^[0-9]{10}$/.test(uscId)) {
       setError('Invalid USC ID format. Please scan the barcode on the back of your card.');
-      setScanState('scanning');
+      setScanState('error');
       setConsecutiveReads([]);
+      processingRef.current = false; // CRITICAL: Reset lock
+      // Restart scanner after 2 seconds
+      setTimeout(() => {
+        setScanState('initializing');
+        setError(null);
+        startScanner();
+      }, 2000);
       return;
     }
     
     // Success!
     setScanState('success');
-    console.log('[USCScanner] ✅ Valid USC ID:', uscId);
+    console.log('[USCScanner] ✅ Valid USC ID: ******' + uscId.slice(-4)); // Redacted for privacy
     
     // Small delay for success animation, then callback
     setTimeout(() => {
@@ -164,7 +217,7 @@ export function USCCardScanner({ onSuccess, onSkipToEmail }: USCCardScannerProps
           Scan Your USC Campus Card
         </h1>
         <p className="text-[#eaeaf0]/70 text-base sm:text-lg">
-          Flip your card to the back and align the barcode
+          Hold the back of your card in view - scanner detects automatically
         </p>
       </div>
 
@@ -254,9 +307,9 @@ export function USCCardScanner({ onSuccess, onSkipToEmail }: USCCardScannerProps
           </p>
           <ul className="text-[#eaeaf0]/50 text-xs space-y-1">
             <li>• Use bright, even lighting (avoid shadows)</li>
-            <li>• Hold card flat and steady (8-10 inches from camera)</li>
-            <li>• Align barcode horizontally in the scan area</li>
-            <li>• Wait for camera to focus (image should be sharp)</li>
+            <li>• Hold card 6-12 inches from camera</li>
+            <li>• Keep card steady - scanner auto-detects anywhere in frame</li>
+            <li>• Barcode is on the back of your USC card (horizontal black lines)</li>
           </ul>
         </div>
 
