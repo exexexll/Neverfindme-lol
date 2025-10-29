@@ -353,13 +353,19 @@ function OnboardingPageContent() {
         setTargetOnline(response.targetOnline);
       }
       
-      // Check if user needs to pay
-      if (response.paidStatus === 'unpaid' && !response.inviteCodeUsed) {
+      // CRITICAL: USC card users bypass paywall (admin QR code verified)
+      // Check if user needs to pay (SKIP for USC card users)
+      if (!uscId && response.paidStatus === 'unpaid' && !response.inviteCodeUsed) {
         console.log('[Onboarding] User needs to pay - redirecting to paywall');
         sessionStorage.setItem('redirecting_to_paywall', 'true');
         sessionStorage.setItem('return_to_onboarding', 'true');
         router.push('/paywall');
         return;
+      }
+      
+      // USC card users already verified via admin QR
+      if (uscId) {
+        console.log('[Onboarding] USC card user - payment bypassed (admin QR verified)');
       }
       
       // SKIP EMAIL VERIFICATION if USC card was scanned
@@ -720,7 +726,8 @@ function OnboardingPageContent() {
     }
     
     // CRITICAL: USC card users MUST use @usc.edu email (admin QR requirement)
-    if (uscId && !email.trim().toLowerCase().endsWith('@usc.edu')) {
+    const tempUscId = uscId || sessionStorage.getItem('temp_usc_id');
+    if (tempUscId && !email.trim().toLowerCase().endsWith('@usc.edu')) {
       setError('USC card users must use @usc.edu email address for permanent account');
       return;
     }
@@ -1241,7 +1248,11 @@ function OnboardingPageContent() {
             {/* Introduction Screen - REMOVED: Referral users follow normal flow now */}
 
             {/* Step 4: Make Permanent */}
-            {step === 'permanent' && (
+            {step === 'permanent' && (() => {
+              // DEBUG: Check if uscId is set
+              console.log('[Onboarding/Permanent] uscId:', uscId, 'sessionStorage:', sessionStorage.getItem('temp_usc_id'));
+              
+              return (
               <motion.div
                 key="permanent"
                 initial={{ opacity: 0, y: 20 }}
@@ -1254,7 +1265,7 @@ function OnboardingPageContent() {
                   Make it permanent?
                 </h1>
 
-                {uscId ? (
+                {(uscId || sessionStorage.getItem('temp_usc_id')) ? (
                   <div className="space-y-4">
                     <p className="text-lg text-[#eaeaf0]/70">
                       Add your USC email to upgrade to a permanent account. Or skip to continue with your 7-day guest account.
@@ -1274,14 +1285,14 @@ function OnboardingPageContent() {
                 <div className="space-y-6">
                   <div>
                     <label className="mb-2 block text-sm font-medium text-[#eaeaf0]">
-                      {uscId ? 'USC Email' : 'Email'}
+                      {(uscId || sessionStorage.getItem('temp_usc_id')) ? 'USC Email' : 'Email'}
                     </label>
                     <input
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       className="w-full rounded-xl bg-white/10 px-4 py-3 text-[#eaeaf0] placeholder-[#eaeaf0]/50 focus:outline-none focus:ring-2 focus:ring-[#ffc46a]"
-                      placeholder={uscId ? "your@usc.edu" : "your@email.com"}
+                      placeholder={(uscId || sessionStorage.getItem('temp_usc_id')) ? "your@usc.edu" : "your@email.com"}
                     />
                   </div>
 
@@ -1312,19 +1323,20 @@ function OnboardingPageContent() {
                       onClick={handleSkip}
                       className="focus-ring flex-1 rounded-xl bg-white/10 px-6 py-3 font-medium text-[#eaeaf0] transition-all hover:bg-white/20"
                     >
-                      Skip for now
+                      {(uscId || sessionStorage.getItem('temp_usc_id')) ? 'Continue as Guest (7 days)' : 'Skip for now'}
                     </button>
                     <button
                       onClick={handleMakePermanent}
                       disabled={loading}
                       className="focus-ring flex-1 rounded-xl bg-[#ffc46a] px-6 py-3 font-medium text-[#0a0a0c] shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50"
                     >
-                      {loading ? 'Saving...' : 'Make permanent'}
+                      {loading ? 'Saving...' : (uscId || sessionStorage.getItem('temp_usc_id')) ? 'Upgrade to Permanent' : 'Make permanent'}
                     </button>
                   </div>
                 </div>
               </motion.div>
-            )}
+              );
+            })()}
           </AnimatePresence>
         </div>
       </Container>
