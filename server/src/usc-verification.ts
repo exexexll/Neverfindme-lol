@@ -280,5 +280,90 @@ router.post('/login-card', async (req: any, res) => {
   });
 });
 
+/**
+ * POST /usc/finalize-registration
+ * Called AFTER onboarding complete to save USC card to database
+ * This prevents incomplete onboardings from blocking USC cards
+ */
+router.post('/finalize-registration', async (req: any, res) => {
+  const { uscId, rawBarcodeValue, barcodeFormat, userId } = req.body;
+  const ip = req.ip || req.socket?.remoteAddress || 'unknown';
+  
+  // Validate inputs
+  if (!uscId || !/^[0-9]{10}$/.test(uscId)) {
+    return res.status(400).json({ error: 'Invalid USC ID' });
+  }
+  
+  if (!userId) {
+    return res.status(400).json({ error: 'User ID required' });
+  }
+  
+  // Validate barcode format
+  const validFormats = ['CODABAR', 'CODE_128', 'CODE_39', 'CODE_93', 'ITF'];
+  if (barcodeFormat && !validFormats.includes(barcodeFormat)) {
+    return res.status(400).json({ error: 'Invalid barcode format' });
+  }
+  
+  try {
+    // ATOMIC: Check duplicate and insert in transaction
+    await query('BEGIN');
+    
+    const existing = await query(
+      'SELECT user_id FROM usc_card_registrations WHERE usc_id = $1 FOR UPDATE',
+      [uscId]
+    );
+    
+    if (existing.rows.length > 0) {
+      await query('ROLLBACK');
+      return res.status(409).json({ 
+        error: 'USC Card already registered to another account'
+      });
+    }
+    
+    // Register USC card
+    const uscIdHash = hashUSCId(uscId);
+    
+    await query(`
+      INSERT INTO usc_card_registrations (
+        usc_id, usc_id_hash, user_id, first_scanned_ip,
+        raw_barcode_value, barcode_format
+      ) VALUES ($1, $2, $3, $4, $5, $6)
+    `, [
+      uscId,
+      uscIdHash,
+      userId,
+      ip,
+      rawBarcodeValue || uscId,
+      barcodeFormat || 'CODABAR',
+    ]);
+    
+    // Update user with USC ID
+    await query(`
+      UPDATE users 
+      SET usc_id = $1, usc_verified_at = NOW(), verification_method = 'usc_card'
+      WHERE user_id = $2
+    `, [uscId, userId]);
+    
+    await query('COMMIT');
+    
+    console.log(`[USC] Finalized registration for USC ID ******${uscId.slice(-4)}, user ${userId.substring(0, 8)}`);
+    
+    res.json({ 
+      success: true,
+      message: 'USC card registered successfully'
+    });
+    
+  } catch (err: any) {
+    try {
+      await query('ROLLBACK');
+    } catch (rollbackErr) {
+      console.error('[USC] Rollback failed:', rollbackErr);
+    }
+    
+    console.error('[USC] Finalize registration failed:', err);
+    res.status(500).json({ error: 'Failed to register USC card' });
+  }
+});
+
 export default router;
 

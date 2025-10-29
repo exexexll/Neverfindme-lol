@@ -300,34 +300,27 @@ function OnboardingPageContent() {
     try {
       let response;
       
-      // USC CARD PATH: Use USC card guest account endpoint
+      // USC CARD PATH: Create guest account WITHOUT USC card (card saved later)
       if (uscId) {
-        // SECURITY: Frontend validation
-        if (!/^[0-9]{10}$/.test(uscId)) {
-          throw new Error('Invalid USC ID format');
-        }
-        
-        console.log('[Onboarding] Creating USC card guest account (USC ID: ******' + uscId.slice(-4) + ')');
+        console.log('[Onboarding] Creating guest account for USC card user');
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3001'}/auth/guest-usc`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             name: name.trim(),
             gender,
-            uscId,
-            rawBarcodeValue: uscId, // We only have the extracted ID at this point
-            barcodeFormat: 'CODABAR',
             inviteCode: inviteCode || undefined,
+            // USC card will be saved later after onboarding complete
           }),
         });
         
         if (!res.ok) {
           const errorData = await res.json();
-          throw new Error(errorData.error || 'Failed to create USC account');
+          throw new Error(errorData.error || 'Failed to create account');
         }
         
         response = await res.json();
-        console.log('[Onboarding] USC guest account created');
+        console.log('[Onboarding] Guest account created, will link USC card after onboarding');
       } else {
         // NORMAL PATH: Call API with USC email if provided
         response = await createGuestAccount(
@@ -362,6 +355,13 @@ function OnboardingPageContent() {
         sessionStorage.setItem('redirecting_to_paywall', 'true');
         sessionStorage.setItem('return_to_onboarding', 'true');
         router.push('/paywall');
+        return;
+      }
+      
+      // SKIP EMAIL VERIFICATION if USC card was scanned
+      if (uscId) {
+        console.log('[Onboarding] USC card scanned - skipping email verification');
+        setStep('selfie');
         return;
       }
       
@@ -639,7 +639,42 @@ function OnboardingPageContent() {
   /**
    * Step 4: Skip permanent account step - go to main
    */
-  const handleSkip = () => {
+  const handleSkip = async () => {
+    // CRITICAL: Finalize USC card registration if card was scanned
+    if (uscId) {
+      const tempBarcode = sessionStorage.getItem('temp_usc_barcode');
+      
+      try {
+        console.log('[Onboarding] Finalizing USC card registration');
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3001'}/usc/finalize-registration`, {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${sessionToken}`,
+          },
+          body: JSON.stringify({
+            uscId,
+            rawBarcodeValue: tempBarcode || uscId,
+            barcodeFormat: 'CODABAR',
+            userId,
+          }),
+        });
+        
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.error || 'Failed to register USC card');
+        }
+        
+        console.log('[Onboarding] USC card registered to database');
+        // Clean up temp storage
+        sessionStorage.removeItem('temp_usc_id');
+        sessionStorage.removeItem('temp_usc_barcode');
+      } catch (err: any) {
+        console.error('[Onboarding] USC card registration failed:', err);
+        alert('Warning: Failed to link USC card to account. You may need to re-verify later.');
+      }
+    }
+    
     // Save session to localStorage now (profile is complete)
     if (sessionToken && userId) {
       console.log('[Onboarding] Saving session - profile complete');
@@ -691,6 +726,41 @@ function OnboardingPageContent() {
 
     try {
       await linkAccount(sessionToken, email, password);
+      
+      // CRITICAL: Finalize USC card registration if card was scanned
+      if (uscId) {
+        const tempBarcode = sessionStorage.getItem('temp_usc_barcode');
+        
+        try {
+          console.log('[Onboarding] Finalizing USC card registration');
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3001'}/usc/finalize-registration`, {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${sessionToken}`,
+            },
+            body: JSON.stringify({
+              uscId,
+              rawBarcodeValue: tempBarcode || uscId,
+              barcodeFormat: 'CODABAR',
+              userId,
+            }),
+          });
+          
+          if (!res.ok) {
+            const errorData = await res.json();
+            throw new Error(errorData.error || 'Failed to register USC card');
+          }
+          
+          console.log('[Onboarding] USC card registered to database');
+          // Clean up temp storage
+          sessionStorage.removeItem('temp_usc_id');
+          sessionStorage.removeItem('temp_usc_barcode');
+        } catch (err: any) {
+          console.error('[Onboarding] USC card registration failed:', err);
+          alert('Warning: Failed to link USC card to account.');
+        }
+      }
       
       // Save session to localStorage (account is now permanent)
       console.log('[Onboarding] Saving permanent account session');
@@ -766,14 +836,20 @@ function OnboardingPageContent() {
             {step === 'usc-scan' && (
               <USCCardScanner
                 onSuccess={(scannedUSCId, rawValue) => {
-                  console.log('[Onboarding] USC Card scanned:', scannedUSCId);
+                  console.log('[Onboarding] USC Card scanned successfully');
+                  // Store USC ID temporarily (will save to DB after onboarding complete)
                   setUscId(scannedUSCId);
+                  sessionStorage.setItem('temp_usc_id', scannedUSCId);
+                  sessionStorage.setItem('temp_usc_barcode', rawValue);
                   setStep('name'); // Proceed to name/gender
                 }}
                 onSkipToEmail={() => {
                   // Fallback to email verification
                   setNeedsUSCEmail(true);
                   setNeedsUSCCard(false);
+                  setUscId(null);
+                  sessionStorage.removeItem('temp_usc_id');
+                  sessionStorage.removeItem('temp_usc_barcode');
                   setStep('name'); // Go to name, will show email input
                 }}
               />

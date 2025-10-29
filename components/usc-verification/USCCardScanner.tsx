@@ -24,12 +24,23 @@ export function USCCardScanner({ onSuccess, onSkipToEmail }: USCCardScannerProps
   const [scanState, setScanState] = useState<ScanState>('initializing');
   const [error, setError] = useState<string | null>(null);
   const [consecutiveReads, setConsecutiveReads] = useState<string[]>([]);
+  const [detectedUSCId, setDetectedUSCId] = useState<string | null>(null); // Show confirmation
   const processingRef = useRef(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const mountedRef = useRef(true);
 
   useEffect(() => {
     mountedRef.current = true;
+    
+    // SECURITY: Prevent bypassing scanner with back button
+    const preventBack = (e: PopStateEvent) => {
+      e.preventDefault();
+      window.history.pushState(null, '', window.location.href);
+      alert('Please complete USC card verification before going back.');
+    };
+    
+    window.history.pushState(null, '', window.location.href);
+    window.addEventListener('popstate', preventBack);
     
     const initScanner = async () => {
       try {
@@ -113,6 +124,7 @@ export function USCCardScanner({ onSuccess, onSkipToEmail }: USCCardScannerProps
       mountedRef.current = false;
       Quagga.stop();
       Quagga.offDetected(handleDetected);
+      window.removeEventListener('popstate', preventBack);
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
@@ -192,6 +204,7 @@ export function USCCardScanner({ onSuccess, onSkipToEmail }: USCCardScannerProps
 
     // Success!
     setScanState('success');
+    setDetectedUSCId(uscId); // Show confirmation
     console.log('[Quagga] ✅ Valid USC ID: ******' + uscId.slice(-4));
     
     setTimeout(() => {
@@ -234,13 +247,17 @@ export function USCCardScanner({ onSuccess, onSkipToEmail }: USCCardScannerProps
         </p>
       </div>
 
-      {/* Scanner */}
-      <div className="flex-1 flex items-center justify-center px-4 pb-8">
+      {/* Scanner - Responsive on mobile and desktop */}
+      <div className="flex-1 flex items-center justify-center p-4">
         <div className="w-full max-w-2xl">
           <div 
             id="usc-scanner-reader" 
-            className="rounded-2xl overflow-hidden shadow-2xl bg-black"
-            style={{ minHeight: '400px' }}
+            className="rounded-2xl overflow-hidden shadow-2xl bg-black relative"
+            style={{ 
+              width: '100%',
+              aspectRatio: '16/9', // Maintain ratio on all devices
+              maxHeight: '70vh', // Don't exceed viewport height
+            }}
           >
             {/* Quagga2 will inject video and canvas here */}
           </div>
@@ -297,10 +314,16 @@ export function USCCardScanner({ onSuccess, onSkipToEmail }: USCCardScannerProps
                 initial={{ opacity: 0, scale: 0.5 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0 }}
-                className="text-green-400 text-xl font-bold"
+                className="text-green-400"
               >
-                <span className="text-3xl mr-2">✅</span>
-                USC Card Verified!
+                <div className="text-3xl mb-2">✅</div>
+                <div className="text-xl font-bold">USC Card Verified!</div>
+                {detectedUSCId && (
+                  <div className="text-sm mt-2 font-mono">
+                    USC ID: ******{detectedUSCId.slice(-4)}
+                  </div>
+                )}
+                <div className="text-xs mt-2 opacity-70">Proceeding to registration...</div>
               </motion.div>
             )}
 
