@@ -307,6 +307,8 @@ function OnboardingPageContent() {
       // USC CARD PATH: Create guest account WITHOUT USC card (card saved later)
       if (uscId) {
         console.log('[Onboarding] Creating guest account for USC card user');
+        console.log('[Onboarding] DEBUG - inviteCode value:', inviteCode, '| length:', inviteCode?.length, '| type:', typeof inviteCode);
+        console.log('[Onboarding] DEBUG - name:', name, '| gender:', gender, '| uscId:', uscId?.slice(-4));
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3001'}/auth/guest-usc`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
