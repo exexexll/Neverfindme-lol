@@ -1219,7 +1219,12 @@ class DataStore {
       return { success: false, error: 'This invite code has been fully used' };
     }
 
-    // Use the code
+    // Use the code (ensure usedBy is an array)
+    if (!Array.isArray(inviteCode.usedBy)) {
+      console.error(`[InviteCode] WARNING: usedBy is not an array:`, inviteCode.usedBy);
+      inviteCode.usedBy = [];
+    }
+    
     inviteCode.usedBy.push(userId);
     
     // Decrement uses for user codes (admin codes have unlimited uses)
@@ -1227,17 +1232,19 @@ class DataStore {
       inviteCode.usesRemaining--;
       console.log(`[InviteCode] Code ${code} used by ${userName} - ${inviteCode.usesRemaining} uses remaining`);
     } else {
-      console.log(`[InviteCode] Admin code ${code} used by ${userName} (USC: ${email}) - unlimited uses`);
+      console.log(`[InviteCode] Admin code ${code} used by ${userName} - unlimited uses`);
     }
     
     // Update in database if available
     if (this.useDatabase) {
       try {
+        // Ensure usedBy is an array before stringify
+        const usedByToStore = Array.isArray(inviteCode.usedBy) ? inviteCode.usedBy : [];
         await query(
           `UPDATE invite_codes 
            SET uses_remaining = $1, used_by = $2 
            WHERE code = $3`,
-          [inviteCode.usesRemaining, JSON.stringify(inviteCode.usedBy), code]
+          [inviteCode.usesRemaining, JSON.stringify(usedByToStore), code]
         );
         console.log(`[InviteCode] ✅ Updated usage in database`);
       } catch (error) {
