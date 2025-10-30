@@ -564,8 +564,9 @@ router.post('/link', async (req, res) => {
       console.error('[Auth] Error message:', err.message);
       console.error('[Auth] Error stack:', err.stack?.split('\n').slice(0, 5));
       res.status(500).json({ 
-        error: 'Failed to create account',
-        details: process.env.NODE_ENV === 'development' ? err.message : undefined
+        error: 'Failed to create account: ' + err.message, // ALWAYS return actual error for debugging
+        details: err.message,
+        stack: err.stack?.split('\n').slice(0, 3)
       });
     }
   });
