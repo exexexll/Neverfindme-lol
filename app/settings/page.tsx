@@ -217,7 +217,7 @@ export default function SettingsPage() {
                 <br/>
                 <strong>Upgrade Button Check:</strong><br/>
                 • loadingPayment: {loadingPayment ? 'true' : 'false'}<br/>
-                • accountType === 'guest': {paymentStatus.accountType === 'guest' ? 'YES ✅' : 'NO ❌'}<br/>
+                • accountType === &apos;guest&apos;: {paymentStatus.accountType === 'guest' ? 'YES ✅' : 'NO ❌'}<br/>
                 • accountExpiresAt exists: {paymentStatus.accountExpiresAt ? 'YES ✅' : 'NO ❌'}<br/>
                 • Should show button: {(!loadingPayment && paymentStatus.accountType === 'guest' && paymentStatus.accountExpiresAt) ? 'YES ✅✅✅' : 'NO ❌❌❌'}
               </p>
