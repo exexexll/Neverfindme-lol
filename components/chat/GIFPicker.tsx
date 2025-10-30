@@ -17,6 +17,29 @@ export function GIFPicker({ onSelectGIF, onClose }: GIFPickerProps) {
   const [loading, setLoading] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
+  // CRITICAL: Prevent body scroll and zoom when modal is open
+  useEffect(() => {
+    // Store original styles
+    const originalOverflow = document.body.style.overflow;
+    const originalPosition = document.body.style.position;
+    const originalWidth = document.body.style.width;
+    const originalTouchAction = document.body.style.touchAction;
+    
+    // Lock body scroll and prevent zoom
+    document.body.style.overflow = 'hidden';
+    document.body.style.position = 'fixed';
+    document.body.style.width = '100%';
+    document.body.style.touchAction = 'none'; // Prevent pinch zoom
+    
+    return () => {
+      // Restore original styles on unmount
+      document.body.style.overflow = originalOverflow;
+      document.body.style.position = originalPosition;
+      document.body.style.width = originalWidth;
+      document.body.style.touchAction = originalTouchAction;
+    };
+  }, []);
+
   // Load trending GIFs on mount
   useEffect(() => {
     loadTrending();
