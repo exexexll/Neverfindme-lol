@@ -475,14 +475,14 @@ router.post('/link', async (req, res) => {
     let newUserInviteCode: string | undefined;
     if (codeVerified) {
       const crypto = require('crypto');
-      const randomBytes = crypto.randomBytes(8);
+      const randomBytes = crypto.randomBytes(16); // FIXED: Generate 16 bytes (not 8)
       const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
       let code = '';
       for (let i = 0; i < 16; i++) {
         code += chars[randomBytes[i] % chars.length];
       }
       newUserInviteCode = code;
-      console.log(`[Auth] Will generate 4-use invite code for USC user ${name}: ${newUserInviteCode}`);
+      console.log(`[Auth] Will generate 4-use invite code for USC user ${name}: ${newUserInviteCode} (length: ${code.length})`);
     }
 
     try {
