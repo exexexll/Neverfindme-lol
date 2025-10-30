@@ -133,6 +133,9 @@ export function createAuthRoutes(
     }
   }
 
+  // CRITICAL: ALL guest accounts expire in 7 days
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
   const user: User = {
     userId,
     name: name.trim(),
@@ -150,6 +153,7 @@ export function createAuthRoutes(
     inviteCodeUsesRemaining: newUserInviteCode ? 4 : 0,
     qrUnlocked: false, // Starts locked, unlocks after 4 sessions
     successfulSessions: 0, // Starts at 0
+    accountExpiresAt: expiresAt.getTime(), // CRITICAL: ALL guest accounts expire in 7 days
     // Store introduction info if this is via referral
     ...(referralInfo && {
       introducedTo: referralInfo.targetUserId,
