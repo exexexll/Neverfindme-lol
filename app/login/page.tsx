@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Container } from '@/components/Container';
 import { login } from '@/lib/api';
 import { saveSession } from '@/lib/session';
-import { USCCardScanner } from '@/components/usc-verification/USCCardScanner';
+import { USCCardLogin } from '@/components/usc-verification/USCCardLogin';
 import Link from 'next/link';
 
 function LoginPageContent() {
@@ -168,7 +168,7 @@ function LoginPageContent() {
           </form>
           ) : (
           <div className="space-y-6">
-            <USCCardScanner
+            <USCCardLogin
               onSuccess={async (uscId, rawValue) => {
                 setLoading(true);
                 setError('');
