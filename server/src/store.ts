@@ -161,12 +161,13 @@ class DataStore {
         }
       }
       
-      // All retries failed - but continue in memory-only mode
+      // All retries failed - THROW ERROR for USC users
       console.error('[Store] ❌ FAILED to create user in PostgreSQL after 3 attempts:', lastError?.message);
-      console.error('[Store] ⚠️  User will work in memory-only mode (NOT IDEAL for USC users)');
+      console.error('[Store] ⚠️  CRITICAL: User cannot be created - USC card registration will fail');
       console.error('[Store] Error code:', lastError?.code);
       console.error('[Store] Error detail:', lastError?.detail);
-      // Don't throw - allow memory-only mode for now
+      console.error('[Store] Stack:', lastError?.stack?.split('\n').slice(0, 3));
+      throw new Error(`Database error: ${lastError?.message || 'Unable to create user'}`);
     }
   }
 
