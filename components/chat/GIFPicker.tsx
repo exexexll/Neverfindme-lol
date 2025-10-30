@@ -91,12 +91,18 @@ export function GIFPicker({ onSelectGIF, onClose }: GIFPickerProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/80 p-4">
+    <div 
+      className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/80 p-0 sm:p-4"
+      onClick={onClose}
+      style={{ touchAction: 'none' }} // Prevent zoom gestures on backdrop
+    >
       <motion.div
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 50 }}
+        onClick={(e) => e.stopPropagation()} // Don't close when clicking inside
         className="w-full max-w-2xl bg-[#0a0a0c] rounded-t-2xl sm:rounded-2xl shadow-2xl border border-white/10 max-h-[80vh] flex flex-col"
+        style={{ touchAction: 'auto' }} // Allow scroll inside modal
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-white/10">
