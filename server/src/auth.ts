@@ -305,6 +305,8 @@ router.post('/link', async (req, res) => {
     accountType: 'permanent',
     email,
     password_hash, // ✅ Securely hashed with bcrypt
+    email_verified: true, // CRITICAL: Mark email as verified (no SendGrid code needed for /auth/link)
+    accountExpiresAt: null, // CRITICAL: Remove expiry for permanent accounts
   });
 
   // Extend session expiry for permanent users
