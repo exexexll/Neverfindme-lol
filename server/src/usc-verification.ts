@@ -2,8 +2,14 @@ import express from 'express';
 import crypto from 'crypto';
 import { query } from './database';
 import { store } from './store';
+import type { Server as SocketServer } from 'socket.io';
 
-const router = express.Router();
+// USC verification routes need io and activeSockets for session invalidation notifications
+export function createUSCRoutes(
+  io: SocketServer,
+  activeSockets: Map<string, string>
+) {
+  const router = express.Router();
 
 // Rate limiting for scan attempts
 const scanAttempts = new Map<string, number[]>(); // IP -> timestamps[]
@@ -345,11 +351,7 @@ router.post('/login-card', async (req: any, res) => {
   const sessionToken = crypto.randomBytes(32).toString('hex');
   
   try {
-    // CRITICAL: Invalidate all other sessions (single session enforcement)
-    await store.invalidateUserSessions(user.user_id);
-    console.log('[USC Login] Invalidated previous sessions for user');
-    
-    // Create NEW session (proper Session object)
+    // Create NEW session first
     const session = {
       sessionToken,
       userId: user.user_id,
@@ -361,6 +363,25 @@ router.post('/login-card', async (req: any, res) => {
     };
     await store.createSession(session);
     console.log('[USC Login] New session created');
+    
+    // CRITICAL: NOW invalidate all OTHER sessions (except this new one)
+    const invalidatedCount = await store.invalidateUserSessions(user.user_id, sessionToken);
+    console.log(`[USC Login] Invalidated ${invalidatedCount} old sessions (kept new session: ${sessionToken.substring(0, 8)})`);
+    
+    // Notify old sessions via Socket.IO
+    if (invalidatedCount > 0) {
+      const sockets = Array.from(activeSockets.entries())
+        .filter(([userId, _]) => userId === user.user_id)
+        .map(([_, socketId]) => socketId);
+      
+      sockets.forEach(socketId => {
+        io.to(socketId).emit('session:invalidated', {
+          message: 'You have been logged out because you logged in from another device.',
+          reason: 'new_login',
+        });
+      });
+      console.log(`[USC Login] Notified ${sockets.length} old sessions`);
+    }
   } catch (sessionErr: any) {
     console.error('[USC Login] Session creation failed:', sessionErr);
     throw new Error('Failed to create session: ' + sessionErr.message);
@@ -564,5 +585,9 @@ router.post('/finalize-registration', async (req: any, res) => {
   }
 });
 
-export default router;
+  return router;
+}
+
+// Default export for backward compatibility
+export default (io: any, activeSockets: any) => createUSCRoutes(io, activeSockets);
 

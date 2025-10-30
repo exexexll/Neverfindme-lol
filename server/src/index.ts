@@ -29,7 +29,7 @@ import { requireEventAccess } from './event-guard';
 import { authLimiter, apiLimiter, turnLimiter, paymentLimiter, reportLimiter, rsvpLimiter, eventPublicLimiter } from './rate-limit';
 import verificationRoutes from './verification';
 import locationRoutes from './location';
-import uscVerificationRoutes from './usc-verification';
+import createUSCVerificationRoutes from './usc-verification';
 import instagramRoutes from './instagram';
 import { startGuestAccountCleanup } from './guest-account-cleanup';
 import { securityHeaders, httpsRedirect } from './security-headers';
@@ -509,7 +509,7 @@ app.use('/admin', authLimiter, adminAuthRoutes);
 app.use('/verification', apiLimiter, verificationRoutes);
 app.use('/location', apiLimiter, locationRoutes);
 app.use('/instagram', apiLimiter, instagramRoutes);
-app.use('/usc', apiLimiter, uscVerificationRoutes);
+app.use('/usc', apiLimiter, createUSCVerificationRoutes(io, activeSockets));
 // EVENT MODE: Public event endpoints with rate limiting (SECURITY: prevent scraping)
 app.use('/event/attendance', eventPublicLimiter);
 app.use('/event/settings', eventPublicLimiter);
