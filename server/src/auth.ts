@@ -553,7 +553,12 @@ router.post('/link', async (req, res) => {
       });
     } catch (err: any) {
       console.error('[Auth] USC guest creation failed:', err);
-      res.status(500).json({ error: 'Failed to create account' });
+      console.error('[Auth] Error message:', err.message);
+      console.error('[Auth] Error stack:', err.stack?.split('\n').slice(0, 5));
+      res.status(500).json({ 
+        error: 'Failed to create account',
+        details: process.env.NODE_ENV === 'development' ? err.message : undefined
+      });
     }
   });
 
