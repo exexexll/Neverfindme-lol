@@ -1158,7 +1158,7 @@ class DataStore {
             type: row.type,
             maxUses: row.max_uses,
             usesRemaining: row.uses_remaining,
-            usedBy: row.used_by || [],
+            usedBy: typeof row.used_by === 'string' ? JSON.parse(row.used_by) : (row.used_by || []),
             isActive: row.is_active,
           };
           // Cache in memory
