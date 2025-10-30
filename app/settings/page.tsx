@@ -202,16 +202,24 @@ export default function SettingsPage() {
             </div>
           )}
 
-          {/* Debug: Show payment status */}
+          {/* Debug: Show payment status + Upgrade button condition */}
           {!loadingPayment && paymentStatus && (
             <div className="rounded-xl bg-blue-500/10 border border-blue-500/30 p-3">
               <p className="text-xs text-blue-300 font-mono">
                 🔍 Debug:<br/>
-                • Status: {paymentStatus.paidStatus}<br/>
+                • Account Type: {paymentStatus.accountType || 'undefined'}<br/>
+                • Paid Status: {paymentStatus.paidStatus}<br/>
+                • Account Expires At: {paymentStatus.accountExpiresAt || 'undefined'}<br/>
                 • My Code: {paymentStatus.myInviteCode || 'none'}<br/>
                 • Uses Left: {paymentStatus.inviteCodeUsesRemaining} / {paymentStatus.myCodeInfo?.maxUses || 4}<br/>
                 • Total Used: {paymentStatus.myCodeInfo?.totalUsed || 0}<br/>
-                {paymentStatus.inviteCodeUsed && `• Joined Via: ${paymentStatus.inviteCodeUsed}`}
+                {paymentStatus.inviteCodeUsed && `• Joined Via: ${paymentStatus.inviteCodeUsed}`}<br/>
+                <br/>
+                <strong>Upgrade Button Check:</strong><br/>
+                • loadingPayment: {loadingPayment ? 'true' : 'false'}<br/>
+                • accountType === 'guest': {paymentStatus.accountType === 'guest' ? 'YES ✅' : 'NO ❌'}<br/>
+                • accountExpiresAt exists: {paymentStatus.accountExpiresAt ? 'YES ✅' : 'NO ❌'}<br/>
+                • Should show button: {(!loadingPayment && paymentStatus.accountType === 'guest' && paymentStatus.accountExpiresAt) ? 'YES ✅✅✅' : 'NO ❌❌❌'}
               </p>
             </div>
           )}
