@@ -1343,6 +1343,24 @@ export default function RoomPage() {
         setChatOpen(true);
         return;
       }
+      
+      // CRITICAL: Emit socket event to send socials to peer
+      if (socketRef.current) {
+        socketRef.current.emit('room:giveSocial', {
+          roomId,
+          socials,
+        });
+        
+        // Show confirmation in chat
+        const message: ChatMessage = {
+          from: 'system',
+          text: '✅ Shared your social handles with ' + peerName,
+          timestamp: Date.now(),
+          type: 'message',
+        };
+        setMessages(prev => [...prev, message]);
+        setChatOpen(true);
+      }
 
       setShowSocialConfirm(true);
     } catch (e) {

@@ -112,6 +112,8 @@ function optimizeQueueData(data: any): any {
       cooldownExpiry: user.cooldownExpiry,
       wasIntroducedToMe: user.wasIntroducedToMe,
       introducedBy: user.introducedBy,
+      distance: user.distance, // CRITICAL: Include distance for location badges
+      hasLocation: user.hasLocation, // CRITICAL: Include location flag
       // Omit heavy fields: bio, timestamps, etc.
     }))
   };
