@@ -25,6 +25,7 @@ export function USCCardScanner({ onSuccess, onSkipToEmail }: USCCardScannerProps
   const [consecutiveReads, setConsecutiveReads] = useState<string[]>([]);
   const [detectedUSCId, setDetectedUSCId] = useState<string | null>(null); // Show confirmation
   const [flashlightOn, setFlashlightOn] = useState(false);
+  const [failedAttempts, setFailedAttempts] = useState(0);
   const processingRef = useRef(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const videoTrackRef = useRef<MediaStreamTrack | null>(null);
@@ -224,13 +225,24 @@ export function USCCardScanner({ onSuccess, onSkipToEmail }: USCCardScannerProps
     // Extract USC ID
     const uscId = extractUSCId(rawValue);
     
-    if (!uscId) {
-      setError('Invalid barcode. Please scan the barcode on the back of your USC card.');
+    if (!uscId || !/^[0-9]{10}$/.test(uscId)) {
+      setFailedAttempts(prev => prev + 1);
+      
+      // After 3 failed attempts, stop auto-retry (prevent infinite loop)
+      if (failedAttempts >= 2) {
+        setError('Unable to scan this card. Please try a different card or use email verification.');
+        setScanState('error');
+        setConsecutiveReads([]);
+        processingRef.current = false;
+        return;
+      }
+      
+      setError(`Scan failed (attempt ${failedAttempts + 1}/3). Please ensure barcode is clear and well-lit.`);
       setScanState('error');
       setConsecutiveReads([]);
       processingRef.current = false;
       
-      // Restart after 2 seconds
+      // Restart after 3 seconds (longer delay to prevent rapid loops)
       setTimeout(async () => {
         if (mountedRef.current) {
           const Quagga = (await import('@ericblade/quagga2')).default;
@@ -238,27 +250,9 @@ export function USCCardScanner({ onSuccess, onSkipToEmail }: USCCardScannerProps
           setError(null);
           Quagga.start();
           setScanState('scanning');
+          processingRef.current = false; // Reset processing flag
         }
-      }, 2000);
-      return;
-    }
-
-    // Validate format
-    if (!/^[0-9]{10}$/.test(uscId)) {
-      setError('Invalid USC ID format. Please try again.');
-      setScanState('error');
-      setConsecutiveReads([]);
-      processingRef.current = false;
-      
-      setTimeout(async () => {
-        if (mountedRef.current) {
-          const Quagga = (await import('@ericblade/quagga2')).default;
-          setScanState('initializing');
-          setError(null);
-          Quagga.start();
-          setScanState('scanning');
-        }
-      }, 2000);
+      }, 3000);
       return;
     }
 

@@ -177,20 +177,20 @@ router.post('/verify-card', async (req: any, res) => {
     });
   }
   
-  // SECURITY LAYER 5: Validate USC ID range (real USC IDs start with 1 or 2)
+  // SECURITY LAYER 5: Validate USC ID range (allow 1-9, reject 0)
   const firstDigit = uscId[0];
-  if (firstDigit !== '1' && firstDigit !== '2') {
+  if (firstDigit === '0') {
     await logScanAttempt({
       rawValue: rawBarcodeValue,
       uscId,
       valid: false,
       ip,
       userAgent,
-      error: 'USC ID out of valid range',
+      error: 'USC ID starts with 0 (invalid)',
     });
     
     return res.status(400).json({ 
-      error: 'Invalid USC ID - not in valid range' 
+      error: 'Invalid USC ID format' 
     });
   }
   
