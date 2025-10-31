@@ -270,27 +270,55 @@ export default function WaitlistPage() {
             </div>
             <div className="flex-1 flex items-center justify-center p-4">
               <div className="w-full max-w-2xl">
-                <USCCardScanner
-                  onSuccess={(uscId, rawValue) => {
-                    console.log('[Waitlist] USC card scanned:', uscId);
-                    // Prompt for admin code
-                    const adminCode = prompt('Enter admin invite code (from campus events):');
-                    if (adminCode && /^[A-Z0-9]{16}$/i.test(adminCode)) {
+                <div className="space-y-4">
+                  <USCCardScanner
+                    onSuccess={async (uscId, rawValue) => {
+                      console.log('[Waitlist] USC card scanned:', uscId);
+                      
+                      // Prompt for admin code
+                      const adminCode = prompt('Enter admin invite code from campus events:');
+                      
+                      if (!adminCode) {
+                        // User cancelled
+                        return;
+                      }
+                      
+                      if (!/^[A-Z0-9]{16}$/i.test(adminCode)) {
+                        alert('Invalid code format. Must be 16 characters (A-Z, 0-9)');
+                        return;
+                      }
+                      
+                      // Validate code with backend before storing
+                      try {
+                        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3001'}/payment/validate-code`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ code: adminCode.toUpperCase() }),
+                        });
+                        
+                        const data = await res.json();
+                        
+                        if (!data.valid || data.type !== 'admin') {
+                          alert('Invalid admin code. Please get an admin code from USC campus events.');
+                          return;
+                        }
+                        
+                        // Valid admin code - proceed
+                        setShowBarcodeScanner(false);
+                        sessionStorage.setItem('temp_usc_id', uscId);
+                        sessionStorage.setItem('temp_usc_barcode', rawValue);
+                        sessionStorage.setItem('usc_card_verified', 'true');
+                        router.push(`/onboarding?inviteCode=${adminCode.toUpperCase()}`);
+                      } catch (err) {
+                        alert('Failed to validate code. Please try again.');
+                      }
+                    }}
+                    onSkipToEmail={() => {
                       setShowBarcodeScanner(false);
-                      // Store USC card for onboarding
-                      sessionStorage.setItem('temp_usc_id', uscId);
-                      sessionStorage.setItem('temp_usc_barcode', rawValue);
-                      sessionStorage.setItem('usc_card_verified', 'true');
-                      router.push(`/onboarding?inviteCode=${adminCode.toUpperCase()}`);
-                    } else {
-                      alert('Invalid admin code. Get a code from USC campus events.');
-                    }
-                  }}
-                  onSkipToEmail={() => {
-                    setShowBarcodeScanner(false);
-                    alert('Please get an admin QR code from USC campus events to continue.');
-                  }}
-                />
+                      alert('Please scan an admin QR code to continue with email verification.');
+                    }}
+                  />
+                </div>
               </div>
             </div>
           </div>
