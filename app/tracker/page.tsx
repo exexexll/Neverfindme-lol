@@ -27,11 +27,18 @@ export default function TrackerPage() {
     })
       .then(res => res.json())
       .then(paymentData => {
+        // CRITICAL: Check if email verification is pending
+        if (paymentData.pendingEmail && !paymentData.emailVerified) {
+          console.log('[Tracker] Email verification pending - redirecting to onboarding');
+          router.push('/onboarding');
+          return;
+        }
+        
         const hasPaid = paymentData.paidStatus === 'paid' || paymentData.paidStatus === 'qr_verified' || paymentData.paidStatus === 'qr_grace_period';
         
         if (!hasPaid) {
-          console.warn('[Tracker] Unpaid user attempted access - redirecting to paywall');
-          router.push('/paywall');
+          console.warn('[Tracker] Unpaid user attempted access - redirecting to waitlist');
+          router.push('/waitlist');
           return;
         }
         

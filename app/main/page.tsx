@@ -52,6 +52,13 @@ function MainPageContent() {
     
     Promise.all([paymentPromise, eventPromise])
       .then(([paymentData, eventData]) => {
+        // CRITICAL: Check if email verification is pending (MUST be first check)
+        if (paymentData.pendingEmail && !paymentData.emailVerified) {
+          console.log('[Main] Email verification pending - redirecting to complete verification');
+          router.push('/onboarding');
+          return;
+        }
+        
         // CRITICAL: Check if guest account expired
         if (paymentData.accountType === 'guest' && paymentData.accountExpiresAt) {
           const expiryDate = new Date(paymentData.accountExpiresAt);
@@ -71,7 +78,7 @@ function MainPageContent() {
                         paymentData.paidStatus === 'qr_grace_period';
         
         if (!hasPaid) {
-          router.push('/paywall');
+          router.push('/waitlist');
           return;
         }
         
