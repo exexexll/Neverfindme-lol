@@ -159,22 +159,9 @@ export function Hero() {
                 {isVerified ? 'Continue to App' : 'Start connecting'}
               </button>
             )}
-            <Button variant="ghost" href="/manifesto" className="hidden sm:inline-flex">
+            <Button variant="ghost" href="/manifesto">
               Meet Who and Do What?
             </Button>
-          </div>
-          
-          {/* Mobile: Move "Meet Who and Do What" below, aligned right */}
-          <div className="sm:hidden mt-4 text-right">
-            <Link
-              href="/manifesto"
-              className="inline-flex items-center gap-2 text-sm text-white/70 hover:text-white transition-colors"
-            >
-              Meet Who and Do What?
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </Link>
           </div>
 
           {/* Login link for existing users (hidden if already logged in) */}
