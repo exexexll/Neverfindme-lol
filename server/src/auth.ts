@@ -477,7 +477,7 @@ router.post('/link', async (req, res) => {
     const userId = uuidv4();
     const sessionToken = uuidv4();
     
-    // Validate invite code (admin QR codes)
+    // Validate invite code (admin QR codes) - OPTIONAL for USC card users
     let codeVerified = false;
     if (inviteCode) {
       const sanitizedCode = inviteCode.trim().toUpperCase();
@@ -501,6 +501,11 @@ router.post('/link', async (req, res) => {
 
       codeVerified = true;
       console.log('[Auth] ✅ Invite code verified');
+    } else {
+      // USC card scan without invite code is still valid
+      // The USC card itself provides verification
+      console.log('[Auth] No invite code provided - USC card scan is verification method');
+      codeVerified = true; // USC card IS the verification
     }
 
     // CRITICAL: Generate 4-use invite code for verified USC card users (same as regular users)
