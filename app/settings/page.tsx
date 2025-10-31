@@ -89,10 +89,13 @@ export default function SettingsPage() {
 
     if (!session) return;
 
-    // CRITICAL: USC card users MUST use @usc.edu email
+    // CRITICAL: USC users (card OR email) MUST use @usc.edu
     const hasUSCCard = paymentStatus?.uscId || session.uscId;
-    if (hasUSCCard && !email.trim().toLowerCase().endsWith('@usc.edu')) {
-      alert('USC card users must use @usc.edu email address for permanent account');
+    const hasUSCEmail = paymentStatus?.email?.endsWith('@usc.edu');
+    const isUSCUser = hasUSCCard || hasUSCEmail;
+    
+    if (isUSCUser && !email.trim().toLowerCase().endsWith('@usc.edu')) {
+      alert('USC users must use @usc.edu email address for permanent account');
       return;
     }
 
@@ -560,8 +563,8 @@ export default function SettingsPage() {
                 <div className="space-y-4">
                   <div>
                     <label className="mb-2 block text-sm font-medium text-[#eaeaf0]">
-                      Email {(paymentStatus?.uscId || session?.uscId) && (
-                        <span className="ml-2 text-yellow-300 text-xs">(must be @usc.edu)</span>
+                      Email {((paymentStatus?.uscId || session?.uscId) || paymentStatus?.email?.endsWith('@usc.edu')) && (
+                        <span className="ml-2 text-yellow-300 text-xs font-bold">(MUST be @usc.edu)</span>
                       )}
                     </label>
                     <input
@@ -569,7 +572,7 @@ export default function SettingsPage() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       className="w-full rounded-xl bg-white/10 px-4 py-3 text-[#eaeaf0] placeholder-[#eaeaf0]/50 focus:outline-none focus:ring-2 focus:ring-green-500"
-                      placeholder={(paymentStatus?.uscId || session?.uscId) ? "your@usc.edu" : "your@email.com"}
+                      placeholder={((paymentStatus?.uscId || session?.uscId) || paymentStatus?.email?.endsWith('@usc.edu')) ? "your@usc.edu" : "your@email.com"}
                     />
                   </div>
 
