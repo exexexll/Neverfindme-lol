@@ -68,6 +68,21 @@ function OnboardingPageContent() {
   // Onboarding completion tracking
   const [onboardingComplete, setOnboardingComplete] = useState(false);
 
+  // CRITICAL: Waitlist protection - require invite code or valid session
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const inviteParam = params.get('inviteCode');
+    const session = getSession();
+    const storedInvite = sessionStorage.getItem('onboarding_invite_code');
+    const tempUsc = sessionStorage.getItem('temp_usc_id');
+    
+    // Allow access if: invite code in URL, stored invite, valid session, or USC scan in progress
+    if (!inviteParam && !storedInvite && !tempUsc && !session) {
+      console.log('[Onboarding] No access credentials - redirecting to waitlist');
+      router.push('/waitlist');
+    }
+  }, [router]);
+
   // Prevent tab closing/navigation during onboarding (strengthened)
   useEffect(() => {
     if (onboardingComplete) return; // Allow leaving after complete
