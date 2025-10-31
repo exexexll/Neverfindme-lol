@@ -288,7 +288,7 @@ export default function WaitlistPage() {
                   }}
                   onSkipToEmail={() => {
                     setShowBarcodeScanner(false);
-                    setShowEmailInput(true);
+                    alert('Please get an admin QR code from USC campus events to continue.');
                   }}
                 />
               </div>
