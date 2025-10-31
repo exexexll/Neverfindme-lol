@@ -46,61 +46,29 @@ async function requireAuth(req: any, res: any, next: any) {
 
 /**
  * POST /payment/create-checkout
- * Create a Stripe checkout session for $1 payment
+ * DISABLED: Payment processing via Stripe is no longer available
+ * App is now invite-only (USC cards + invite codes)
  */
 router.post('/create-checkout', requireAuth, async (req: any, res) => {
-  const user = await store.getUser(req.userId);
-  if (!user) {
-    return res.status(404).json({ error: 'User not found' });
-  }
-
-  // Check if user already paid
-  if (user.paidStatus === 'paid' || user.paidStatus === 'qr_verified') {
-    return res.status(400).json({ error: 'You have already verified access' });
-  }
-
-  try {
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      line_items: [
-        {
-          price_data: {
-            currency: 'usd',
-            product_data: {
-              name: 'BUMPIn Access',
-              description: 'One-time payment for platform access + 4 friend invites',
-            },
-            unit_amount: PRICE_AMOUNT,
-          },
-          quantity: 1,
-        },
-      ],
-      mode: 'payment',
-      success_url: `${req.headers.origin || 'http://localhost:3000'}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${req.headers.origin || 'http://localhost:3000'}/onboarding`,
-      client_reference_id: req.userId, // Track which user this payment is for
-      metadata: {
-        userId: req.userId,
-        userName: user.name,
-      },
-    });
-
-    res.json({ 
-      checkoutUrl: session.url,
-      sessionId: session.id,
-    });
-  } catch (error: any) {
-    console.error('[Payment] Failed to create checkout:', error);
-    res.status(500).json({ error: 'Failed to create payment session' });
-  }
+  return res.status(410).json({ 
+    error: 'Payment processing is no longer available',
+    message: 'BUMPIN is currently invite-only. Get an invite code from a friend or join our waitlist.',
+    waitlistUrl: '/waitlist',
+    inviteOnly: true
+  });
 });
 
 /**
  * POST /payment/webhook
- * Stripe webhook to handle payment completion
- * CRITICAL SECURITY: Verify webhook signature
+ * DISABLED: Stripe webhook no longer active
+ * App is now invite-only
  */
 router.post('/webhook', express.raw({ type: 'application/json' }), async (req: any, res) => {
+  console.log('[Payment] Webhook called but Stripe is disabled - returning 410');
+  return res.status(410).send('Stripe webhook disabled - app is invite-only');
+  
+  // KEEPING OLD CODE BELOW FOR REFERENCE (commented out)
+  /*
   const sig = req.headers['stripe-signature'];
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
@@ -214,6 +182,7 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req: a
     console.error('[Payment] Stack trace:', error.stack);
     res.status(500).send('Webhook processing failed');
   }
+  */
 });
 
 /**

@@ -39,7 +39,17 @@ export function createAuthRoutes(
   const userId = uuidv4();
   const sessionToken = uuidv4();
 
-  // PAYWALL CHECK: Validate invite code if provided
+  // CRITICAL: REQUIRE invite code (app is now invite-only)
+  if (!inviteCode) {
+    return res.status(403).json({ 
+      error: 'Invite code required',
+      message: 'BUMPIN is currently invite-only. Please use an invite code or join our waitlist.',
+      requiresInviteCode: true,
+      waitlistUrl: '/waitlist'
+    });
+  }
+
+  // PAYWALL CHECK: Validate invite code
   let codeVerified = false;
   let codeUsed: string | undefined;
   
