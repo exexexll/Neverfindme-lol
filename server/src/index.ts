@@ -144,7 +144,13 @@ function getClientIp(req: any): string {
 app.use(createCompressionMiddleware());
 
 // CORS with environment-based origin configuration
-const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'];
+const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || [
+  'http://localhost:3000',
+  'https://bumpin.io',
+  'https://www.bumpin.io',
+  'https://napalmsky.com', // Keep during transition
+  'https://www.napalmsky.com'
+];
 
 app.use(cors({
   origin: (origin, callback) => {

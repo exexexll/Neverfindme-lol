@@ -7,11 +7,11 @@
 // API Base URL (backend server)
 // Production fallback to Railway (not localhost)
 export const API_BASE = process.env.NEXT_PUBLIC_API_BASE || 
-                        (typeof window !== 'undefined' ? 'https://bumpin-production.up.railway.app' : 'http://localhost:3001');
+                        (typeof window !== 'undefined' ? 'https://napalmsky-production.up.railway.app' : 'http://localhost:3001');
 
 // Socket URL (for real-time connections)
 export const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || 
-                          (typeof window !== 'undefined' ? 'https://bumpin-production.up.railway.app' : 'http://localhost:3001');
+                          (typeof window !== 'undefined' ? 'https://napalmsky-production.up.railway.app' : 'http://localhost:3001');
 
 // Stripe Public Key
 export const STRIPE_PUBLIC_KEY = process.env.NEXT_PUBLIC_STRIPE_KEY || '';
