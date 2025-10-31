@@ -527,33 +527,45 @@ function OnboardingPageContent() {
   };
 
   const confirmPhoto = async () => {
-    if (!capturedPhoto) return;
+    if (!capturedPhoto || !canvasRef.current) return;
     
     setUploadingPhoto(true);
     setError('');
     
     try {
-      // Convert data URL back to blob
-      const response = await fetch(capturedPhoto);
-      const blob = await response.blob();
-      
-      console.log('[Selfie] Original size:', (blob.size / 1024).toFixed(0), 'KB');
-      
-      // Compress
-      const compressed = await compressImage(blob, 800, 800, 0.85);
-      console.log('[Selfie] WebP compressed:', (compressed.compressedSize / 1024).toFixed(0), 'KB',
-                 `(${compressed.reductionPercent.toFixed(1)}% reduction)`);
-      
-      // Upload
-      await uploadSelfie(sessionToken, compressed.blob);
-      
-      // Stop camera completely
-      stream?.getTracks().forEach(track => track.stop());
-      setStream(null);
-      setCapturedPhoto(null);
-      setStep('video');
+      // Convert canvas directly to blob (more reliable than data URL fetch)
+      await new Promise<void>((resolve, reject) => {
+        canvasRef.current?.toBlob(async (blob) => {
+          if (!blob) {
+            reject(new Error('Failed to create image blob'));
+            return;
+          }
+          
+          try {
+            console.log('[Selfie] Original size:', (blob.size / 1024).toFixed(0), 'KB');
+            
+            // Compress
+            const compressed = await compressImage(blob, 800, 800, 0.85);
+            console.log('[Selfie] WebP compressed:', (compressed.compressedSize / 1024).toFixed(0), 'KB',
+                       `(${compressed.reductionPercent.toFixed(1)}% reduction)`);
+            
+            // Upload
+            await uploadSelfie(sessionToken, compressed.blob);
+            
+            // Stop camera completely
+            stream?.getTracks().forEach(track => track.stop());
+            setStream(null);
+            setCapturedPhoto(null);
+            setStep('video');
+            resolve();
+          } catch (err: any) {
+            reject(err);
+          }
+        }, 'image/jpeg', 0.95);
+      });
     } catch (err: any) {
-      setError(err.message);
+      console.error('[Selfie] Upload error:', err);
+      setError(err.message || 'Failed to upload photo');
     } finally {
       setUploadingPhoto(false);
     }
