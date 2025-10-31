@@ -385,6 +385,9 @@ router.get('/status', requireAuth, async (req: any, res) => {
           qrUnlockedAt: row.qr_unlocked_at ? new Date(row.qr_unlocked_at).getTime() : undefined,
           accountType: row.account_type, // CRITICAL: Include for guest upgrade button
           accountExpiresAt: row.account_expires_at ? new Date(row.account_expires_at).getTime() : undefined, // CRITICAL: Include for guest upgrade
+          uscId: row.usc_id, // CRITICAL: Include for USC email enforcement in settings
+          pending_email: row.pending_email, // CRITICAL: For email verification check
+          email_verified: row.email_verified, // CRITICAL: For email verification status
         };
       }
     } catch (error) {
