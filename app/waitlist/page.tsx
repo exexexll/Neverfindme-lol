@@ -32,10 +32,9 @@ export default function WaitlistPage() {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showScanChoice, setShowScanChoice] = useState(false);
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
-  const [showEmailInput, setShowEmailInput] = useState(false);
-  const [uscEmail, setUscEmail] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -128,31 +127,25 @@ export default function WaitlistPage() {
             <p className="text-[#eaeaf0]/70">
               BUMPIN is currently invite-only. Join our waitlist to be notified when we expand access.
             </p>
-            <div className="relative">
-              <div className="flex items-center gap-4 my-6">
+            {/* USC Portal - Simplified */}
+            <div className="mt-8">
+              <div className="flex items-center gap-4 mb-6">
                 <div className="flex-1 border-t border-white/10"></div>
                 <span className="text-[#eaeaf0]/50 text-sm font-medium">OR</span>
                 <div className="flex-1 border-t border-white/10"></div>
               </div>
               
-              <div className="rounded-xl bg-blue-500/10 border border-blue-500/30 p-6 space-y-4">
-                <h2 className="text-center font-playfair text-xl font-bold text-blue-300">
-                  🎓 USC Students
-                </h2>
-                <p className="text-center text-blue-200 text-sm">
-                  Scan admin QR code OR your USC campus card
+              <div className="text-center space-y-4">
+                <p className="text-[#eaeaf0]/80 text-sm font-medium">
+                  USC Students / QR Code Invite Only
                 </p>
                 
                 <button
-                  onClick={() => setShowQRScanner(true)}
-                  className="w-full rounded-xl bg-blue-500 px-6 py-3 font-bold text-white hover:bg-blue-600 transition-all"
+                  onClick={() => setShowScanChoice(true)}
+                  className="w-full rounded-xl bg-[#ffc46a] px-6 py-4 font-bold text-[#0a0a0c] hover:opacity-90 transition-opacity text-base shadow-lg"
                 >
                   📱 Scan QR Code or Barcode
                 </button>
-                
-                <p className="text-xs text-center text-blue-200/70">
-                  QR codes available at campus events. Card barcode on back of USC ID.
-                </p>
               </div>
             </div>
           </div>
@@ -303,68 +296,55 @@ export default function WaitlistPage() {
           </div>
         )}
 
-        {/* USC Email Entry Modal */}
-        {showEmailInput && (
+        {/* Scan Choice Modal */}
+        {showScanChoice && (
           <div className="fixed inset-0 z-[999] bg-black/95 flex items-center justify-center p-4">
-            <div className="max-w-md w-full">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="rounded-2xl bg-[#0a0a0c] p-8 border border-white/10"
-              >
-                <h2 className="font-playfair text-2xl font-bold text-[#eaeaf0] mb-4">
-                  USC Email Verification
-                </h2>
-                <p className="text-[#eaeaf0]/70 text-sm mb-6">
-                  Enter your @usc.edu email to get started
-                </p>
-                
-                <div className="space-y-4">
-                  <input
-                    type="email"
-                    value={uscEmail}
-                    onChange={(e) => setUscEmail(e.target.value)}
-                    placeholder="your@usc.edu"
-                    className="w-full rounded-xl bg-white/10 px-4 py-3 text-[#eaeaf0] placeholder-[#eaeaf0]/50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  
-                  <div className="flex gap-3">
-                  <button
-                    onClick={() => {
-                      setShowEmailInput(false);
-                      setUscEmail('');
-                    }}
-                    className="flex-1 rounded-xl bg-white/10 px-6 py-3 font-medium text-[#eaeaf0] hover:bg-white/20 transition-all"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={() => {
-                      if (!uscEmail.trim().toLowerCase().endsWith('@usc.edu')) {
-                        alert('Must be a @usc.edu email address');
-                        return;
-                      }
-                      
-                      // Ask for admin code (needed to access onboarding)
-                      const adminCode = prompt('Enter admin invite code from campus events:');
-                      if (!adminCode || !/^[A-Z0-9]{16}$/i.test(adminCode)) {
-                        alert('Invalid admin code. Get a code from USC campus events.');
-                        return;
-                      }
-                      
-                      setShowEmailInput(false);
-                      sessionStorage.setItem('usc_email_temp', uscEmail.trim());
-                      router.push(`/onboarding?inviteCode=${adminCode.toUpperCase()}`);
-                    }}
-                    disabled={!uscEmail.trim()}
-                    className="flex-1 rounded-xl bg-[#ffc46a] px-6 py-3 font-medium text-[#0a0a0c] hover:opacity-90 transition-opacity disabled:opacity-50"
-                  >
-                    Continue
-                  </button>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="max-w-md w-full rounded-2xl bg-[#0a0a0c] p-8 border border-white/10"
+            >
+              <h2 className="font-playfair text-2xl font-bold text-[#eaeaf0] mb-6 text-center">
+                Choose Scan Method
+              </h2>
+              
+              <div className="space-y-4">
+                <button
+                  onClick={() => {
+                    setShowScanChoice(false);
+                    setShowQRScanner(true);
+                  }}
+                  className="w-full rounded-xl bg-[#ffc46a] px-6 py-4 font-bold text-[#0a0a0c] hover:opacity-90 transition-opacity text-left flex items-center gap-3"
+                >
+                  <span className="text-2xl">📱</span>
+                  <div>
+                    <div className="font-bold">Scan QR Code</div>
+                    <div className="text-xs opacity-70">Admin QR from campus events</div>
                   </div>
-                </div>
-              </motion.div>
-            </div>
+                </button>
+                
+                <button
+                  onClick={() => {
+                    setShowScanChoice(false);
+                    setShowBarcodeScanner(true);
+                  }}
+                  className="w-full rounded-xl bg-[#ffc46a] px-6 py-4 font-bold text-[#0a0a0c] hover:opacity-90 transition-opacity text-left flex items-center gap-3"
+                >
+                  <span className="text-2xl">🎓</span>
+                  <div>
+                    <div className="font-bold">Scan USC Card</div>
+                    <div className="text-xs opacity-70">Barcode on back of card</div>
+                  </div>
+                </button>
+                
+                <button
+                  onClick={() => setShowScanChoice(false)}
+                  className="w-full rounded-xl bg-white/10 px-6 py-3 font-medium text-[#eaeaf0] hover:bg-white/20 transition-all"
+                >
+                  Cancel
+                </button>
+              </div>
+            </motion.div>
           </div>
         )}
       </Container>
