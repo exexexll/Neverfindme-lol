@@ -35,10 +35,10 @@ export function AuthGuard({ children }: AuthGuardProps) {
     const isAdminRoute = pathname?.startsWith('/admin');
     const isPublicRoute = publicRoutes.includes(pathname || '');
     
-    // If not public and no session, redirect to onboarding
+    // If not public and no session, redirect to waitlist (invite-only)
     if (!isPublicRoute && !session) {
-      console.log('[AuthGuard] No session found, redirecting to onboarding');
-      router.push('/onboarding');
+      console.log('[AuthGuard] No session found, redirecting to waitlist');
+      router.push('/waitlist');
       return;
     }
 

@@ -511,7 +511,7 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
     const session = getSession();
     if (!session) {
       console.error('[Matchmake] No session found');
-      router.push('/onboarding');
+      router.push('/waitlist');
       return;
     }
 

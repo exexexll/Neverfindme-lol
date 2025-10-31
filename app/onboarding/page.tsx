@@ -76,10 +76,36 @@ function OnboardingPageContent() {
     const storedInvite = sessionStorage.getItem('onboarding_invite_code');
     const tempUsc = sessionStorage.getItem('temp_usc_id');
     
-    // Allow access if: invite code in URL, stored invite, valid session, or USC scan in progress
-    if (!inviteParam && !storedInvite && !tempUsc && !session) {
-      console.log('[Onboarding] No access credentials - redirecting to waitlist');
+    // STRICT: Must have EITHER invite code OR valid verified session
+    const hasInviteCode = inviteParam || storedInvite;
+    const hasUscScan = tempUsc;
+    
+    if (!hasInviteCode && !hasUscScan && !session) {
+      console.log('[Onboarding] No invite code and no session - redirecting to waitlist');
       router.push('/waitlist');
+      return;
+    }
+    
+    // If has session but no invite code, verify session has access
+    if (session && !hasInviteCode && !hasUscScan) {
+      fetch(`${process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3001'}/payment/status`, {
+        headers: { 'Authorization': `Bearer ${session.sessionToken}` },
+      })
+        .then(res => res.json())
+        .then(data => {
+          const hasAccess = data.paidStatus === 'paid' || 
+                           data.paidStatus === 'qr_verified' || 
+                           data.paidStatus === 'qr_grace_period';
+          
+          if (!hasAccess) {
+            console.log('[Onboarding] Session exists but no access - redirecting to waitlist');
+            router.push('/waitlist');
+          }
+        })
+        .catch(() => {
+          console.log('[Onboarding] Session verification failed - redirecting to waitlist');
+          router.push('/waitlist');
+        });
     }
   }, [router]);
 

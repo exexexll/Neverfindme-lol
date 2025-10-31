@@ -73,10 +73,10 @@ export function Header() {
             </li>
             <li>
               <Link
-                href="/onboarding"
+                href="/check-access"
                 className="focus-ring rounded-xl bg-[#ffc46a] px-4 py-2 text-sm font-medium text-[#0a0a0c] shadow-sm transition-opacity hover:opacity-90 sm:text-base"
               >
-                Start connecting
+                Get Started
               </Link>
             </li>
           </ul>
