@@ -181,6 +181,7 @@ export default function TextChatRoom() {
     
     if (isSameRoom && wasActive && isRecentReload) {
       // Only show reconnecting if reload was quick enough for grace period
+      console.log('[TextRoom] Detected page reload - showing reconnecting (will clear on room:joined)');
       setShowReconnecting(true);
     } else if (!isSameRoom && wasActive) {
       // Different room - clear old data
@@ -205,6 +206,10 @@ export default function TextChatRoom() {
     // Update timestamp on successful join confirmation
     socket.on('room:joined', () => {
       sessionStorage.setItem('text_room_join_time', Date.now().toString());
+      
+      // CRITICAL: Hide reconnecting popup on successful join (fixes ghost popup)
+      setShowReconnecting(false);
+      console.log('[TextRoom] Room joined successfully - cleared reconnecting popup');
     });
     
     // CRITICAL FIX: Handle socket reconnection properly with queue flushing
@@ -1084,16 +1089,34 @@ export default function TextChatRoom() {
               const session = getSession();
               if (!session || !socketRef.current) return;
               
-              // Get user's preset socials from localStorage
-              const userSocials = localStorage.getItem('bumpin_user_socials');
+              // Get user's preset socials from localStorage  
+              const userSocials = localStorage.getItem('bumpin_socials'); // FIXED: Use bumpin_socials not bumpin_user_socials
               if (userSocials) {
                 try {
                   const socials = JSON.parse(userSocials);
+                  
+                  // Check if any social is set
+                  const hasAnySocial = Object.values(socials).some((v: any) => v && v.trim());
+                  if (!hasAnySocial) {
+                    alert('No socials set. Add them in Settings first.');
+                    return;
+                  }
+                  
                   socketRef.current.emit('room:giveSocial', {
                     roomId,
                     socials,
                   });
-                  alert('Socials shared with ' + peerName);
+                  
+                  // Show in chat as system message
+                  const systemMsg: Message = {
+                    messageId: `system-${Date.now()}`,
+                    from: 'system',
+                    fromName: 'System',
+                    messageType: 'system',
+                    content: '✅ Shared your social handles with ' + peerName,
+                    timestamp: new Date(),
+                  };
+                  setMessages(prev => [...prev, systemMsg]);
                 } catch (e) {
                   alert('No socials set. Update them in Settings.');
                 }
