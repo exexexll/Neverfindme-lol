@@ -41,6 +41,8 @@ function OnboardingPageContent() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
+  const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   // Step 3: Video
   const [isRecording, setIsRecording] = useState(false);
@@ -499,31 +501,55 @@ function OnboardingPageContent() {
     if (ctx) {
       ctx.drawImage(video, 0, 0);
       
-      // Convert to blob
-      canvas.toBlob(async (blob) => {
-        if (blob) {
-          setLoading(true);
-          try {
-            // PHASE 3: Advanced compression with WebP
-            console.log('[Selfie] Original size:', (blob.size / 1024).toFixed(0), 'KB');
-            
-            const compressed = await compressImage(blob, 800, 800, 0.85);
-            console.log('[Selfie] WebP compressed:',  (compressed.compressedSize / 1024).toFixed(0), 'KB',
-                       `(${compressed.reductionPercent.toFixed(1)}% reduction)`);
-            
-            await uploadSelfie(sessionToken, compressed.blob);
-            
-            // Stop camera
-            stream?.getTracks().forEach(track => track.stop());
-            setStream(null);
-            setStep('video');
-          } catch (err: any) {
-            setError(err.message);
-          } finally {
-            setLoading(false);
-          }
-        }
-      }, 'image/jpeg', 0.95); // High quality for compression input
+      // Convert to data URL for preview
+      const photoDataUrl = canvas.toDataURL('image/jpeg', 0.95);
+      setCapturedPhoto(photoDataUrl);
+      
+      // Pause camera stream (don't stop yet, user might retake)
+      if (stream) {
+        stream.getTracks().forEach(track => track.enabled = false);
+      }
+    }
+  };
+
+  const confirmPhoto = async () => {
+    if (!capturedPhoto) return;
+    
+    setUploadingPhoto(true);
+    setError('');
+    
+    try {
+      // Convert data URL back to blob
+      const response = await fetch(capturedPhoto);
+      const blob = await response.blob();
+      
+      console.log('[Selfie] Original size:', (blob.size / 1024).toFixed(0), 'KB');
+      
+      // Compress
+      const compressed = await compressImage(blob, 800, 800, 0.85);
+      console.log('[Selfie] WebP compressed:', (compressed.compressedSize / 1024).toFixed(0), 'KB',
+                 `(${compressed.reductionPercent.toFixed(1)}% reduction)`);
+      
+      // Upload
+      await uploadSelfie(sessionToken, compressed.blob);
+      
+      // Stop camera completely
+      stream?.getTracks().forEach(track => track.stop());
+      setStream(null);
+      setCapturedPhoto(null);
+      setStep('video');
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
+  const retakePhoto = () => {
+    setCapturedPhoto(null);
+    // Resume camera stream
+    if (stream) {
+      stream.getTracks().forEach(track => track.enabled = true);
     }
   };
 
@@ -1210,14 +1236,25 @@ function OnboardingPageContent() {
 
                 <div className="space-y-6">
                   <div className="relative aspect-square overflow-hidden rounded-xl bg-black">
-                    <video
-                      ref={videoRef}
-                      autoPlay
-                      playsInline
-                      muted
-                      className="h-full w-full object-contain"
-                      style={{ transform: 'scaleX(-1)' }}
-                    />
+                    {capturedPhoto ? (
+                      // Show captured photo preview
+                      <img
+                        src={capturedPhoto}
+                        alt="Captured selfie"
+                        className="h-full w-full object-contain"
+                        style={{ transform: 'scaleX(-1)' }}
+                      />
+                    ) : (
+                      // Show live camera feed
+                      <video
+                        ref={videoRef}
+                        autoPlay
+                        playsInline
+                        muted
+                        className="h-full w-full object-contain"
+                        style={{ transform: 'scaleX(-1)' }}
+                      />
+                    )}
                   </div>
                   <canvas ref={canvasRef} className="hidden" />
 
@@ -1227,13 +1264,46 @@ function OnboardingPageContent() {
                     </div>
                   )}
 
-                  <button
-                    onClick={captureSelfie}
-                    disabled={loading || !stream}
-                    className="focus-ring w-full rounded-xl bg-[#ffc46a] px-6 py-3 font-medium text-[#0a0a0c] shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50"
-                  >
-                    {loading ? 'Uploading...' : 'Capture selfie'}
-                  </button>
+                  {/* Upload progress bar */}
+                  {uploadingPhoto && (
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm text-[#eaeaf0]/70">
+                        <span>Uploading photo...</span>
+                      </div>
+                      <div className="h-2 w-full rounded-full bg-white/10 overflow-hidden">
+                        <div className="h-full bg-[#ffc46a] transition-all duration-300 animate-pulse" style={{ width: '100%' }} />
+                      </div>
+                    </div>
+                  )}
+
+                  {capturedPhoto ? (
+                    // Show confirm/retake buttons after capture
+                    <div className="flex gap-4">
+                      <button
+                        onClick={retakePhoto}
+                        disabled={uploadingPhoto}
+                        className="focus-ring flex-1 rounded-xl bg-white/10 px-6 py-3 font-medium text-[#eaeaf0] hover:bg-white/20 transition-all disabled:opacity-50"
+                      >
+                        🔄 Retake
+                      </button>
+                      <button
+                        onClick={confirmPhoto}
+                        disabled={uploadingPhoto}
+                        className="focus-ring flex-1 rounded-xl bg-[#ffc46a] px-6 py-3 font-medium text-[#0a0a0c] shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50"
+                      >
+                        {uploadingPhoto ? 'Uploading...' : '✓ Confirm & Upload'}
+                      </button>
+                    </div>
+                  ) : (
+                    // Show capture button before taking photo
+                    <button
+                      onClick={captureSelfie}
+                      disabled={!stream}
+                      className="focus-ring w-full rounded-xl bg-[#ffc46a] px-6 py-3 font-medium text-[#0a0a0c] shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50"
+                    >
+                      📸 Capture selfie
+                    </button>
+                  )}
                 </div>
               </motion.div>
             )}
