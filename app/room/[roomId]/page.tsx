@@ -1688,8 +1688,8 @@ export default function RoomPage() {
         </div>
       </div>
 
-      {/* Controls Footer - Always Visible, Highest Z-Index, Touch-Friendly */}
-      <div className="fixed bottom-0 left-0 right-0 z-[200] pointer-events-none">
+      {/* Controls Footer - Always Visible, Below Chat Drawer, Touch-Friendly */}
+      <div className="fixed bottom-0 left-0 right-0 z-30 pointer-events-none">
         <div 
           className="flex items-center justify-center gap-4 px-6 pt-12 pointer-events-auto bg-gradient-to-t from-black via-black/80 to-transparent"
           style={{
@@ -1763,7 +1763,7 @@ export default function RoomPage() {
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 25 }}
-            className="fixed right-0 top-0 bottom-0 z-40 flex w-full flex-col bg-black/95 backdrop-blur-md sm:w-96 border-l border-white/10"
+            className="fixed right-0 top-0 bottom-0 z-50 flex w-full flex-col bg-black/95 backdrop-blur-md sm:w-96 border-l border-white/10"
           >
             <div className="flex items-center justify-between border-b border-white/10 p-4">
               <h3 className="font-playfair text-xl font-bold text-[#eaeaf0]">Chat</h3>
@@ -1802,14 +1802,41 @@ export default function RoomPage() {
                       <p className="mb-2 text-xs font-medium text-green-300">
                         {msg.from === getSession()?.userId ? 'You' : peerName} shared socials:
                       </p>
-                      <div className="flex flex-wrap gap-2">
-                        {Object.entries(msg.socials || {}).map(([platform, handle]: any) => 
-                          handle && handle.trim() ? (
-                            <div key={platform} className="rounded-lg bg-green-500/20 px-3 py-1 text-xs text-green-200">
-                              {platform}: {handle}
-                            </div>
-                          ) : null
-                        )}
+                      <div className="flex flex-col gap-2">
+                        {Object.entries(msg.socials || {}).map(([platform, handle]: any) => {
+                          if (!handle || !handle.trim()) return null;
+                          
+                          const platformLower = platform.toLowerCase();
+                          let url = '';
+                          
+                          if (platformLower === 'instagram') {
+                            url = `https://instagram.com/${handle.replace('@', '')}`;
+                          } else if (platformLower === 'tiktok') {
+                            url = `https://tiktok.com/@${handle.replace('@', '')}`;
+                          } else if (platformLower === 'twitter' || platformLower === 'x') {
+                            url = `https://twitter.com/${handle.replace('@', '')}`;
+                          } else if (platformLower === 'snapchat') {
+                            url = `https://snapchat.com/add/${handle.replace('@', '')}`;
+                          } else {
+                            url = handle.startsWith('http') ? handle : `https://${handle}`;
+                          }
+                          
+                          return (
+                            <a
+                              key={platform}
+                              href={url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="rounded-lg bg-green-500/20 px-3 py-2 text-sm text-green-200 hover:bg-green-500/30 transition-all flex items-center gap-2"
+                            >
+                              <span className="font-medium capitalize">{platform}:</span>
+                              <span className="underline">{handle}</span>
+                              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                              </svg>
+                            </a>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
