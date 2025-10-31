@@ -107,6 +107,7 @@ router.post('/verify', requireAuth, async (req: any, res) => {
     email: email.toLowerCase(), // Move from pending_email to email
     email_verified: true,
     accountType: 'permanent', // CRITICAL: Upgrade from guest to permanent
+    accountExpiresAt: null, // CRITICAL: Remove expiry for permanent accounts
     // SECURITY: Admin code users upgrade to 'paid' after email verification
     paidStatus: isAdminCodeUser ? 'paid' : user.paidStatus,
     verification_code: null,
