@@ -93,6 +93,18 @@ function OnboardingPageContent() {
       })
         .then(res => res.json())
         .then(data => {
+          // CRITICAL: If email verification is pending, ALLOW access to complete it
+          if (data.pendingEmail && !data.emailVerified) {
+            console.log('[Onboarding] Pending email verification found - allowing access to complete');
+            // Set the USC email and step to email-verify
+            if (data.pendingEmail.endsWith('@usc.edu')) {
+              setUscEmail(data.pendingEmail);
+              setNeedsUSCEmail(true);
+              setStep('email-verify');
+            }
+            return; // Stay on onboarding to complete verification
+          }
+          
           const hasAccess = data.paidStatus === 'paid' || 
                            data.paidStatus === 'qr_verified' || 
                            data.paidStatus === 'qr_grace_period';
@@ -107,7 +119,7 @@ function OnboardingPageContent() {
           router.push('/waitlist');
         });
     }
-  }, [router]);
+  }, [router, setUscEmail, setNeedsUSCEmail, setStep]);
 
   // Prevent tab closing/navigation during onboarding (strengthened)
   useEffect(() => {

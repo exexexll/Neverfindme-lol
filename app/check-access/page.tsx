@@ -38,6 +38,14 @@ function CheckAccessContent() {
           
           if (res.ok) {
             const data = await res.json();
+            
+            // CRITICAL: Check if email verification is pending
+            if (data.pendingEmail && !data.emailVerified) {
+              console.log('[CheckAccess] Email verification pending - redirecting to complete verification');
+              router.push('/onboarding');
+              return;
+            }
+            
             const hasAccess = data.paidStatus === 'paid' || 
                              data.paidStatus === 'qr_verified' || 
                              data.paidStatus === 'qr_grace_period';
