@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 import { Container } from '@/components/Container';
 import { API_BASE } from '@/lib/config';
 import Link from 'next/link';
@@ -21,6 +22,7 @@ const US_STATES = [
 ];
 
 export default function WaitlistPage() {
+  const router = useRouter();
   const [name, setName] = useState('');
   const [state, setState] = useState('');
   const [school, setSchool] = useState('');
@@ -28,6 +30,7 @@ export default function WaitlistPage() {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showQRScanner, setShowQRScanner] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -120,13 +123,32 @@ export default function WaitlistPage() {
             <p className="text-[#eaeaf0]/70">
               BUMPIN is currently invite-only. Join our waitlist to be notified when we expand access.
             </p>
-            <div className="rounded-xl bg-yellow-500/10 border border-yellow-500/30 p-4">
-              <p className="text-sm text-yellow-200">
-                <strong>Have an invite code or USC card?</strong><br/>
-                <Link href="/" className="underline hover:text-yellow-100">
-                  Go to homepage
-                </Link> and click &quot;Get Started&quot;
-              </p>
+            <div className="relative">
+              <div className="flex items-center gap-4 my-6">
+                <div className="flex-1 border-t border-white/10"></div>
+                <span className="text-[#eaeaf0]/50 text-sm font-medium">OR</span>
+                <div className="flex-1 border-t border-white/10"></div>
+              </div>
+              
+              <div className="rounded-xl bg-blue-500/10 border border-blue-500/30 p-6 space-y-4">
+                <h2 className="text-center font-playfair text-xl font-bold text-blue-300">
+                  🎓 USC Students
+                </h2>
+                <p className="text-center text-blue-200 text-sm">
+                  Scan admin QR code OR your USC campus card
+                </p>
+                
+                <button
+                  onClick={() => setShowQRScanner(true)}
+                  className="w-full rounded-xl bg-blue-500 px-6 py-3 font-bold text-white hover:bg-blue-600 transition-all"
+                >
+                  📱 Scan QR Code or Barcode
+                </button>
+                
+                <p className="text-xs text-center text-blue-200/70">
+                  QR codes available at campus events. Card barcode on back of USC ID.
+                </p>
+              </div>
             </div>
           </div>
 
