@@ -38,7 +38,12 @@ const faqs: FAQItem[] = [
   {
     category: 'account',
     question: 'How do I verify my account?',
-    answer: 'Three ways: (1) Pay $0.50 one-time fee via Stripe, (2) Use an invite code from a friend (4 uses), or (3) Scan a QR code at campus events (USC students). Verification prevents bots and gives you your own invite codes to share.'
+    answer: 'Three ways: (1) Pay $0.50 one-time fee via Stripe, (2) Use an invite code from a friend (4 uses), or (3) For USC students: Scan admin QR code + USC Campus Card barcode. Verification prevents bots and gives you your own invite codes to share.'
+  },
+  {
+    category: 'account',
+    question: 'How does USC Campus Card verification work?',
+    answer: 'USC students can verify for free: (1) Scan an admin QR code at campus events, (2) Scan your USC Campus Card barcode using your phone camera, (3) Complete profile setup. You get a 7-day guest account. To make it permanent, add your @usc.edu email in Settings. Your USC card can only be used once.'
   },
   {
     category: 'account',
