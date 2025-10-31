@@ -292,19 +292,24 @@ export default function TextChatRoom() {
     });
     
     socket.on('room:partner-disconnected', ({ gracePeriodSeconds }: any) => {
-      setShowReconnecting(true);
-      setReconnectCountdown(gracePeriodSeconds);
+      console.log('[TextRoom] Partner disconnected, grace period:', gracePeriodSeconds);
       
       // CRITICAL FIX: Clear existing countdown to prevent duplicates
       if (partnerDisconnectCountdownRef.current) {
         clearInterval(partnerDisconnectCountdownRef.current);
+        partnerDisconnectCountdownRef.current = null;
       }
+      
+      // Set countdown and show popup
+      setReconnectCountdown(gracePeriodSeconds || 10);
+      setShowReconnecting(true);
       
       const interval = setInterval(() => {
         setReconnectCountdown((prev: number) => {
           if (prev <= 1) {
             clearInterval(interval);
             partnerDisconnectCountdownRef.current = null;
+            setShowReconnecting(false); // CRITICAL: Auto-hide when countdown ends
             return 0;
           }
           return prev - 1;
@@ -317,13 +322,18 @@ export default function TextChatRoom() {
     
     socket.on('room:partner-reconnected', ({ userId }: any) => {
       console.log('[TextRoom] Partner reconnected');
-      setShowReconnecting(false);
       
-      // CRITICAL FIX: Clear countdown interval when partner reconnects
+      // CRITICAL FIX: Clear countdown interval FIRST
       if (partnerDisconnectCountdownRef.current) {
         clearInterval(partnerDisconnectCountdownRef.current);
         partnerDisconnectCountdownRef.current = null;
       }
+      
+      // Reset countdown to default
+      setReconnectCountdown(10);
+      
+      // CRITICAL: Hide popup immediately (prevent flash)
+      setShowReconnecting(false);
     });
     
     socket.on('room:ended-by-disconnect', () => {
