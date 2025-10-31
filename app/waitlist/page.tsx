@@ -70,7 +70,7 @@ export default function WaitlistPage() {
 
   if (submitted) {
     return (
-      <main className="min-h-screen bg-[#0a0a0c] flex items-center justify-center p-4">
+      <main className="min-h-screen bg-[#0a0a0c] flex items-center justify-center p-4 pt-24">
         <Container>
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
@@ -106,7 +106,7 @@ export default function WaitlistPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#0a0a0c] flex items-center justify-center p-4">
+    <main className="min-h-screen bg-[#0a0a0c] flex items-center justify-center p-4 pt-24">
       <Container>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
