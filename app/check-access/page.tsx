@@ -8,7 +8,6 @@ import { API_BASE } from '@/lib/config';
 function CheckAccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [checking, setChecking] = useState(true);
   
   useEffect(() => {
     async function checkAccess() {
