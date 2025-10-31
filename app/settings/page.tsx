@@ -21,7 +21,12 @@ export default function SettingsPage() {
   const [showMakePermanent, setShowMakePermanent] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [passwordValid, setPasswordValid] = useState(false);
   const [makingPermanent, setMakingPermanent] = useState(false);
+  const [showEmailVerify, setShowEmailVerify] = useState(false);
+  const [verificationCode, setVerificationCode] = useState('');
+  const [pendingEmail, setPendingEmail] = useState('');
+  const [verifyingCode, setVerifyingCode] = useState(false);
   const [locationEnabled, setLocationEnabled] = useState(false);
   const [locationLoading, setLocationLoading] = useState(false);
 
@@ -84,42 +89,105 @@ export default function SettingsPage() {
     if (!session) return;
 
     // CRITICAL: USC card users MUST use @usc.edu email
-    // Check if user has USC card (from payment status or session)
     const hasUSCCard = paymentStatus?.uscId || session.uscId;
     if (hasUSCCard && !email.trim().toLowerCase().endsWith('@usc.edu')) {
       alert('USC card users must use @usc.edu email address for permanent account');
       return;
     }
 
+    // CRITICAL: Validate password strength
+    if (!passwordValid) {
+      alert('Password does not meet security requirements. Please check the requirements below.');
+      return;
+    }
+
     setMakingPermanent(true);
     try {
-      const res = await fetch(`${API_BASE}/auth/link`, {
+      // Step 1: Send email verification code
+      const sendRes = await fetch(`${API_BASE}/verification/send`, {
+        method: 'POST',
+        headers: { 
+          'Authorization': `Bearer ${session.sessionToken}`,
+          'Content-Type': 'application/json' 
+        },
+        body: JSON.stringify({ email: email.trim() }),
+      });
+
+      if (!sendRes.ok) {
+        const error = await sendRes.json();
+        throw new Error(error.error || 'Failed to send verification code');
+      }
+
+      // Step 2: Show email verification modal
+      setPendingEmail(email.trim());
+      setShowMakePermanent(false); // Hide upgrade modal
+      setShowEmailVerify(true); // Show verification modal
+      alert(`Verification code sent to ${email.trim()}. Check your email!`);
+    } catch (err: any) {
+      alert(err.message || 'Failed to send verification code');
+    } finally {
+      setMakingPermanent(false);
+    }
+  };
+
+  const handleVerifyAndUpgrade = async () => {
+    if (!verificationCode.trim() || verificationCode.length !== 6) {
+      alert('Please enter the 6-digit verification code');
+      return;
+    }
+
+    if (!session) return;
+
+    setVerifyingCode(true);
+    try {
+      // Step 1: Verify email code
+      const verifyRes = await fetch(`${API_BASE}/verification/verify`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.sessionToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ code: verificationCode }),
+      });
+
+      if (!verifyRes.ok) {
+        const error = await verifyRes.json();
+        throw new Error(error.error || 'Invalid verification code');
+      }
+
+      // Step 2: Link password (email already verified and saved by verification/verify)
+      const linkRes = await fetch(`${API_BASE}/auth/link`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           sessionToken: session.sessionToken,
-          email: email.trim(),
+          email: pendingEmail,
           password: password.trim(),
         }),
       });
 
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Failed to upgrade account');
+      if (!linkRes.ok) {
+        const error = await linkRes.json();
+        throw new Error(error.error || 'Failed to link password');
       }
 
-      // Update local session
+      // Success! Update local session
       const updatedSession = { ...session, accountType: 'permanent' };
       localStorage.setItem('bumpin_session', JSON.stringify(updatedSession));
       setSession(updatedSession);
-      setShowMakePermanent(false);
+      setShowEmailVerify(false);
       setEmail('');
       setPassword('');
-      alert('Account upgraded to permanent!');
+      setVerificationCode('');
+      setPendingEmail('');
+      alert('🎉 Account upgraded to permanent! Your data will never expire.');
+      
+      // Reload payment status to update UI
+      window.location.reload();
     } catch (err: any) {
-      alert(err.message || 'Failed to upgrade account');
+      alert(err.message || 'Verification failed');
     } finally {
-      setMakingPermanent(false);
+      setVerifyingCode(false);
     }
   };
 
@@ -490,24 +558,28 @@ export default function SettingsPage() {
 
                 <div className="space-y-4">
                   <div>
-                    <label className="mb-2 block text-sm font-medium text-[#eaeaf0]">Email</label>
+                    <label className="mb-2 block text-sm font-medium text-[#eaeaf0]">
+                      Email {(paymentStatus?.uscId || session?.uscId) && (
+                        <span className="ml-2 text-yellow-300 text-xs">(must be @usc.edu)</span>
+                      )}
+                    </label>
                     <input
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       className="w-full rounded-xl bg-white/10 px-4 py-3 text-[#eaeaf0] placeholder-[#eaeaf0]/50 focus:outline-none focus:ring-2 focus:ring-green-500"
-                      placeholder="your@email.com"
+                      placeholder={(paymentStatus?.uscId || session?.uscId) ? "your@usc.edu" : "your@email.com"}
                     />
                   </div>
 
                   <div>
                     <label className="mb-2 block text-sm font-medium text-[#eaeaf0]">Password</label>
-                    <input
-                      type="password"
+                    <PasswordInput
                       value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="w-full rounded-xl bg-white/10 px-4 py-3 text-[#eaeaf0] placeholder-[#eaeaf0]/50 focus:outline-none focus:ring-2 focus:ring-green-500"
-                      placeholder="Choose a password"
+                      onChange={setPassword}
+                      onValidationChange={(isValid) => setPasswordValid(isValid)}
+                      showRequirements={true}
+                      placeholder="Choose a strong password"
                     />
                   </div>
 
@@ -528,6 +600,62 @@ export default function SettingsPage() {
                       className="focus-ring flex-1 rounded-xl bg-green-500 px-6 py-3 font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
                     >
                       {makingPermanent ? 'Saving...' : 'Save'}
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          )}
+
+          {/* Email Verification Modal */}
+          {showEmailVerify && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="max-w-md rounded-2xl bg-[#0a0a0c] p-8 shadow-2xl border border-white/10"
+              >
+                <h3 className="mb-4 font-playfair text-2xl font-bold text-[#eaeaf0]">
+                  Verify Your Email
+                </h3>
+                <p className="mb-6 text-[#eaeaf0]/70">
+                  We sent a 6-digit code to <strong>{pendingEmail}</strong>. Enter it below to complete your upgrade.
+                </p>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-[#eaeaf0]">Verification Code</label>
+                    <input
+                      type="text"
+                      value={verificationCode}
+                      onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      className="w-full rounded-xl bg-white/10 px-4 py-3 text-center text-2xl font-mono text-[#eaeaf0] placeholder-[#eaeaf0]/50 focus:outline-none focus:ring-2 focus:ring-green-500 tracking-widest"
+                      placeholder="000000"
+                      maxLength={6}
+                      autoFocus
+                    />
+                    <p className="mt-2 text-xs text-[#eaeaf0]/50">
+                      Code expires in 15 minutes. Check your spam folder if you don&apos;t see it.
+                    </p>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => {
+                        setShowEmailVerify(false);
+                        setShowMakePermanent(true);
+                        setVerificationCode('');
+                      }}
+                      className="focus-ring flex-1 rounded-xl bg-white/10 px-6 py-3 font-medium text-[#eaeaf0] transition-all hover:bg-white/20"
+                    >
+                      Back
+                    </button>
+                    <button
+                      onClick={handleVerifyAndUpgrade}
+                      disabled={verifyingCode || verificationCode.length !== 6}
+                      className="focus-ring flex-1 rounded-xl bg-green-500 px-6 py-3 font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+                    >
+                      {verifyingCode ? 'Verifying...' : 'Verify & Upgrade'}
                     </button>
                   </div>
                 </div>

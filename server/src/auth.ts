@@ -258,6 +258,14 @@ router.post('/link', async (req, res) => {
     return res.status(404).json({ error: 'User not found' });
   }
 
+  // CRITICAL: Check if account is already permanent
+  if (user.accountType === 'permanent') {
+    return res.status(400).json({
+      error: 'Account is already permanent',
+      hint: 'Your account is already upgraded. No action needed.'
+    });
+  }
+
   // SECURITY: Check if user has a pending USC email verification
   if (user.pending_email && user.pending_email.endsWith('@usc.edu')) {
     return res.status(403).json({ 
@@ -305,11 +313,12 @@ router.post('/link', async (req, res) => {
   const password_hash = await bcrypt.hash(password, 12);
   
   // Update user to permanent
+  // CRITICAL: email_verified should already be true (set by /verification/verify)
+  // If not verified yet, this endpoint should not be reached
   await store.updateUser(user.userId, {
     accountType: 'permanent',
     email,
     password_hash, // ✅ Securely hashed with bcrypt
-    email_verified: true, // CRITICAL: Mark email as verified (no SendGrid code needed for /auth/link)
     accountExpiresAt: null, // CRITICAL: Remove expiry for permanent accounts (never expire)
   });
 
