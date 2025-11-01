@@ -338,7 +338,6 @@ export default function WaitlistPage() {
             <Link href="/login" className="text-[#ffc46a] hover:underline font-medium">
               Log in here
             </Link>
-            {' '}(no admin code needed)
           </p>
         </motion.div>
 

@@ -482,27 +482,14 @@ export function USCCardScanner({ onSuccess, onSkipToEmail }: USCCardScannerProps
           </AnimatePresence>
         </div>
 
-        {/* Tips */}
-        <div className="rounded-xl bg-white/5 p-4 border border-white/10">
-          <p className="text-[#eaeaf0]/60 text-sm text-center mb-3">
-            💡 <strong>Scanning Tips:</strong>
-          </p>
-          <ul className="text-[#eaeaf0]/50 text-xs space-y-1">
-            <li>• <strong>Bright lighting</strong> - Use desk lamp or natural light</li>
-            <li>• <strong>Hold steady</strong> - 8-10 inches from camera</li>
-            <li>• <strong>Barcode on back</strong> - Flip card to back side</li>
-            <li>• <strong>Horizontal alignment</strong> - Black lines should be horizontal</li>
-            <li>• <strong>Wait 2-3 seconds</strong> - Scanner reads automatically</li>
-          </ul>
+        {/* Tips - Compact and Above Button */}
+        <div className="absolute bottom-24 left-0 right-0 px-6 z-20">
+          <div className="rounded-xl bg-black/70 backdrop-blur-sm p-3 border border-white/10">
+            <p className="text-[#eaeaf0]/70 text-xs text-center">
+              💡 Bright lighting • Hold steady 8-10&quot; • Barcode on back • Horizontal
+            </p>
+          </div>
         </div>
-
-        {/* Fallback Option */}
-        <button
-          onClick={onSkipToEmail}
-          className="mt-4 w-full py-3 rounded-xl bg-white/10 text-[#eaeaf0] hover:bg-white/20 transition-all text-sm"
-        >
-          Skip - Use Email Verification Instead
-        </button>
       </div>
     </main>
   );
