@@ -210,24 +210,24 @@ function OnboardingPageContent() {
   
   // Check for referral code and invite code in URL
   useEffect(() => {
-    const hasCheckedRef = { current: false };
-    
-    // CRITICAL FIX: Prevent infinite loop by only checking once
-    if (hasCheckedRef.current) return;
-    hasCheckedRef.current = true;
-    
     const ref = searchParams.get('ref');
     const invite = searchParams.get('inviteCode');
+    
+    console.log('[Onboarding] ===== URL PARAMS CHECK =====');
+    console.log('[Onboarding] Full URL:', window.location.href);
+    console.log('[Onboarding] ref:', ref);
+    console.log('[Onboarding] inviteCode from URL:', invite);
+    console.log('[Onboarding] Current inviteCode state:', inviteCode);
     
     // IMPORTANT: Extract invite code FIRST before any session checks
     // This ensures QR code links work even if user has an existing session
     if (invite) {
+      console.log('[Onboarding] ✅ Setting inviteCode state to:', invite);
       setInviteCode(invite);
-      console.log('[Onboarding] Invite code from URL:', invite);
       
       // CRITICAL FIX: Check if this is an admin code (requires USC email)
       // We need to know BEFORE user submits form so we can show email input
-      fetch(`${process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3001'}/payment/validate-code`, {
+      fetch(`${process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3001'}/payment/validate-code', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code: invite }),

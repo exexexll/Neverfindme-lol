@@ -516,22 +516,22 @@ router.get('/admin/codes', requireAdmin, async (req: any, res) => {
   } catch (error) {
     console.error('[Admin] Failed to load codes from database:', error);
     // Fallback to memory
-    const allCodes = Array.from(store['inviteCodes'].values())
-      .sort((a, b) => b.createdAt - a.createdAt);
+  const allCodes = Array.from(store['inviteCodes'].values())
+    .sort((a, b) => b.createdAt - a.createdAt);
 
-    res.json({
-      codes: allCodes.map(code => ({
-        code: code.code,
-        type: code.type,
-        createdBy: code.createdByName,
-        createdAt: code.createdAt,
-        maxUses: code.maxUses,
-        usesRemaining: code.usesRemaining,
-        totalUsed: code.usedBy.length,
-        isActive: code.isActive,
-      })),
-      total: allCodes.length,
-    });
+  res.json({
+    codes: allCodes.map(code => ({
+      code: code.code,
+      type: code.type,
+      createdBy: code.createdByName,
+      createdAt: code.createdAt,
+      maxUses: code.maxUses,
+      usesRemaining: code.usesRemaining,
+      totalUsed: code.usedBy.length,
+      isActive: code.isActive,
+    })),
+    total: allCodes.length,
+  });
   }
 });
 
