@@ -240,6 +240,16 @@ function LoginPageContent() {
             >
               {loading ? 'Logging in...' : 'Login'}
             </button>
+            
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={() => setShowForgotPassword(true)}
+                className="text-sm text-[#ffc46a] hover:underline"
+              >
+                Forgot password?
+              </button>
+            </div>
           </form>
           ) : (
           <div className="space-y-6">
@@ -307,6 +317,128 @@ function LoginPageContent() {
             </Link>
           </div>
         </motion.div>
+
+        {/* Forgot Password Modal */}
+        {showForgotPassword && (
+          <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="max-w-md w-full rounded-2xl bg-[#0a0a0c] p-8 border border-white/10"
+            >
+              <h2 className="font-playfair text-2xl font-bold text-[#eaeaf0] mb-6">
+                Reset Password
+              </h2>
+              
+              {resetStep === 'email' && (
+                <div className="space-y-4">
+                  <p className="text-sm text-[#eaeaf0]/70 mb-4">
+                    Enter your email address and we&apos;ll send you a verification code to reset your password.
+                  </p>
+                  
+                  <div>
+                    <label className="text-sm font-medium text-[#eaeaf0] mb-2 block">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      value={resetEmail}
+                      onChange={(e) => setResetEmail(e.target.value)}
+                      placeholder="your@email.com"
+                      className="w-full rounded-xl bg-white/10 px-4 py-3 text-[#eaeaf0] placeholder-[#eaeaf0]/50 focus:outline-none focus:ring-2 focus:ring-[#ffc46a]"
+                    />
+                  </div>
+                  
+                  {error && (
+                    <div className="rounded-xl bg-red-500/10 p-4 text-sm text-red-400">
+                      {error}
+                    </div>
+                  )}
+                  
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => {
+                        setShowForgotPassword(false);
+                        setResetEmail('');
+                        setError('');
+                      }}
+                      className="flex-1 rounded-xl bg-white/10 px-6 py-3 font-medium text-[#eaeaf0] hover:bg-white/20 transition-all"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleSendResetCode}
+                      disabled={loading || !resetEmail.trim()}
+                      className="flex-1 rounded-xl bg-[#ffc46a] px-6 py-3 font-bold text-[#0a0a0c] hover:opacity-90 transition-opacity disabled:opacity-50"
+                    >
+                      {loading ? 'Sending...' : 'Send Code'}
+                    </button>
+                  </div>
+                </div>
+              )}
+              
+              {resetStep === 'code' && (
+                <div className="space-y-4">
+                  <p className="text-sm text-[#eaeaf0]/70 mb-4">
+                    We sent a 6-digit code to <strong>{resetEmail}</strong>
+                  </p>
+                  
+                  <div>
+                    <label className="text-sm font-medium text-[#eaeaf0] mb-2 block">
+                      Verification Code
+                    </label>
+                    <input
+                      type="text"
+                      value={resetCode}
+                      onChange={(e) => setResetCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      placeholder="000000"
+                      maxLength={6}
+                      className="w-full rounded-xl bg-white/10 px-4 py-3 text-[#eaeaf0] text-center text-2xl font-mono tracking-widest placeholder-[#eaeaf0]/50 focus:outline-none focus:ring-2 focus:ring-[#ffc46a]"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="text-sm font-medium text-[#eaeaf0] mb-2 block">
+                      New Password
+                    </label>
+                    <input
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="Enter new password"
+                      className="w-full rounded-xl bg-white/10 px-4 py-3 text-[#eaeaf0] placeholder-[#eaeaf0]/50 focus:outline-none focus:ring-2 focus:ring-[#ffc46a]"
+                    />
+                    <p className="text-xs text-[#eaeaf0]/50 mt-2">
+                      8+ characters, uppercase, lowercase, number, special character
+                    </p>
+                  </div>
+                  
+                  {error && (
+                    <div className="rounded-xl bg-red-500/10 p-4 text-sm text-red-400">
+                      {error}
+                    </div>
+                  )}
+                  
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setResetStep('email')}
+                      className="flex-1 rounded-xl bg-white/10 px-6 py-3 font-medium text-[#eaeaf0] hover:bg-white/20 transition-all"
+                    >
+                      Back
+                    </button>
+                    <button
+                      onClick={handleResetPassword}
+                      disabled={loading || resetCode.length !== 6 || !newPassword.trim()}
+                      className="flex-1 rounded-xl bg-[#ffc46a] px-6 py-3 font-bold text-[#0a0a0c] hover:opacity-90 transition-opacity disabled:opacity-50"
+                    >
+                      {loading ? 'Resetting...' : 'Reset Password'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          </div>
+        )}
       </Container>
     </main>
   );
