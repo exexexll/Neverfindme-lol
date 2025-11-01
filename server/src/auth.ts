@@ -606,6 +606,106 @@ router.post('/link', async (req, res) => {
     }
 });
 
+  /**
+   * POST /auth/forgot-password
+   * Send password reset code to email
+   */
+  router.post('/forgot-password', async (req, res) => {
+  const { email } = req.body;
+  
+  if (!email || !email.trim()) {
+    return res.status(400).json({ error: 'Email is required' });
+  }
+  
+  try {
+    const store = require('./store').DataStore.getInstance();
+    const user = await store.getUserByEmail(email.trim().toLowerCase());
+    
+    if (!user) {
+      return res.json({ success: true });
+    }
+    
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    await store.setVerificationCode(email.trim().toLowerCase(), code);
+    
+    const sgMail = require('@sendgrid/mail');
+    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+    
+    await sgMail.send({
+      to: email.trim().toLowerCase(),
+      from: process.env.SENDGRID_FROM_EMAIL || 'noreply@bumpin.io',
+      subject: 'Password Reset Code - BUMPIN',
+      html: `<div style="font-family: Arial, sans-serif; padding: 20px;">
+        <h2 style="color: #ffc46a;">Password Reset</h2>
+        <p>Code: <strong style="font-size: 24px;">${code}</strong></p>
+        <p>Expires in 10 minutes.</p>
+      </div>`,
+    });
+    
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to send code' });
+  }
+});
+
+  /**
+   * POST /auth/reset-password
+   * Verify code and reset password
+   */
+  router.post('/reset-password', async (req, res) => {
+    const { email, code, newPassword } = req.body;
+    
+    if (!email || !code || !newPassword) {
+      return res.status(400).json({ error: 'All fields required' });
+    }
+    
+    try {
+      const user = await store.getUserByEmail(email.trim().toLowerCase());
+      
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+      
+      // Verify code
+      if (user.verification_code !== code.trim()) {
+        return res.status(400).json({ error: 'Invalid verification code' });
+      }
+      
+      // Check expiry
+      if (!user.verification_code_expires_at || Date.now() > user.verification_code_expires_at) {
+        return res.status(400).json({ error: 'Code expired. Please request a new one.' });
+      }
+      
+      // Validate password strength
+      if (newPassword.length < 8 ||
+          !/[A-Z]/.test(newPassword) ||
+          !/[a-z]/.test(newPassword) ||
+          !/[0-9]/.test(newPassword) ||
+          !/[^A-Za-z0-9]/.test(newPassword)) {
+        return res.status(400).json({ 
+          error: 'Password must be 8+ chars with uppercase, lowercase, number, special character' 
+        });
+      }
+      
+      const bcrypt = require('bcrypt');
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      
+      // Update password and clear verification fields
+      await store.updateUser(user.userId, {
+        password_hash: hashedPassword, // CORRECT field name
+        verification_code: null,
+        verification_code_expires_at: null,
+        verification_attempts: 0,
+      });
+      
+      console.log('[Auth] Password reset successful for:', email.trim().toLowerCase());
+      res.json({ success: true });
+    } catch (err) {
+      console.error('[Auth] Reset password error:', err);
+      res.status(500).json({ error: 'Failed to reset password' });
+    }
+  });
+
   return router;
 }
 

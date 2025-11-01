@@ -17,6 +17,8 @@ export function EmailVerification({ sessionToken, email, onVerified, onSkip }: E
   const [error, setError] = useState('');
   const [timeLeft, setTimeLeft] = useState(600); // 10 minutes
   const [codeSent, setCodeSent] = useState(false);
+  const [resendAttempts, setResendAttempts] = useState(0);
+  const MAX_RESEND_ATTEMPTS = 3;
 
   useEffect(() => {
     if (!codeSent) return;
@@ -35,6 +37,11 @@ export function EmailVerification({ sessionToken, email, onVerified, onSkip }: E
   }, [codeSent]);
 
   const handleSendCode = async () => {
+    if (resendAttempts >= MAX_RESEND_ATTEMPTS) {
+      setError(`Maximum ${MAX_RESEND_ATTEMPTS} email attempts reached. Please try again later or contact support.`);
+      return;
+    }
+    
     setLoading(true);
     setError('');
 
@@ -55,6 +62,8 @@ export function EmailVerification({ sessionToken, email, onVerified, onSkip }: E
 
       setCodeSent(true);
       setTimeLeft(600);
+      setResendAttempts(prev => prev + 1);
+      console.log(`[EmailVerification] Code sent (attempt ${resendAttempts + 1}/${MAX_RESEND_ATTEMPTS})`);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -157,10 +166,13 @@ export function EmailVerification({ sessionToken, email, onVerified, onSkip }: E
           {timeLeft > 0 && (
             <button
               onClick={handleSendCode}
-              disabled={loading}
-              className="w-full text-sm text-[#eaeaf0]/70 hover:text-[#eaeaf0]"
+              disabled={loading || resendAttempts >= MAX_RESEND_ATTEMPTS}
+              className="w-full text-sm text-[#eaeaf0]/70 hover:text-[#eaeaf0] disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Resend code
+              {resendAttempts >= MAX_RESEND_ATTEMPTS 
+                ? `Max ${MAX_RESEND_ATTEMPTS} attempts reached` 
+                : `Resend code (${resendAttempts}/${MAX_RESEND_ATTEMPTS})`
+              }
             </button>
           )}
         </div>
