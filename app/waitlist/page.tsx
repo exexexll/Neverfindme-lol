@@ -242,7 +242,7 @@ export default function WaitlistPage() {
               className="w-full max-w-2xl rounded-2xl bg-[#0a0a0c] p-8 border border-white/10"
             >
               <h2 className="font-playfair text-2xl font-bold text-[#eaeaf0] mb-6 text-center">
-                📱 Scan Admin QR Code
+                📱 Scan QR Code
               </h2>
               <AdminQRScanner
                 onScan={(inviteCode) => {

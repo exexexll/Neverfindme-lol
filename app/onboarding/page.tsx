@@ -227,7 +227,7 @@ function OnboardingPageContent() {
       
       // CRITICAL FIX: Check if this is an admin code (requires USC email)
       // We need to know BEFORE user submits form so we can show email input
-      fetch(`${process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3001'}/payment/validate-code', {
+      fetch(`${process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3001'}/payment/validate-code`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code: invite }),
