@@ -123,10 +123,11 @@ export function AdminQRScanner({ onScan, onClose }: AdminQRScannerProps) {
       ) : (
         // Show scanner after permission granted
         <>
-          <div id="qr-reader" className="w-full rounded-xl overflow-hidden bg-black">
+          <div id="qr-reader" className="w-full rounded-xl overflow-hidden bg-black min-h-[400px]">
             <style jsx global>{`
               #qr-reader {
                 border: none !important;
+                min-height: 400px !important;
               }
               #qr-reader__dashboard_section {
                 display: none !important;
@@ -136,6 +137,10 @@ export function AdminQRScanner({ onScan, onClose }: AdminQRScannerProps) {
               }
               #qr-reader video {
                 border-radius: 12px;
+                min-height: 300px !important;
+              }
+              #qr-reader__scan_region {
+                min-height: 300px !important;
               }
             `}</style>
           </div>

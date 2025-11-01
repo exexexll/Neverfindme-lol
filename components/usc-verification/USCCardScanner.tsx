@@ -365,9 +365,9 @@ export function USCCardScanner({ onSuccess, onSkipToEmail }: USCCardScannerProps
   };
 
   return (
-    <main id="main" className="min-h-screen bg-[#0a0a0c] flex flex-col">
+    <main id="main" className="min-h-screen bg-[#0a0a0c] flex flex-col overflow-y-auto">
       {/* Header */}
-      <div className="p-6 text-center">
+      <div className="p-6 text-center flex-shrink-0">
         <h1 className="font-playfair text-3xl sm:text-4xl font-bold text-[#eaeaf0] mb-2">
           Scan Your USC Campus Card
         </h1>
@@ -377,7 +377,7 @@ export function USCCardScanner({ onSuccess, onSkipToEmail }: USCCardScannerProps
       </div>
 
       {/* Scanner - Responsive on mobile and desktop */}
-      <div className="flex-1 flex items-center justify-center p-4">
+      <div className="flex-1 flex items-center justify-center p-4 flex-shrink-0">
         <div className="w-full max-w-2xl">
           <div 
             id="usc-scanner-reader" 
