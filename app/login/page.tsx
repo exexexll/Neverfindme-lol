@@ -221,10 +221,10 @@ function LoginPageContent() {
             <p className="text-sm text-[#eaeaf0]/70">
               Don&apos;t have an account?{' '}
               <Link 
-                href={referralCode ? `/onboarding?ref=${referralCode}` : '/onboarding'}
+                href="/waitlist"
                 className="font-medium text-[#ffc46a] hover:underline"
               >
-                Create one now
+                Sign up here
               </Link>
             </p>
             <Link href="/" className="block text-sm text-[#eaeaf0]/50 hover:text-[#eaeaf0]">

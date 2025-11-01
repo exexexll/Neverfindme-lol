@@ -209,7 +209,7 @@ export default function WaitlistPage() {
           <div className="text-center space-y-4">
             <div className="space-y-2">
               <p className="text-[#eaeaf0] text-base font-bold">
-                USC Students / QR Code Invite - Sign Up
+                USC Students / QR Code Invite Only (no admin code needed)
               </p>
               <p className="text-[#eaeaf0]/60 text-xs">
                 Scan admin QR code, USC card, or friend invite code
