@@ -18,6 +18,13 @@ function LoginPageContent() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [referralCode, setReferralCode] = useState<string | null>(null);
+  
+  // Forgot password states
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetCode, setResetCode] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [resetStep, setResetStep] = useState<'email' | 'code' | 'password'>('email');
 
   // Extract referral code from URL if present
   useEffect(() => {
@@ -54,6 +61,74 @@ function LoginPageContent() {
       } else {
         router.push('/main');
       }
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const handleSendResetCode = async () => {
+    if (!resetEmail.trim()) {
+      setError('Email is required');
+      return;
+    }
+    
+    setLoading(true);
+    setError('');
+    
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3001'}/auth/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: resetEmail.trim() }),
+      });
+      
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to send reset code');
+      }
+      
+      setResetStep('code');
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const handleResetPassword = async () => {
+    if (!resetCode.trim() || !newPassword.trim()) {
+      setError('Code and new password are required');
+      return;
+    }
+    
+    setLoading(true);
+    setError('');
+    
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3001'}/auth/reset-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: resetEmail.trim(),
+          code: resetCode.trim(),
+          newPassword: newPassword.trim(),
+        }),
+      });
+      
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to reset password');
+      }
+      
+      // Success - close modal and show success message
+      setShowForgotPassword(false);
+      setResetEmail('');
+      setResetCode('');
+      setNewPassword('');
+      setResetStep('email');
+      alert('Password reset successful! You can now login with your new password.');
     } catch (err: any) {
       setError(err.message);
     } finally {

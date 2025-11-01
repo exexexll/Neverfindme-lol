@@ -1437,9 +1437,24 @@ function OnboardingPageContent() {
                         playsInline
                         loop
                         preload="auto"
+                        muted={false}
                         className="h-full w-full object-contain bg-black"
                         style={{ display: 'block' }}
-                        onLoadedMetadata={() => console.log('[Video] Loaded, can play')}
+                        onLoadedMetadata={() => {
+                          console.log('[Video] Loaded, duration:', videoPreviewRef.current?.duration);
+                          // Ensure video is ready to play
+                          if (videoPreviewRef.current) {
+                            videoPreviewRef.current.play().catch(err => console.log('[Video] Autoplay blocked:', err));
+                          }
+                        }}
+                        onEnded={() => {
+                          console.log('[Video] Ended, restarting due to loop');
+                          // Force restart if loop fails
+                          if (videoPreviewRef.current) {
+                            videoPreviewRef.current.currentTime = 0;
+                            videoPreviewRef.current.play();
+                          }
+                        }}
                         onError={(e) => console.error('[Video] Error:', e)}
                       />
                     ) : (
