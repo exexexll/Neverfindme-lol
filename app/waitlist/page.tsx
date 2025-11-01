@@ -520,10 +520,10 @@ export default function WaitlistPage() {
               className="max-w-md w-full rounded-2xl bg-[#0a0a0c] p-8 border border-white/10"
             >
               <h2 className="font-playfair text-2xl font-bold text-[#eaeaf0] mb-6 text-center">
-                Choose Scan Method
+                Choose Sign Up Method
               </h2>
               
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <button
                   onClick={() => {
                     setShowScanChoice(false);
@@ -534,7 +534,7 @@ export default function WaitlistPage() {
                   <span className="text-2xl">📱</span>
                   <div>
                     <div className="font-bold">Scan QR Code</div>
-                    <div className="text-xs opacity-70">Admin QR from campus events</div>
+                    <div className="text-xs opacity-70">Admin or friend invite code</div>
                   </div>
                 </button>
                 
@@ -549,6 +549,20 @@ export default function WaitlistPage() {
                   <div>
                     <div className="font-bold">Scan USC Card</div>
                     <div className="text-xs opacity-70">Barcode on back of card</div>
+                  </div>
+                </button>
+                
+                <button
+                  onClick={() => {
+                    setShowScanChoice(false);
+                    setShowEmailSignup(true);
+                  }}
+                  className="w-full rounded-xl bg-[#ffc46a] px-6 py-4 font-bold text-[#0a0a0c] hover:opacity-90 transition-opacity text-left flex items-center gap-3"
+                >
+                  <span className="text-2xl">✉️</span>
+                  <div>
+                    <div className="font-bold">USC Email Signup</div>
+                    <div className="text-xs opacity-70">Verify with @usc.edu email</div>
                   </div>
                 </button>
                 
