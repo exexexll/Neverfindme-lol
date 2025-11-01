@@ -727,10 +727,20 @@ function OnboardingPageContent() {
       });
 
       console.log('[Onboarding] Video recorded, size:', (blob.size / 1024 / 1024).toFixed(2), 'MB');
+      console.log('[Onboarding] Video type:', blob.type);
       
       // Create preview URL
       const previewUrl = URL.createObjectURL(blob);
+      console.log('[Onboarding] Preview URL created:', previewUrl);
       setVideoPreviewUrl(previewUrl);
+      
+      // Ensure video element loads
+      setTimeout(() => {
+        if (videoPreviewRef.current) {
+          console.log('[Onboarding] Video element ready, duration:', videoPreviewRef.current.duration);
+          videoPreviewRef.current.load(); // Force reload
+        }
+      }, 100);
     }
   }, [recordedChunks, isRecording]);
 
@@ -1425,8 +1435,12 @@ function OnboardingPageContent() {
                         controls
                         autoPlay
                         playsInline
+                        loop
+                        preload="auto"
                         className="h-full w-full object-contain bg-black"
                         style={{ display: 'block' }}
+                        onLoadedMetadata={() => console.log('[Video] Loaded, can play')}
+                        onError={(e) => console.error('[Video] Error:', e)}
                       />
                     ) : (
                       // Show live camera feed
