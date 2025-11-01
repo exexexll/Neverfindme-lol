@@ -365,7 +365,17 @@ export function USCCardScanner({ onSuccess, onSkipToEmail }: USCCardScannerProps
   };
 
   return (
-    <main id="main" className="min-h-screen bg-[#0a0a0c] flex flex-col">
+    <main id="main" className="min-h-screen bg-[#0a0a0c] flex flex-col relative">
+      {/* Fixed Email Button - Always Visible */}
+      <div className="fixed bottom-6 left-0 right-0 px-6 z-50">
+        <button
+          onClick={onSkipToEmail}
+          className="w-full py-4 rounded-xl bg-[#ffc46a] text-[#0a0a0c] font-bold hover:opacity-90 transition-opacity shadow-2xl text-base"
+        >
+          ✉️ Sign Up with USC Email Instead
+        </button>
+      </div>
+
       {/* Header */}
       <div className="p-6 text-center">
         <h1 className="font-playfair text-3xl sm:text-4xl font-bold text-[#eaeaf0] mb-2">
