@@ -268,8 +268,9 @@ router.post('/link', async (req, res) => {
     return res.status(404).json({ error: 'User not found' });
   }
 
-  // CRITICAL: Check if account is already permanent
-  if (user.accountType === 'permanent') {
+  // CRITICAL: Check if account is already permanent AND has password
+  // Allow upgrade if permanent but no password (from /verification/verify)
+  if (user.accountType === 'permanent' && user.password_hash) {
     return res.status(400).json({
       error: 'Account is already permanent',
       hint: 'Your account is already upgraded. No action needed.'
