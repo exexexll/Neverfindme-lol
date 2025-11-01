@@ -407,6 +407,14 @@ function OnboardingPageContent() {
         console.log('[Onboarding] Guest account created, will link USC card after onboarding');
       } else {
         // NORMAL PATH: Call API with USC email if provided
+        console.log('[Onboarding] Calling createGuestAccount with inviteCode:', inviteCode);
+        console.log('[Onboarding] Full params:', {
+          name, gender,
+          referralCode: referralCode || 'none',
+          inviteCode: inviteCode || 'MISSING',
+          uscEmail: uscEmail || 'none'
+        });
+        
         response = await createGuestAccount(
           name, 
           gender, 
