@@ -619,9 +619,13 @@ router.post('/link', async (req, res) => {
   }
   
   try {
+    console.log('[Auth] Forgot password request for:', email.trim().toLowerCase());
+    
     const user = await store.getUserByEmail(email.trim().toLowerCase());
+    console.log('[Auth] User found:', !!user);
     
     if (!user) {
+      console.log('[Auth] Email not found, returning success (security)');
       return res.json({ success: true });
     }
     
@@ -630,12 +634,17 @@ router.post('/link', async (req, res) => {
                        (Date.now() - user.verification_code_expires_at) > 3600000;
     const currentAttempts = shouldReset ? 0 : (user.verification_attempts || 0);
     
+    console.log('[Auth] Current attempts:', currentAttempts);
+    
     if (currentAttempts >= 3) {
+      console.log('[Auth] Too many attempts, blocking');
       return res.status(429).json({ error: 'Too many attempts. Wait 1 hour.' });
     }
     
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = Date.now() + (10 * 60 * 1000);
+    
+    console.log('[Auth] Generated code, updating user...');
     
     // Store in user object (not separate table)
     await store.updateUser(user.userId, {
@@ -644,8 +653,14 @@ router.post('/link', async (req, res) => {
       verification_attempts: currentAttempts + 1,
     });
     
+    console.log('[Auth] Code stored, sending email...');
+    
     const sgMail = require('@sendgrid/mail');
     sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+    
+    if (!process.env.SENDGRID_API_KEY) {
+      throw new Error('SendGrid API key not configured');
+    }
     
     await sgMail.send({
       to: email.trim().toLowerCase(),
@@ -653,14 +668,18 @@ router.post('/link', async (req, res) => {
       subject: 'Password Reset Code - BUMPIN',
       html: `<div style="font-family: Arial, sans-serif; padding: 20px;">
         <h2 style="color: #ffc46a;">Password Reset</h2>
-        <p>Code: <strong style="font-size: 24px;">${code}</strong></p>
+        <p>Code: <strong style="font-size: 24px; letter-spacing: 3px;">${code}</strong></p>
         <p>Expires in 10 minutes.</p>
+        <p style="color: #999; font-size: 12px;">Attempt ${currentAttempts + 1}/3</p>
       </div>`,
     });
     
+    console.log('[Auth] ✅ Reset code sent successfully');
     res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to send code' });
+  } catch (err: any) {
+    console.error('[Auth] Forgot password ERROR:', err);
+    console.error('[Auth] Error details:', err.message, err.stack);
+    res.status(500).json({ error: 'Failed to send reset code: ' + (err.message || 'Unknown error') });
   }
 });
 
