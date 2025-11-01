@@ -619,7 +619,6 @@ router.post('/link', async (req, res) => {
   }
   
   try {
-    const store = require('./store').DataStore.getInstance();
     const user = await store.getUserByEmail(email.trim().toLowerCase());
     
     if (!user) {
