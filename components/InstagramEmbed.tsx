@@ -97,8 +97,9 @@ export function InstagramEmbed({ postUrl, onLoad }: InstagramEmbedProps) {
         className="w-full h-full flex items-center justify-center overflow-hidden bg-black instagram-embed-wrapper relative"
         style={{ padding: 0, pointerEvents: 'auto' }}
       >
-        {/* Black bar covers Instagram's white header (username/profile) - explicitly allow clicks through */}
-        <div className="absolute top-0 left-0 right-0 h-14 bg-black z-[15]" style={{ pointerEvents: 'none' }} />
+        {/* Black bars cover Instagram's white header/footer */}
+        <div className="absolute top-0 left-0 right-0 h-16 bg-black z-[15]" style={{ pointerEvents: 'none' }} />
+        <div className="absolute bottom-0 left-0 right-0 h-20 bg-black z-[15]" style={{ pointerEvents: 'none' }} />
         
         <style jsx>{`
           /* Container styling */
@@ -106,17 +107,19 @@ export function InstagramEmbed({ postUrl, onLoad }: InstagramEmbedProps) {
             position: relative;
             width: 100%;
             height: 100%;
+            overflow: hidden;
           }
           
-          /* Scale to hide white header - adjusted to prevent content leak */
+          /* Scale to hide white header/footer - increased scale and adjusted position */
           .instagram-embed-wrapper :global(.instagram-media) {
             background: #000 !important;
             border: none !important;
             box-shadow: none !important;
             margin: 0 auto !important;
             max-width: 540px !important;
-            transform: scale(1.35) translateY(-45px) !important;
+            transform: scale(1.45) translateY(-50px) !important;
             overflow: hidden !important;
+            position: relative !important;
           }
           
           /* Hide white borders and padding that might leak */
@@ -149,18 +152,21 @@ export function InstagramEmbed({ postUrl, onLoad }: InstagramEmbedProps) {
             touch-action: auto !important;
           }
           
-          /* CRITICAL: Make Instagram's carousel navigation arrows visible */
+          /* CRITICAL: Make Instagram's carousel navigation arrows ALWAYS visible */
           .instagram-embed-wrapper :global(.coreSpriteLeftChevron),
           .instagram-embed-wrapper :global(.coreSpriteRightChevron),
           .instagram-embed-wrapper :global([aria-label*="Next"]),
           .instagram-embed-wrapper :global([aria-label*="Previous"]),
-          .instagram-embed-wrapper :global([aria-label*="Go to"]) {
+          .instagram-embed-wrapper :global([aria-label*="Go to"]),
+          .instagram-embed-wrapper :global(button[aria-label*="Next"]),
+          .instagram-embed-wrapper :global(button[aria-label*="Previous"]) {
             display: block !important;
             pointer-events: auto !important;
             opacity: 1 !important;
             visibility: visible !important;
             cursor: pointer !important;
-            z-index: 1000 !important;
+            z-index: 2000 !important;
+            position: relative !important;
           }
           
           /* Ensure video controls are visible */
