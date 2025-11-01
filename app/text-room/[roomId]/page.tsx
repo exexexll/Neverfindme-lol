@@ -594,7 +594,7 @@ export default function TextChatRoom() {
     
     return () => clearInterval(interval);
   }, []);
-  
+
   // CRITICAL: End session client-side when countdown reaches 0
   // Don't wait for server (which checks every 30s) - more responsive UX
   useEffect(() => {
@@ -1089,7 +1089,7 @@ export default function TextChatRoom() {
               const session = getSession();
               if (!session || !socketRef.current) return;
               
-              // Get user's preset socials from localStorage  
+              // Get user's preset socials from localStorage
               const userSocials = localStorage.getItem('bumpin_socials'); // FIXED: Use bumpin_socials not bumpin_user_socials
               if (userSocials) {
                 try {

@@ -11,9 +11,12 @@ interface AdminQRScannerProps {
 export function AdminQRScanner({ onScan, onClose }: AdminQRScannerProps) {
   const scannerRef = useRef<Html5QrcodeScanner | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [cameraStarted, setCameraStarted] = useState(false);
 
-  useEffect(() => {
-    // Initialize scanner with auto-start camera
+  const startScanner = () => {
+    setCameraStarted(true);
+    
+    // Initialize scanner after user clicks button
     const scanner = new Html5QrcodeScanner(
       'qr-reader',
       {
@@ -86,50 +89,81 @@ export function AdminQRScanner({ onScan, onClose }: AdminQRScannerProps) {
       clearTimeout(timeout);
       scanner.clear().catch(() => {});
     };
-  }, [onScan, onClose]);
+  };
 
   return (
     <div className="space-y-6">
-      {/* QR Scanner - Clean UI */}
-      <div id="qr-reader" className="w-full rounded-xl overflow-hidden bg-black">
-        <style jsx global>{`
-          #qr-reader {
-            border: none !important;
-          }
-          #qr-reader__dashboard_section {
-            display: none !important;
-          }
-          #qr-reader__dashboard_section_csr {
-            display: none !important;
-          }
-          #qr-reader video {
-            border-radius: 12px;
-          }
-        `}</style>
-      </div>
-
-      {error && (
-        <div className="rounded-xl bg-red-500/10 p-4 text-sm text-red-400">
-          <p className="font-medium mb-1">❌ Scan Error</p>
-          <p className="text-xs">{error}</p>
+      {!cameraStarted ? (
+        // Show button to request camera permission
+        <div className="text-center space-y-6">
+          <div className="space-y-3">
+            <div className="text-6xl">📱</div>
+            <h3 className="text-xl font-bold text-[#eaeaf0]">
+              Camera Permission Needed
+            </h3>
+            <p className="text-sm text-[#eaeaf0]/70">
+              Click below to enable your camera and scan the QR code
+            </p>
+          </div>
+          
+          <button
+            onClick={startScanner}
+            className="w-full rounded-xl bg-[#ffc46a] px-8 py-4 font-bold text-[#0a0a0c] hover:opacity-90 transition-opacity shadow-lg text-lg"
+          >
+            📷 Enable Camera to Scan
+          </button>
+          
+          <button
+            onClick={onClose}
+            className="w-full rounded-xl bg-white/10 px-6 py-3 font-medium text-[#eaeaf0] hover:bg-white/20 transition-all"
+          >
+            Cancel
+          </button>
         </div>
+      ) : (
+        // Show scanner after permission granted
+        <>
+          <div id="qr-reader" className="w-full rounded-xl overflow-hidden bg-black">
+            <style jsx global>{`
+              #qr-reader {
+                border: none !important;
+              }
+              #qr-reader__dashboard_section {
+                display: none !important;
+              }
+              #qr-reader__dashboard_section_csr {
+                display: none !important;
+              }
+              #qr-reader video {
+                border-radius: 12px;
+              }
+            `}</style>
+          </div>
+
+          {error && (
+            <div className="rounded-xl bg-red-500/10 p-4 text-sm text-red-400">
+              <p className="font-medium mb-1">❌ Scan Error</p>
+              <p className="text-xs">{error}</p>
+            </div>
+          )}
+
+          <button
+            onClick={onClose}
+            className="w-full rounded-xl bg-white/10 px-6 py-3 font-medium text-[#eaeaf0] hover:bg-white/20 transition-all"
+          >
+            Cancel
+          </button>
+
+          <div className="text-center space-y-2">
+            <p className="text-sm font-medium text-[#eaeaf0]">
+              📱 Point camera at QR code
+            </p>
+            <p className="text-xs text-[#eaeaf0]/50">
+              Admin QR from events or friend invite code
+            </p>
+          </div>
+        </>
       )}
-
-      <button
-        onClick={onClose}
-        className="w-full rounded-xl bg-white/10 px-6 py-3 font-medium text-[#eaeaf0] hover:bg-white/20 transition-all"
-      >
-        Cancel
-      </button>
-
-      <div className="text-center space-y-2">
-        <p className="text-sm font-medium text-[#eaeaf0]">
-          📱 Point camera at QR code
-        </p>
-        <p className="text-xs text-[#eaeaf0]/50">
-          Admin QR from events or friend invite code
-        </p>
-      </div>
     </div>
   );
 }

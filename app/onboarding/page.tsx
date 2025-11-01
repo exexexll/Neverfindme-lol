@@ -372,16 +372,16 @@ function OnboardingPageContent() {
     // CRITICAL: If USC card was scanned, SKIP all USC email checks
     if (!uscId) {
       // Only check USC email if NO card was scanned
-      if (needsUSCEmail && !uscEmail.trim()) {
-        setError('USC email is required for this QR code');
+    if (needsUSCEmail && !uscEmail.trim()) {
+      setError('USC email is required for this QR code');
+      return;
+    }
+    
+    // Validate USC email format if provided
+    if (needsUSCEmail && uscEmail.trim()) {
+      if (!/^[^\s@]+@usc\.edu$/i.test(uscEmail.trim())) {
+        setError('Please enter a valid @usc.edu email address');
         return;
-      }
-      
-      // Validate USC email format if provided
-      if (needsUSCEmail && uscEmail.trim()) {
-        if (!/^[^\s@]+@usc\.edu$/i.test(uscEmail.trim())) {
-          setError('Please enter a valid @usc.edu email address');
-          return;
         }
       }
     }
@@ -435,12 +435,12 @@ function OnboardingPageContent() {
         });
         
         response = await createGuestAccount(
-          name, 
-          gender, 
-          referralCode || undefined, 
-          inviteCode || undefined,
-          uscEmail || undefined // Pass USC email for admin code validation
-        );
+        name, 
+        gender, 
+        referralCode || undefined, 
+        inviteCode || undefined,
+        uscEmail || undefined // Pass USC email for admin code validation
+      );
       }
       setSessionToken(response.sessionToken);
       setUserId(response.userId);
@@ -567,7 +567,7 @@ function OnboardingPageContent() {
     setUploadingPhoto(true);
     setError('');
     
-    try {
+          try {
       // Convert canvas directly to blob (more reliable than data URL fetch)
       await new Promise<void>((resolve, reject) => {
         canvasRef.current?.toBlob(async (blob) => {
@@ -601,9 +601,9 @@ function OnboardingPageContent() {
     } catch (err: any) {
       console.error('[Selfie] Upload error:', err);
       setError(err.message || 'Failed to upload photo');
-    } finally {
+          } finally {
       setUploadingPhoto(false);
-    }
+          }
   };
 
   const retakePhoto = () => {
@@ -740,35 +740,35 @@ function OnboardingPageContent() {
     const blob = new Blob(recordedChunks, { 
       type: mediaRecorderRef.current?.mimeType || 'video/webm' 
     });
-    
+      
     setUploadingVideo(true);
-    setUploadProgress(0);
+      setUploadProgress(0);
     setShowUploadProgress(true);
-    
+      
     console.log('[Onboarding] 🎬 Uploading video...');
-    
+      
     try {
       const data: any = await uploadVideo(sessionToken, blob, (percent) => {
         setUploadProgress(percent);
       });
       
       console.log('[Onboarding] ✅ Video uploaded');
-      
-      setUploadProgress(100);
-      setTimeout(() => {
-        setShowUploadProgress(false);
-        setUploadProgress(0);
-      }, 500);
-      
+          
+          setUploadProgress(100);
+          setTimeout(() => {
+            setShowUploadProgress(false);
+            setUploadProgress(0);
+          }, 500);
+          
       // Clean up
       if (videoPreviewUrl) {
         URL.revokeObjectURL(videoPreviewUrl);
         setVideoPreviewUrl(null);
-      }
-      
-      setStep('permanent');
+          }
+          
+          setStep('permanent');
     } catch (err: any) {
-      setError(err.message);
+          setError(err.message);
     } finally {
       setUploadingVideo(false);
     }
@@ -1014,7 +1014,7 @@ function OnboardingPageContent() {
       // CRITICAL: Wait 500ms to ensure Quagga fully released camera
       const cameraTimeout = setTimeout(() => {
         console.log('[Onboarding] Starting selfie camera...');
-        startCamera();
+      startCamera();
       }, 500);
       
       return () => clearTimeout(cameraTimeout);
@@ -1335,14 +1335,14 @@ function OnboardingPageContent() {
                       />
                     ) : (
                       // Show live camera feed
-                      <video
-                        ref={videoRef}
-                        autoPlay
-                        playsInline
-                        muted
-                        className="h-full w-full object-contain"
-                        style={{ transform: 'scaleX(-1)' }}
-                      />
+                    <video
+                      ref={videoRef}
+                      autoPlay
+                      playsInline
+                      muted
+                      className="h-full w-full object-contain"
+                      style={{ transform: 'scaleX(-1)' }}
+                    />
                     )}
                   </div>
                   <canvas ref={canvasRef} className="hidden" />
@@ -1385,13 +1385,13 @@ function OnboardingPageContent() {
                     </div>
                   ) : (
                     // Show capture button before taking photo
-                    <button
-                      onClick={captureSelfie}
+                  <button
+                    onClick={captureSelfie}
                       disabled={!stream}
-                      className="focus-ring w-full rounded-xl bg-[#ffc46a] px-6 py-3 font-medium text-[#0a0a0c] shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50"
-                    >
+                    className="focus-ring w-full rounded-xl bg-[#ffc46a] px-6 py-3 font-medium text-[#0a0a0c] shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50"
+                  >
                       📸 Capture selfie
-                    </button>
+                  </button>
                   )}
                 </div>
               </motion.div>
@@ -1431,21 +1431,21 @@ function OnboardingPageContent() {
                     ) : (
                       // Show live camera feed
                       <>
-                        <video
-                          ref={videoRef}
-                          autoPlay
-                          playsInline
-                          muted
-                          className="h-full w-full object-contain"
-                          style={{ transform: 'scaleX(-1)' }}
-                        />
-                        {isRecording && (
-                          <div className="absolute top-4 right-4 flex items-center gap-2 rounded-lg bg-black/50 px-3 py-2 backdrop-blur-sm">
-                            <span className="h-3 w-3 animate-pulse rounded-full bg-red-500" />
-                            <span className="text-sm font-medium text-white">
-                              {Math.floor(recordingTime / 60)}:{(recordingTime % 60).toString().padStart(2, '0')} / 1:00
-                            </span>
-                          </div>
+                    <video
+                      ref={videoRef}
+                      autoPlay
+                      playsInline
+                      muted
+                      className="h-full w-full object-contain"
+                      style={{ transform: 'scaleX(-1)' }}
+                    />
+                    {isRecording && (
+                      <div className="absolute top-4 right-4 flex items-center gap-2 rounded-lg bg-black/50 px-3 py-2 backdrop-blur-sm">
+                        <span className="h-3 w-3 animate-pulse rounded-full bg-red-500" />
+                        <span className="text-sm font-medium text-white">
+                          {Math.floor(recordingTime / 60)}:{(recordingTime % 60).toString().padStart(2, '0')} / 1:00
+                        </span>
+                      </div>
                         )}
                       </>
                     )}
@@ -1499,44 +1499,44 @@ function OnboardingPageContent() {
                   ) : (
                     // Show record/stop buttons
                     <>
-                      {!isRecording && recordedChunks.length === 0 && (
-                        <button
-                          onClick={startVideoRecording}
+                  {!isRecording && recordedChunks.length === 0 && (
+                    <button
+                      onClick={startVideoRecording}
                           disabled={uploadingVideo}
-                          className="focus-ring w-full rounded-xl bg-[#ffc46a] px-6 py-3 font-medium text-[#0a0a0c] shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50"
-                        >
+                      className="focus-ring w-full rounded-xl bg-[#ffc46a] px-6 py-3 font-medium text-[#0a0a0c] shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50"
+                    >
                           🎥 Start recording
-                        </button>
-                      )}
+                    </button>
+                  )}
 
-                      {isRecording && (
-                        <button
-                          onClick={stopVideoRecording}
-                          disabled={recordingTime < 5}
-                          className={`focus-ring w-full rounded-xl px-6 py-3 font-medium shadow-sm transition-opacity ${
-                            recordingTime < 5 
-                              ? 'bg-gray-500/50 text-gray-300 cursor-not-allowed opacity-50'
-                              : 'bg-red-500 text-white hover:opacity-90'
-                          }`}
-                        >
-                          {recordingTime < 5 
-                            ? `Keep recording... (${5 - recordingTime}s minimum)` 
+                  {isRecording && (
+                    <button
+                      onClick={stopVideoRecording}
+                      disabled={recordingTime < 5}
+                      className={`focus-ring w-full rounded-xl px-6 py-3 font-medium shadow-sm transition-opacity ${
+                        recordingTime < 5 
+                          ? 'bg-gray-500/50 text-gray-300 cursor-not-allowed opacity-50'
+                          : 'bg-red-500 text-white hover:opacity-90'
+                      }`}
+                    >
+                      {recordingTime < 5 
+                        ? `Keep recording... (${5 - recordingTime}s minimum)` 
                             : '⏹ Stop recording'}
-                        </button>
-                      )}
-                      
+                    </button>
+                  )}
+                  
                       {/* Skip Video Option */}
                       {!isRecording && recordedChunks.length === 0 && !uploadingVideo && (
                         <>
-                          <button
-                            onClick={handleSkipVideo}
-                            className="focus-ring w-full rounded-xl bg-white/10 px-6 py-3 font-medium text-[#eaeaf0] transition-all hover:bg-white/20"
-                          >
-                            Skip for now
-                          </button>
-                          <p className="text-xs text-center text-[#eaeaf0]/50">
-                            You can upload an intro video later from your profile page
-                          </p>
+                    <button
+                      onClick={handleSkipVideo}
+                      className="focus-ring w-full rounded-xl bg-white/10 px-6 py-3 font-medium text-[#eaeaf0] transition-all hover:bg-white/20"
+                    >
+                      Skip for now
+                    </button>
+                    <p className="text-xs text-center text-[#eaeaf0]/50">
+                      You can upload an intro video later from your profile page
+                    </p>
                         </>
                       )}
                     </>
@@ -1577,9 +1577,9 @@ function OnboardingPageContent() {
                     </div>
                   </div>
                 ) : (
-                  <p className="text-lg text-[#eaeaf0]/70">
-                    Link an email and password to save your account permanently. Or skip to continue as a guest.
-                  </p>
+                <p className="text-lg text-[#eaeaf0]/70">
+                  Link an email and password to save your account permanently. Or skip to continue as a guest.
+                </p>
                 )}
 
                 <div className="space-y-6">
@@ -1628,27 +1628,27 @@ function OnboardingPageContent() {
                     </div>
                   ) : (
                     <>
-                      {error && (
-                        <div className="rounded-xl bg-red-500/10 p-4 text-sm text-red-400">
-                          {error}
-                        </div>
-                      )}
+                  {error && (
+                    <div className="rounded-xl bg-red-500/10 p-4 text-sm text-red-400">
+                      {error}
+                    </div>
+                  )}
 
-                      <div className="flex gap-4">
-                        <button
-                          onClick={handleSkip}
-                          className="focus-ring flex-1 rounded-xl bg-white/10 px-6 py-3 font-medium text-[#eaeaf0] transition-all hover:bg-white/20"
-                        >
+                  <div className="flex gap-4">
+                    <button
+                      onClick={handleSkip}
+                      className="focus-ring flex-1 rounded-xl bg-white/10 px-6 py-3 font-medium text-[#eaeaf0] transition-all hover:bg-white/20"
+                    >
                           {(uscId || sessionStorage.getItem('temp_usc_id')) ? 'Continue as Guest (7 days)' : 'Skip for now'}
-                        </button>
-                        <button
-                          onClick={handleMakePermanent}
-                          disabled={loading}
-                          className="focus-ring flex-1 rounded-xl bg-[#ffc46a] px-6 py-3 font-medium text-[#0a0a0c] shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50"
-                        >
+                    </button>
+                    <button
+                      onClick={handleMakePermanent}
+                      disabled={loading}
+                      className="focus-ring flex-1 rounded-xl bg-[#ffc46a] px-6 py-3 font-medium text-[#0a0a0c] shadow-sm transition-opacity hover:opacity-90 disabled:opacity-50"
+                    >
                           {loading ? 'Sending verification code...' : (uscId || sessionStorage.getItem('temp_usc_id')) ? 'Upgrade to Permanent' : 'Make permanent'}
-                        </button>
-                      </div>
+                    </button>
+                  </div>
                     </>
                   )}
                 </div>
