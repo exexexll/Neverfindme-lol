@@ -278,28 +278,35 @@ export default function WaitlistPage() {
               <div className="w-full max-w-2xl">
                 <USCCardScanner
                   onSuccess={async (uscId, rawValue) => {
-                    console.log('[Waitlist] USC card scanned:', uscId);
+                    console.log('[Waitlist] ✅ USC card scanned successfully:', uscId);
+                    
+                    // Close scanner first to prevent re-scans
+                    setShowBarcodeScanner(false);
                     
                     // CRITICAL: Check if card already registered before storing
                     try {
+                      console.log('[Waitlist] Checking if card is already registered...');
                       const checkRes = await fetch(`${process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3001'}/usc/check-card/${uscId}`);
                       const checkData = await checkRes.json();
                       
                       if (checkData.registered) {
-                        alert('This USC card is already registered to another account. Please log in with that account or scan a different card.');
-                        setShowBarcodeScanner(false);
-                        return;
+                        console.warn('[Waitlist] ❌ Card already registered');
+                        alert('This USC card is already registered to another account. Please log in with that account or use a different verification method.');
+                        return; // Stop here, don't redirect
                       }
+                      
+                      console.log('[Waitlist] ✅ Card available, proceeding to onboarding');
                     } catch (err) {
-                      console.warn('[Waitlist] Could not check card status, proceeding anyway');
+                      console.warn('[Waitlist] Could not check card status (network error), proceeding anyway');
+                      // Continue even if check fails (network issue)
                     }
                     
                     // Store USC card data and redirect to onboarding
                     // No admin code needed - USC card IS the verification
-                    setShowBarcodeScanner(false);
                     sessionStorage.setItem('temp_usc_id', uscId);
                     sessionStorage.setItem('temp_usc_barcode', rawValue);
                     sessionStorage.setItem('usc_card_verified', 'true');
+                    console.log('[Waitlist] Redirecting to onboarding...');
                     router.push('/onboarding');
                   }}
                   onSkipToEmail={() => {
