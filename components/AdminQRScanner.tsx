@@ -37,15 +37,32 @@ export function AdminQRScanner({ onScan, onClose }: AdminQRScannerProps) {
             // Check if it's a URL
             if (decodedText.startsWith('http')) {
               const url = new URL(decodedText);
-              if (!url.hostname.includes('napalmsky.com') && 
-                  !url.hostname.includes('bumpin.io')) {
-                setError('Invalid QR domain');
+              console.log('[QR] Scanned URL hostname:', url.hostname);
+              console.log('[QR] Full URL:', decodedText);
+              
+              // Accept bumpin.io and all subdomains (www.bumpin.io, app.bumpin.io, etc.)
+              const validDomain = url.hostname === 'bumpin.io' || 
+                                 url.hostname.endsWith('.bumpin.io') ||
+                                 url.hostname === 'napalmsky.com' ||
+                                 url.hostname.endsWith('.napalmsky.com') ||
+                                 url.hostname === 'localhost';
+              
+              if (!validDomain) {
+                console.error('[QR] Invalid domain:', url.hostname);
+                setError('Invalid QR domain: ' + url.hostname);
                 return;
               }
+              
               const code = url.searchParams.get('inviteCode');
+              console.log('[QR] Extracted inviteCode:', code);
+              
               if (code && /^[A-Z0-9]{16}$/i.test(code)) {
+                console.log('[QR] ✅ Valid code, stopping scanner and calling onScan');
                 html5QrCode.stop();
                 onScan(code.toUpperCase());
+              } else {
+                console.error('[QR] No valid inviteCode parameter in URL');
+                setError('No inviteCode in QR. Expected: ?inviteCode=...');
               }
             }
             // Check if it's direct code
