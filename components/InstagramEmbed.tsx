@@ -159,14 +159,17 @@ export function InstagramEmbed({ postUrl, onLoad }: InstagramEmbedProps) {
           .instagram-embed-wrapper :global([aria-label*="Previous"]),
           .instagram-embed-wrapper :global([aria-label*="Go to"]),
           .instagram-embed-wrapper :global(button[aria-label*="Next"]),
-          .instagram-embed-wrapper :global(button[aria-label*="Previous"]) {
+          .instagram-embed-wrapper :global(button[aria-label*="Previous"]),
+          .instagram-embed-wrapper :global([role="button"]) {
             display: block !important;
             pointer-events: auto !important;
             opacity: 1 !important;
             visibility: visible !important;
             cursor: pointer !important;
-            z-index: 2000 !important;
+            z-index: 9999 !important;
             position: relative !important;
+            background: rgba(255, 255, 255, 0.9) !important;
+            border-radius: 50% !important;
           }
           
           /* Ensure video controls are visible */
