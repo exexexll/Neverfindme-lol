@@ -312,6 +312,13 @@ class DataStore {
           if (updates.qrUnlocked !== undefined) { setClauses.push(`qr_unlocked = $${paramIndex++}`); values.push(updates.qrUnlocked); }
           if (updates.successfulSessions !== undefined) { setClauses.push(`successful_sessions = $${paramIndex++}`); values.push(updates.successfulSessions); }
           if (updates.qrUnlockedAt !== undefined) { setClauses.push(`qr_unlocked_at = $${paramIndex++}`); values.push(updates.qrUnlockedAt ? new Date(updates.qrUnlockedAt) : null); }
+          // EMAIL VERIFICATION FIELDS
+          if (updates.verification_code !== undefined) { setClauses.push(`verification_code = $${paramIndex++}`); values.push(updates.verification_code); }
+          if (updates.verification_code_expires_at !== undefined) { setClauses.push(`verification_code_expires_at = $${paramIndex++}`); values.push(updates.verification_code_expires_at ? new Date(updates.verification_code_expires_at) : null); }
+          if (updates.verification_attempts !== undefined) { setClauses.push(`verification_attempts = $${paramIndex++}`); values.push(updates.verification_attempts); }
+          if (updates.email_verified !== undefined) { setClauses.push(`email_verified = $${paramIndex++}`); values.push(updates.email_verified); }
+          if (updates.pending_email !== undefined) { setClauses.push(`pending_email = $${paramIndex++}`); values.push(updates.pending_email); }
+          if (updates.accountExpiresAt !== undefined) { setClauses.push(`account_expires_at = $${paramIndex++}`); values.push(updates.accountExpiresAt ? new Date(updates.accountExpiresAt) : null); }
           
           if (setClauses.length > 0) {
             values.push(userId);
