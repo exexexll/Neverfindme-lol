@@ -40,13 +40,24 @@ export function AdminQRScanner({ onScan, onClose }: AdminQRScannerProps) {
               console.log('[QR] Scanned URL hostname:', url.hostname);
               console.log('[QR] Full URL:', decodedText);
               
-              // Accept bumpin.io, napalmsky.com, and QR code generator domains
+              // If it's a myqrcode.mobi redirect, just navigate to it
+              if (url.hostname === 'myqrcode.mobi' || url.hostname.endsWith('.myqrcode.mobi')) {
+                console.log('[QR] ✅ myqrcode.mobi redirect detected, navigating to URL');
+                try {
+                  await html5QrCode.stop();
+                } catch (stopErr) {
+                  console.warn('[QR] Stop error (ignored):', stopErr);
+                }
+                // Navigate to the redirect URL, it will go to bumpin.io
+                window.location.href = decodedText;
+                return;
+              }
+              
+              // For direct bumpin.io URLs, validate and extract inviteCode
               const validDomain = url.hostname === 'bumpin.io' || 
                                  url.hostname.endsWith('.bumpin.io') ||
                                  url.hostname === 'napalmsky.com' ||
                                  url.hostname.endsWith('.napalmsky.com') ||
-                                 url.hostname === 'myqrcode.mobi' || // QR generator
-                                 url.hostname.endsWith('.myqrcode.mobi') ||
                                  url.hostname === 'localhost';
               
               if (!validDomain) {
