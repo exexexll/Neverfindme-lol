@@ -1086,22 +1086,40 @@ export default function TextChatRoom() {
           {/* Share Social Button */}
           <button
             onClick={async () => {
+              console.log('[TextRoom] Share socials button clicked');
               const session = getSession();
-              if (!session || !socketRef.current) return;
+              if (!session) {
+                console.log('[TextRoom] No session');
+                alert('Please login first');
+                return;
+              }
+              if (!socketRef.current) {
+                console.log('[TextRoom] Socket not connected');
+                alert('Not connected to chat. Please refresh.');
+                return;
+              }
               
               // Get user's preset socials from localStorage
-              const userSocials = localStorage.getItem('bumpin_socials'); // FIXED: Use bumpin_socials not bumpin_user_socials
+              const userSocials = localStorage.getItem('bumpin_socials');
+              console.log('[TextRoom] localStorage bumpin_socials:', userSocials);
+              
               if (userSocials) {
                 try {
                   const socials = JSON.parse(userSocials);
+                  console.log('[TextRoom] Parsed socials:', socials);
                   
                   // Check if any social is set
-                  const hasAnySocial = Object.values(socials).some((v: any) => v && v.trim());
+                  const socialValues = Object.values(socials);
+                  console.log('[TextRoom] Social values:', socialValues);
+                  const hasAnySocial = socialValues.some((v: any) => v && v.trim && v.trim());
+                  console.log('[TextRoom] Has any social:', hasAnySocial);
+                  
                   if (!hasAnySocial) {
-                    alert('No socials set. Add them in Settings first.');
+                    alert('No socials set. Add them in /socials page first.');
                     return;
                   }
                   
+                  console.log('[TextRoom] Emitting room:giveSocial event');
                   socketRef.current.emit('room:giveSocial', {
                     roomId,
                     socials,
@@ -1117,11 +1135,14 @@ export default function TextChatRoom() {
                     timestamp: new Date(),
                   };
                   setMessages(prev => [...prev, systemMsg]);
+                  console.log('[TextRoom] ✅ Socials shared successfully');
                 } catch (e) {
-                  alert('No socials set. Update them in Settings.');
+                  console.error('[TextRoom] Error parsing/sending socials:', e);
+                  alert('Error sending socials. Please try setting them again in /socials page.');
                 }
               } else {
-                alert('No socials set. Add them in Settings first.');
+                console.log('[TextRoom] No socials in localStorage');
+                alert('No socials set. Please go to /socials page and save your handles first.');
               }
             }}
             className="flex-shrink-0 p-2 rounded-full bg-white/5 hover:bg-white/10 transition-all"
