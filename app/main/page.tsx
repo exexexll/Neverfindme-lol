@@ -61,6 +61,17 @@ function MainPageContent() {
     if (socket) {
       console.log('[Main] Syncing background queue, toggle is:', backgroundQueueEnabled ? 'ON' : 'OFF');
       backgroundQueue.syncWithToggle(backgroundQueueEnabled);
+      
+      // CRITICAL: Force overlay to refresh if it's open
+      // This ensures user cards show immediately when toggle changes
+      if (showMatchmake) {
+        console.log('[Main] Overlay is open, forcing queue refresh...');
+        // Close and reopen to trigger fresh queue load
+        setShowMatchmake(false);
+        setTimeout(() => {
+          setShowMatchmake(true);
+        }, 100);
+      }
     }
     
     return () => {
