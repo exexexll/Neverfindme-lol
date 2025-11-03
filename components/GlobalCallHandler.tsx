@@ -122,11 +122,16 @@ export function GlobalCallHandler() {
 
             // Emit accept immediately
             const socket = getSocket();
-            if (socket) {
+            if (socket && socket.connected) {
+              console.log('[GlobalCallHandler] Emitting call:accept to server');
               socket.emit('call:accept', {
                 inviteId,
                 requestedSeconds,
               });
+            } else {
+              console.error('[GlobalCallHandler] ❌ Socket not connected, cannot accept call');
+              // Don't clear notification - let user try again when connection restored
+              return;
             }
 
             // Clear notification
@@ -140,11 +145,14 @@ export function GlobalCallHandler() {
 
             // Emit decline
             const socket = getSocket();
-            if (socket) {
+            if (socket && socket.connected) {
+              console.log('[GlobalCallHandler] Emitting call:decline to server');
               socket.emit('call:decline', { inviteId });
+            } else {
+              console.error('[GlobalCallHandler] ❌ Socket not connected, cannot decline call');
             }
 
-            // Clear notification
+            // Clear notification regardless (user wants to dismiss)
             setIncomingInvite(null);
           }}
         />
