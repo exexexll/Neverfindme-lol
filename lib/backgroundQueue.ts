@@ -16,6 +16,7 @@ class BackgroundQueueManager {
   private blurTimeout: NodeJS.Timeout | null = null; // For window minimize
   private readonly GRACE_PERIOD = 60 * 1000; // 1 minute
   private profileComplete = false; // Cache profile check
+  private initialized = false;
   private callListenersSetup = false; // Track if global listeners are setup
   
   init(socket: Socket) {
@@ -44,6 +45,10 @@ class BackgroundQueueManager {
     }
     
     console.log('[BackgroundQueue] ========================================');
+  }
+  
+  isInitialized(): boolean {
+    return this.callListenersSetup;
   }
   
   private setupGlobalCallListeners() {
