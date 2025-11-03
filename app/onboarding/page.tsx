@@ -1430,6 +1430,7 @@ function OnboardingPageContent() {
                     {videoPreviewUrl ? (
                       // Show recorded video preview with controls
                       <video
+                        key={videoPreviewUrl}
                         ref={videoPreviewRef}
                         src={videoPreviewUrl}
                         controls
@@ -1437,13 +1438,22 @@ function OnboardingPageContent() {
                         muted
                         loop
                         playsInline
-                        preload="metadata"
+                        preload="auto"
                         className="h-full w-full object-contain bg-black"
                         style={{ display: 'block' }}
                         onLoadedMetadata={() => {
-                          console.log('[Video] Loaded, duration:', videoPreviewRef.current?.duration);
+                          console.log('[Onboarding] Video preview loaded, duration:', videoPreviewRef.current?.duration);
                         }}
-                        onError={(e) => console.error('[Video] Error:', e)}
+                        onLoadedData={() => {
+                          console.log('[Onboarding] Video preview data loaded, playing...');
+                        }}
+                        onCanPlay={() => {
+                          console.log('[Onboarding] Video preview can play');
+                        }}
+                        onError={(e) => {
+                          console.error('[Onboarding] Video preview error:', e);
+                          console.error('[Onboarding] Video src:', videoPreviewUrl);
+                        }}
                       />
                     ) : (
                       // Show live camera feed
