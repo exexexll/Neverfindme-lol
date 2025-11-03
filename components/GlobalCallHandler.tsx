@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getSocket } from '@/lib/socket';
+import { connectSocket, getSocket } from '@/lib/socket';
+import { getSession } from '@/lib/session';
+import { backgroundQueue } from '@/lib/backgroundQueue';
 import { CalleeNotification } from '@/components/matchmake/CalleeNotification';
 
 /**
@@ -15,8 +17,30 @@ export function GlobalCallHandler() {
 
   // CRITICAL: Setup global socket listeners that persist across all pages
   useEffect(() => {
-    const socket = getSocket();
-    if (!socket) return;
+    // CRITICAL: Connect socket if not already connected
+    const session = getSession();
+    if (!session) {
+      console.log('[GlobalCallHandler] No session, skipping socket setup');
+      return;
+    }
+
+    // Get or create socket connection
+    let socket = getSocket();
+    if (!socket || !socket.connected) {
+      console.log('[GlobalCallHandler] Socket not connected, connecting now...');
+      socket = connectSocket(session.sessionToken);
+      
+      // CRITICAL: Initialize background queue with the new socket
+      if (socket) {
+        backgroundQueue.init(socket);
+        console.log('[GlobalCallHandler] Initialized background queue with socket');
+      }
+    }
+
+    if (!socket) {
+      console.error('[GlobalCallHandler] Failed to get/create socket');
+      return;
+    }
 
     console.log('[GlobalCallHandler] Setting up persistent call listeners');
 
