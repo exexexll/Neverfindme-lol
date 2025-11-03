@@ -33,34 +33,10 @@ export default function EventWaitPage() {
 
     loadData();
 
-    // REAL-TIME: Listen for event settings changes
-    const socket = connectSocket(session.sessionToken);
-    
-    const handleSettingsChanged = (data: any) => {
-      console.log('[EventWait] Event settings changed:', data);
-      
-      // Check if event mode was disabled or we can now access
-      getEventStatus(session.sessionToken).then(status => {
-        // If event mode is OFF or we have access, go to main
-        if (!status.eventModeEnabled || status.canAccess) {
-          console.log('[EventWait] Event mode OFF or event started! Redirecting to main...');
-          router.push('/main');
-        } else {
-          // Still blocked - reload data
-          loadData();
-        }
-      }).catch(err => {
-        console.error('[EventWait] Status check failed:', err);
-      });
-    };
-    
-    socket.on('event:settings-changed', handleSettingsChanged);
-
-    return () => {
-      socket.off('event:settings-changed', handleSettingsChanged);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Empty deps - only run once on mount, loadData/router/session are stable
+    // NOTE: Event settings changes are handled by EventModeBanner (global component)
+    // EventModeBanner will trigger redirects when event mode changes
+    // No need for duplicate listener here - prevents double handling
+  }, []);
 
   const loadData = async () => {
     if (!session) return;
