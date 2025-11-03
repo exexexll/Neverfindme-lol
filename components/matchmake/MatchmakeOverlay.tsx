@@ -440,7 +440,8 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
       
       setUsers(prevUsers => {
         const currentViewingUserId = prevUsers[currentIndex]?.userId;
-        console.log('[Matchmake] Background update - currently viewing:', prevUsers[currentIndex]?.name);
+        const currentViewingUser = prevUsers[currentIndex];
+        console.log('[Matchmake] Background update - currently viewing:', currentViewingUser?.name);
         
         // TRUST BACKEND'S ORDER: Backend returns distance-sorted if user has location
         // filteredQueue is already: closest→farthest if location enabled, random if not
@@ -462,6 +463,14 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
           }
         }
         
+        // CRITICAL: If currently viewing user is NOT in new queue, keep them anyway (sticky view)
+        // This happens AFTER sorting so position remains stable
+        if (currentViewingUserId && !newOrder.find(u => u.userId === currentViewingUserId)) {
+          console.log('[Matchmake] 📌 Currently viewed user not in new queue - keeping them visible (sticky)');
+          // Insert current user at their current position to maintain smooth UX
+          newOrder.splice(currentIndex, 0, currentViewingUser);
+        }
+        
         // Log what changed
         const prevIds = new Set(prevUsers.map(u => u.userId));
         const newIds = new Set(newOrder.map(u => u.userId));
@@ -476,12 +485,11 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
           const newIdx = newOrder.findIndex(u => u.userId === currentViewingUserId);
           if (newIdx !== -1) {
             if (newIdx !== currentIndex) {
-              console.log(`[Matchmake] 📍 Reordered: card moved ${currentIndex}→${newIdx} (still showing ${prevUsers[currentIndex]?.name})`);
+              console.log(`[Matchmake] 📍 Reordered: card moved ${currentIndex}→${newIdx} (still showing ${currentViewingUser?.name})`);
               setCurrentIndex(newIdx);
             }
           } else {
-            console.log('[Matchmake] Current user left queue');
-            // Stay at same index, will show whoever is there now
+            console.log('[Matchmake] ⚠️ Current user somehow missing after sticky logic - should not happen');
           }
         }
         
@@ -586,8 +594,17 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
       console.log('[Matchmake] Presence update:', { userId: userId.substring(0, 8), online, available });
       
       if (!online || !available) {
-        // User went offline or unavailable - remove immediately
+        // CRITICAL: Don't remove currently viewed user - keep them visible
         setUsers(prev => {
+          const currentlyViewingUserId = prev[currentIndex]?.userId;
+          
+          // If this is the user we're currently viewing, keep them (don't disrupt viewing)
+          if (userId === currentlyViewingUserId) {
+            console.log('[Matchmake] ⚠️ Currently viewed user went offline - keeping visible for smooth UX');
+            return prev; // Don't remove
+          }
+          
+          // Remove other users who go offline
           const filtered = prev.filter(u => u.userId !== userId);
           console.log('[Matchmake] Removed user from queue (offline/unavailable)');
           return filtered;
@@ -607,8 +624,17 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
       console.log('[Matchmake] Queue update:', { userId: userId.substring(0, 8), available });
       
       if (!available) {
-        // User became busy (in call) - remove immediately
+        // CRITICAL: Don't remove currently viewed user - keep them visible
         setUsers(prev => {
+          const currentlyViewingUserId = prev[currentIndex]?.userId;
+          
+          // If this is the user we're currently viewing, keep them (don't disrupt viewing)
+          if (userId === currentlyViewingUserId) {
+            console.log('[Matchmake] ⚠️ Currently viewed user became busy - keeping visible for smooth UX');
+            return prev; // Don't remove
+          }
+          
+          // Remove other users who became busy
           const filtered = prev.filter(u => u.userId !== userId);
           console.log('[Matchmake] Removed user (busy/in-call)');
           return filtered;
