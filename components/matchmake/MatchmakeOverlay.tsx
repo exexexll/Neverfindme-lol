@@ -688,17 +688,17 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
     return () => {
       clearInterval(refreshInterval);
       
-      // Always leave presence when overlay closes (no longer actively browsing)
-      socket.emit('presence:leave');
-      console.log('[MatchmakeOverlay] Left presence on cleanup');
+      // CRITICAL: Don't emit presence:leave here - let background queue manage it
+      // Overlay is just for browsing, background queue controls actual presence
       
-      // CRITICAL: Only leave queue if background queue is OFF
-      // If background queue is ON, user should stay in queue
+      // Only leave queue if background queue is OFF
       if (!backgroundQueue.isBackgroundEnabled()) {
-        console.log('[MatchmakeOverlay] Background queue OFF, leaving queue on overlay close');
+        console.log('[MatchmakeOverlay] Background queue OFF, leaving queue and presence');
         socket.emit('queue:leave');
+        socket.emit('presence:leave');
       } else {
         console.log('[MatchmakeOverlay] Background queue ON, staying in queue after overlay close');
+        // Background queue keeps user online and available
       }
       
       socket.off('auth:success');
@@ -1038,16 +1038,8 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
 
   // Handle close overlay
   const handleClose = () => {
-    // Note: Incoming invites are handled by main page now
-    // Users can close overlay freely; main page notification will persist
-
-    // CRITICAL: Always leave presence (user no longer actively browsing)
-    // But let main page decide queue state based on toggle
-    if (socketRef.current && socketRef.current.connected) {
-      socketRef.current.emit('presence:leave');
-      console.log('[Matchmake] Left presence (overlay closing)');
-      // Note: queue:leave is handled by main page's onClose based on toggle state
-    }
+    // Note: Background queue manages all presence/queue state
+    // Overlay doesn't emit presence:leave - that would conflict with background queue
 
     // Clear reel state for fresh load next time
     setUsers([]);
