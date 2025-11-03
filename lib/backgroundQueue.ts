@@ -16,12 +16,45 @@ class BackgroundQueueManager {
   private blurTimeout: NodeJS.Timeout | null = null; // For window minimize
   private readonly GRACE_PERIOD = 60 * 1000; // 1 minute
   private profileComplete = false; // Cache profile check
+  private callListenersSetup = false; // Track if global listeners are setup
   
   init(socket: Socket) {
     this.socket = socket;
     this.setupVisibilityDetection();
     this.setupActivityDetection();
+    this.setupGlobalCallListeners();
     console.log('[BackgroundQueue] Initialized');
+  }
+  
+  private setupGlobalCallListeners() {
+    if (!this.socket || this.callListenersSetup) return;
+    
+    console.log('[BackgroundQueue] Setting up global call listeners for background queue');
+    
+    // Listen for incoming calls while in background queue
+    this.socket.on('call:notify', (data: any) => {
+      console.log('[BackgroundQueue] ✅ Received call notification while in background queue');
+      console.log('[BackgroundQueue] From:', data.fromUser?.name);
+      console.log('[BackgroundQueue] Current page:', typeof window !== 'undefined' ? window.location.pathname : 'unknown');
+      
+      // Emit custom event that main page can listen to
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('backgroundqueue:call', { detail: data }));
+      }
+    });
+    
+    this.socket.on('call:start', (data: any) => {
+      console.log('[BackgroundQueue] ✅ Received call:start while in background queue');
+      console.log('[BackgroundQueue] Room:', data.roomId);
+      
+      // Emit custom event that main page can listen to
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('backgroundqueue:callstart', { detail: data }));
+      }
+    });
+    
+    this.callListenersSetup = true;
+    console.log('[BackgroundQueue] Global call listeners active');
   }
   
   private setupVisibilityDetection() {
@@ -248,6 +281,11 @@ class BackgroundQueueManager {
     
     // Leave queue
     this.leaveQueue();
+    
+    // Remove socket listeners (keep them active for background queue)
+    // Don't remove call:notify and call:start - they need to persist
+    // this.socket?.off('call:notify');
+    // this.socket?.off('call:start');
     
     // Remove event listeners
     this.activityListeners.forEach(({ event, handler }) => {

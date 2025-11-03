@@ -5,7 +5,6 @@ import { motion } from 'framer-motion';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getSession } from '@/lib/session';
 import { MatchmakeOverlay } from '@/components/matchmake/MatchmakeOverlay';
-import { CalleeNotification } from '@/components/matchmake/CalleeNotification';
 import { ReferralNotifications } from '@/components/ReferralNotifications';
 // Animation removed for cleaner main page
 import { FloatingUserNames } from '@/components/FloatingUserNames';
@@ -24,7 +23,6 @@ function MainPageContent() {
   const [showMatchmake, setShowMatchmake] = useState(false);
   const [directMatchTarget, setDirectMatchTarget] = useState<string | null>(null);
   const [backgroundQueueEnabled, setBackgroundQueueEnabled] = useState(false);
-  const [incomingInvite, setIncomingInvite] = useState<any>(null);
 
   useEffect(() => {
     // Hide footer on main page
@@ -47,71 +45,8 @@ function MainPageContent() {
     setBackgroundQueueEnabled(saved === 'true');
   }, []);
   
-  // CRITICAL: Global socket listeners for calls - ALWAYS active regardless of page/overlay state
-  useEffect(() => {
-    const initSocket = async () => {
-      const socket = getSocket();
-      if (!socket) {
-        console.error('[Main] No socket available for call notifications!');
-        return;
-      }
-      
-      console.log('[Main] Setting up global call listeners');
-      
-      // Listener 1: Incoming call notification
-      const handleCallNotify = (data: any) => {
-        console.log('[Main] ✅ INCOMING CALL NOTIFICATION:', data);
-        console.log('[Main] From:', data.fromUser?.name);
-        console.log('[Main] Current page:', window.location.pathname);
-        
-        // Show notification - don't auto-open overlay
-        // Let user decide to accept/decline from notification itself
-        setIncomingInvite(data);
-        console.log('[Main] Notification displayed - waiting for user action');
-      };
-      
-      // Listener 2: Call starting (both users accepted)
-      const handleCallStart = ({ roomId, agreedSeconds, isInitiator, chatMode, peerUser }: any) => {
-        console.log('[Main] ✅ CALL STARTING:', { roomId, agreedSeconds, isInitiator, chatMode, peerUser });
-        console.log('[Main] Current page:', window.location.pathname);
-        console.log('[Main] Navigating to room...');
-        
-        const mode = chatMode || 'video'; // Default to video
-        
-        // Route to appropriate room based on mode
-        if (mode === 'text') {
-          router.push(
-            `/text-room/${roomId}?duration=${agreedSeconds}&peerId=${peerUser.userId}&peerName=${encodeURIComponent(peerUser.name)}&peerSelfie=${encodeURIComponent(peerUser.selfieUrl || '')}`
-          );
-        } else {
-          router.push(
-            `/room/${roomId}?duration=${agreedSeconds}&peerId=${peerUser.userId}&peerName=${encodeURIComponent(peerUser.name)}&initiator=${isInitiator}`
-          );
-        }
-      };
-      
-      // Remove any existing listeners first
-      socket.off('call:notify');
-      socket.off('call:start');
-      
-      // Add listeners
-      socket.on('call:notify', handleCallNotify);
-      socket.on('call:start', handleCallStart);
-      
-      console.log('[Main] Global call listeners registered (call:notify, call:start)');
-    };
-    
-    initSocket();
-    
-    return () => {
-      const socket = getSocket();
-      if (socket) {
-        socket.off('call:notify');
-        socket.off('call:start');
-        console.log('[Main] Global call listeners removed');
-      }
-    };
-  }, []); // Empty deps - persistent listeners
+  // NOTE: Call listeners are now handled by GlobalCallHandler in app/layout.tsx
+  // This ensures they work across ALL pages, not just /main
 
   // Initialize background queue manager
   useEffect(() => {
@@ -456,45 +391,7 @@ function MainPageContent() {
         />
       )}
 
-      {/* Global Incoming Call Notification - Shows on ALL pages, always on top */}
-      {incomingInvite && (
-        <CalleeNotification
-          invite={incomingInvite}
-          onAccept={(inviteId, requestedSeconds) => {
-            console.log('[Main] ✅ Call ACCEPTED, duration:', requestedSeconds);
-            console.log('[Main] Overlay currently open:', showMatchmake);
-            
-            // Emit call:accept FIRST (don't wait for UI state)
-            const socket = getSocket();
-            if (socket) {
-              console.log('[Main] Emitting call:accept immediately');
-              socket.emit('call:accept', {
-                inviteId,
-                requestedSeconds,
-              });
-            }
-            
-            // Clear notification immediately
-            setIncomingInvite(null);
-            
-            // Server will emit call:start to BOTH users
-            // Overlay's call:start listener will handle navigation to room
-            console.log('[Main] Waiting for call:start from server...');
-          }}
-          onDecline={(inviteId) => {
-            console.log('[Main] ❌ Call DECLINED');
-            
-            // Emit decline immediately
-            const socket = getSocket();
-            if (socket) {
-              socket.emit('call:decline', { inviteId });
-            }
-            
-            // Clear notification
-            setIncomingInvite(null);
-          }}
-        />
-      )}
+      {/* CalleeNotification now rendered by GlobalCallHandler (works on ALL pages) */}
 
       {/* Referral Notifications */}
       <ReferralNotifications />

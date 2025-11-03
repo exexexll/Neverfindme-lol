@@ -7,6 +7,7 @@ import { LegalFooter } from '@/components/LegalFooter';
 import { CookieConsent } from '@/components/CookieConsent';
 import { SessionInvalidatedModal } from '@/components/SessionInvalidatedModal';
 import { EventModeBanner } from '@/components/EventModeBanner';
+import { GlobalCallHandler } from '@/components/GlobalCallHandler';
 
 const playfair = Playfair_Display({
   weight: '700',
@@ -99,6 +100,7 @@ export default function RootLayout({
         <LegalFooter />
         <CookieConsent />
         <SessionInvalidatedModal />
+        <GlobalCallHandler />
       </body>
     </html>
   );
