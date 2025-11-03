@@ -73,34 +73,42 @@ export function GlobalCallHandler() {
     };
 
     // CRITICAL FIX: Wait for socket to actually connect before setting up
-    const setupListenersAndQueue = () => {
+    const setupListenersAndQueue = (connectedSocket: typeof socket) => {
       console.log('[GlobalCallHandler] Socket connected, setting up listeners and background queue...');
+      console.log('[GlobalCallHandler] Socket ID:', connectedSocket.id);
+      console.log('[GlobalCallHandler] Socket connected state:', connectedSocket.connected);
       
       // Initialize background queue AFTER socket connected
-      backgroundQueue.init(socket);
+      backgroundQueue.init(connectedSocket);
       console.log('[GlobalCallHandler] ✅ Background queue initialized with connected socket');
 
       // Remove existing listeners first
-      socket.off('call:notify');
-      socket.off('call:start');
+      connectedSocket.off('call:notify');
+      connectedSocket.off('call:start');
 
       // Add socket listeners
-      socket.on('call:notify', handleCallNotify);
-      socket.on('call:start', handleCallStart);
+      connectedSocket.on('call:notify', handleCallNotify);
+      connectedSocket.on('call:start', handleCallStart);
 
       console.log('[GlobalCallHandler] ✅ Persistent socket listeners active (works on ALL pages)');
     };
 
     // If socket already connected, setup immediately
     if (socket.connected) {
-      console.log('[GlobalCallHandler] Socket already connected');
-      setupListenersAndQueue();
+      console.log('[GlobalCallHandler] Socket already connected, setting up now');
+      setupListenersAndQueue(socket);
     } else {
       // Wait for connection
       console.log('[GlobalCallHandler] Waiting for socket to connect...');
       socket.once('connect', () => {
         console.log('[GlobalCallHandler] Socket connect event fired');
-        setupListenersAndQueue();
+        // Use getSocket() to ensure we have the latest socket reference
+        const connectedSocket = getSocket();
+        if (connectedSocket && connectedSocket.connected) {
+          setupListenersAndQueue(connectedSocket);
+        } else {
+          console.error('[GlobalCallHandler] ❌ Connect event fired but socket not available or not connected');
+        }
       });
     }
 
