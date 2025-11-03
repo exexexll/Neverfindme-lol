@@ -26,21 +26,25 @@ export function GlobalCallHandler() {
 
     // Get or create socket connection
     let socket = getSocket();
-    if (!socket || !socket.connected) {
-      console.log('[GlobalCallHandler] Socket not connected, connecting now...');
+    if (!socket) {
+      console.log('[GlobalCallHandler] No socket exists, creating new connection...');
       socket = connectSocket(session.sessionToken);
-      
-      // CRITICAL: Initialize background queue with the new socket
-      if (socket) {
-        backgroundQueue.init(socket);
-        console.log('[GlobalCallHandler] Initialized background queue with socket');
-      }
+    } else if (!socket.connected) {
+      console.log('[GlobalCallHandler] Socket exists but not connected, reconnecting...');
+      socket = connectSocket(session.sessionToken);
+    } else {
+      console.log('[GlobalCallHandler] Reusing existing connected socket:', socket.id);
     }
 
     if (!socket) {
       console.error('[GlobalCallHandler] Failed to get/create socket');
       return;
     }
+
+    // CRITICAL: ALWAYS initialize background queue (even if socket already existed)
+    // This ensures background queue is set up on first page load
+    backgroundQueue.init(socket);
+    console.log('[GlobalCallHandler] Background queue initialized with socket');
 
     console.log('[GlobalCallHandler] Setting up persistent call listeners');
 

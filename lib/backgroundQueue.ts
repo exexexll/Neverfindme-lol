@@ -19,15 +19,28 @@ class BackgroundQueueManager {
   private callListenersSetup = false; // Track if global listeners are setup
   
   init(socket: Socket) {
+    // Update socket reference (might be new socket after reconnect)
     this.socket = socket;
-    this.setupVisibilityDetection();
-    this.setupActivityDetection();
-    this.setupGlobalCallListeners();
-    console.log('[BackgroundQueue] Initialized');
+    
+    // Setup visibility/activity detection only once
+    if (this.activityListeners.length === 0) {
+      this.setupVisibilityDetection();
+      this.setupActivityDetection();
+      console.log('[BackgroundQueue] Visibility and activity detection setup');
+    }
+    
+    // Setup call listeners only once
+    if (!this.callListenersSetup) {
+      this.setupGlobalCallListeners();
+    } else {
+      console.log('[BackgroundQueue] Already initialized (call listeners active)');
+    }
   }
   
   private setupGlobalCallListeners() {
-    if (!this.socket || this.callListenersSetup) return;
+    if (!this.socket || this.callListenersSetup) {
+      return;
+    }
     
     console.log('[BackgroundQueue] Setting up global call listeners for background queue');
     
@@ -171,21 +184,34 @@ class BackgroundQueueManager {
   }
   
   async joinQueue() {
+    console.log('[BackgroundQueue] ========== JOIN QUEUE CALLED ==========');
+    console.log('[BackgroundQueue] Socket exists:', !!this.socket);
+    console.log('[BackgroundQueue] Socket connected:', this.socket?.connected);
+    console.log('[BackgroundQueue] Already in queue:', this.inQueue);
+    console.log('[BackgroundQueue] Document hidden:', document.hidden);
+    console.log('[BackgroundQueue] Background enabled:', this.isBackgroundEnabled());
+    console.log('[BackgroundQueue] Current page:', typeof window !== 'undefined' ? window.location.pathname : 'unknown');
+    
     if (!this.socket) {
-      console.warn('[BackgroundQueue] No socket, cannot join queue');
+      console.warn('[BackgroundQueue] ❌ No socket, cannot join queue');
+      return;
+    }
+    
+    if (!this.socket.connected) {
+      console.warn('[BackgroundQueue] ❌ Socket not connected, cannot join queue');
       return;
     }
     
     // Check if tab is hidden or window not focused
     if (document.hidden) {
-      console.log('[BackgroundQueue] Tab hidden, not joining queue');
+      console.log('[BackgroundQueue] ⚠️ Tab hidden, not joining queue');
       return;
     }
     
     // If background queue is disabled, only allow from /main
     if (!this.isBackgroundEnabled()) {
       if (typeof window !== 'undefined' && window.location.pathname !== '/main') {
-        console.log('[BackgroundQueue] Background disabled, not on /main, not joining');
+        console.log('[BackgroundQueue] ⚠️ Background disabled, not on /main, not joining');
         return;
       }
     }
@@ -225,18 +251,28 @@ class BackgroundQueueManager {
       }
     }
     
-    console.log('[BackgroundQueue] Joining queue');
+    console.log('[BackgroundQueue] ✅ Emitting queue:join to server');
     this.socket.emit('queue:join');
     this.inQueue = true;
     this.lastActivity = Date.now();
+    console.log('[BackgroundQueue] ✅ Successfully joined queue, inQueue =', this.inQueue);
   }
   
   leaveQueue() {
-    if (!this.socket || !this.inQueue) return;
+    if (!this.socket) {
+      console.log('[BackgroundQueue] No socket, cannot leave queue');
+      return;
+    }
     
-    console.log('[BackgroundQueue] Leaving queue');
+    if (!this.inQueue) {
+      console.log('[BackgroundQueue] Not in queue, nothing to leave');
+      return;
+    }
+    
+    console.log('[BackgroundQueue] ✅ Leaving queue');
     this.socket.emit('queue:leave');
     this.inQueue = false;
+    console.log('[BackgroundQueue] ✅ Left queue, inQueue =', this.inQueue);
   }
   
   // Force sync queue state with toggle
