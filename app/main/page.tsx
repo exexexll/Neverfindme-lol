@@ -52,15 +52,32 @@ function MainPageContent() {
       backgroundQueue.init(socket);
       console.log('[Main] Background queue manager initialized');
       
-      // If background queue enabled, join queue immediately
-      if (backgroundQueueEnabled) {
-        console.log('[Main] Background queue enabled, joining queue...');
-        backgroundQueue.joinQueue();
-      }
+      // Sync queue state with toggle on mount and changes
+      backgroundQueue.syncWithToggle(backgroundQueueEnabled);
     }
     
     return () => {
-      backgroundQueue.cleanup();
+      // Don't cleanup if background queue is enabled
+      // User should stay in queue even when leaving /main
+      if (!backgroundQueueEnabled) {
+        backgroundQueue.cleanup();
+      }
+    };
+  }, [backgroundQueueEnabled]);
+  
+  // Sync queue state when page becomes visible
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && backgroundQueueEnabled) {
+        console.log('[Main] Page visible, syncing queue state...');
+        backgroundQueue.syncWithToggle(backgroundQueueEnabled);
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [backgroundQueueEnabled]);
 
@@ -203,7 +220,7 @@ function MainPageContent() {
             {/* Background Queue Toggle - Desktop */}
             <div className="flex items-center gap-4 bg-black/40 backdrop-blur-sm px-8 py-4 rounded-2xl border-2 border-white/20">
               <div className="text-base font-medium text-white">
-                🔄 Background Queue
+                Background Queue
               </div>
               <Toggle
                 enabled={backgroundQueueEnabled}
@@ -287,7 +304,7 @@ function MainPageContent() {
             {/* Background Queue Toggle - Front and Center */}
             <div className="flex items-center gap-4 bg-black/40 backdrop-blur-sm px-6 py-3 rounded-2xl border-2 border-white/20">
               <div className="text-sm font-medium text-white">
-                🔄 Background Queue
+                Background Queue
               </div>
               <Toggle
                 enabled={backgroundQueueEnabled}
