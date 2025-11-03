@@ -702,6 +702,10 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
     return () => {
       clearInterval(refreshInterval);
       
+      // Always leave presence when overlay closes (no longer actively browsing)
+      socket.emit('presence:leave');
+      console.log('[MatchmakeOverlay] Left presence on cleanup');
+      
       // CRITICAL: Only leave queue if background queue is OFF
       // If background queue is ON, user should stay in queue
       if (!backgroundQueue.isBackgroundEnabled()) {
@@ -1051,12 +1055,12 @@ export function MatchmakeOverlay({ isOpen, onClose, directMatchTarget }: Matchma
     // Note: Incoming invites are handled by main page now
     // Users can close overlay freely; main page notification will persist
 
-    // CRITICAL FIX: Leave BOTH queue and presence when closing
+    // CRITICAL: Always leave presence (user no longer actively browsing)
+    // But let main page decide queue state based on toggle
     if (socketRef.current && socketRef.current.connected) {
-      console.log('[Matchmake] 🚪 Closing overlay - leaving queue and presence');
-      socketRef.current.emit('queue:leave');
       socketRef.current.emit('presence:leave');
-      console.log('[Matchmake] ✅ Left queue and presence');
+      console.log('[Matchmake] Left presence (overlay closing)');
+      // Note: queue:leave is handled by main page's onClose based on toggle state
     }
 
     // Clear reel state for fresh load next time

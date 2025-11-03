@@ -248,7 +248,7 @@ function MainPageContent() {
             <button
               onClick={() => {
                 setShowMatchmake(true);
-                backgroundQueue.joinQueue();
+                // Note: Overlay will handle queue:join on mount
               }}
               className="px-20 py-10 rounded-3xl font-playfair text-6xl font-bold text-black border-4 border-black hover:scale-105 active:scale-95 transition-all"
               style={{
@@ -334,8 +334,7 @@ function MainPageContent() {
             <button
               onClick={() => {
                 setShowMatchmake(true);
-                // Join queue when opening matchmaking
-                backgroundQueue.joinQueue();
+                // Note: Overlay will handle queue:join on mount
               }}
               className="px-12 py-8 rounded-2xl font-playfair text-4xl font-bold text-black border-4 border-black"
               style={{ backgroundColor: '#ffc46a', boxShadow: '8px 8px 0px #000000' }}
