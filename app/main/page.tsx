@@ -11,6 +11,8 @@ import { FloatingUserNames } from '@/components/FloatingUserNames';
 import DirectMatchInput from '@/components/DirectMatchInput';
 import { API_BASE } from '@/lib/config';
 import { prefetchTurnCredentials } from '@/lib/webrtc-config';
+import { backgroundQueue } from '@/lib/backgroundQueue';
+import { getSocket } from '@/lib/socket';
 import Link from 'next/link';
 
 function MainPageContent() {
@@ -32,6 +34,19 @@ function MainPageContent() {
       if (footer) {
         (footer as HTMLElement).style.display = '';
       }
+    };
+  }, []);
+
+  // Initialize background queue manager
+  useEffect(() => {
+    const socket = getSocket();
+    if (socket) {
+      backgroundQueue.init(socket);
+      console.log('[Main] Background queue manager initialized');
+    }
+    
+    return () => {
+      backgroundQueue.cleanup();
     };
   }, []);
 
