@@ -237,33 +237,50 @@ class BackgroundQueueManager {
   }
   
   leaveQueue() {
+    console.log('[BackgroundQueue] ========== LEAVE QUEUE CALLED ==========');
+    console.log('[BackgroundQueue] Socket exists:', !!this.socket);
+    console.log('[BackgroundQueue] Socket connected:', this.socket?.connected);
+    console.log('[BackgroundQueue] Currently in queue:', this.inQueue);
+    
     if (!this.socket) {
-      console.log('[BackgroundQueue] No socket, cannot leave queue');
+      console.warn('[BackgroundQueue] ❌ No socket, cannot leave queue');
       return;
     }
     
     if (!this.inQueue) {
-      console.log('[BackgroundQueue] Not in queue, nothing to leave');
+      console.warn('[BackgroundQueue] ⚠️ Not in queue, nothing to leave');
       return;
     }
     
-    console.log('[BackgroundQueue] ✅ Leaving queue and presence');
+    console.log('[BackgroundQueue] ✅ Emitting queue:leave and presence:leave to server');
     // Emit BOTH queue:leave AND presence:leave
     this.socket.emit('queue:leave');
     this.socket.emit('presence:leave');
     this.inQueue = false;
-    console.log('[BackgroundQueue] ✅ Left queue, inQueue =', this.inQueue);
+    console.log('[BackgroundQueue] ✅ Left queue and presence, inQueue =', this.inQueue);
+    console.log('[BackgroundQueue] ========================================');
   }
   
   // Force sync queue state with toggle
   syncWithToggle(toggleState: boolean) {
+    console.log('[BackgroundQueue] ========== SYNC WITH TOGGLE ==========');
+    console.log('[BackgroundQueue] Toggle state:', toggleState);
+    console.log('[BackgroundQueue] Currently in queue:', this.inQueue);
+    console.log('[BackgroundQueue] Socket exists:', !!this.socket);
+    console.log('[BackgroundQueue] Socket connected:', this.socket?.connected);
+    
     if (toggleState && !this.inQueue) {
-      console.log('[BackgroundQueue] Syncing: Toggle ON but not in queue, joining...');
+      console.log('[BackgroundQueue] ✅ Action: Toggle ON but not in queue, joining...');
       this.joinQueue();
     } else if (!toggleState && this.inQueue) {
-      console.log('[BackgroundQueue] Syncing: Toggle OFF but in queue, leaving...');
+      console.log('[BackgroundQueue] ✅ Action: Toggle OFF but in queue, leaving...');
       this.leaveQueue();
+    } else if (toggleState && this.inQueue) {
+      console.log('[BackgroundQueue] ℹ️ Already in queue, no action needed');
+    } else {
+      console.log('[BackgroundQueue] ℹ️ Already out of queue, no action needed');
     }
+    console.log('[BackgroundQueue] ========================================');
   }
   
   isBackgroundEnabled(): boolean {
