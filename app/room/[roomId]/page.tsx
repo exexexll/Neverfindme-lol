@@ -262,19 +262,32 @@ export default function RoomPage() {
 
   // Initialize media and WebRTC
   useEffect(() => {
+    console.log('[Room] ========== ROOM PAGE USEEFFECT FIRED ==========');
+    console.log('[Room] RoomId:', roomId);
+    console.log('[Room] Duration:', agreedSeconds);
+    console.log('[Room] PeerUserId:', peerUserId);
+    console.log('[Room] IsInitiator:', isInitiator);
+    
     const session = getSession();
     if (!session) {
+      console.error('[Room] No session, redirecting to onboarding');
       router.push('/onboarding');
       return;
     }
+    
+    console.log('[Room] Session exists, calling initializeRoom()...');
 
     async function initializeRoom() {
+      console.log('[Room] initializeRoom() started');
       const currentSession = getSession();
-      if (!currentSession) return;
+      if (!currentSession) {
+        console.error('[Room] No session in initializeRoom, aborting');
+        return;
+      }
 
       try {
         // 1. Request user media with optimized constraints
-        console.log('[Media] Requesting getUserMedia...');
+        console.log('[Room] Step 1: Requesting getUserMedia...');
         setConnectionPhase('initializing');
         
         const { isSafari, isMobile } = detectDevice();
