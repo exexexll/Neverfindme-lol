@@ -1433,6 +1433,9 @@ function OnboardingPageContent() {
                         ref={videoPreviewRef}
                         src={videoPreviewUrl}
                         controls
+                        autoPlay
+                        muted
+                        loop
                         playsInline
                         preload="metadata"
                         className="h-full w-full object-contain bg-black"
