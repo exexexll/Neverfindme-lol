@@ -13,12 +13,18 @@ async function requireAdmin(req: any, res: any, next: any) {
     return res.status(401).json({ error: 'Authorization required' });
   }
 
-  const adminUser = await store.getAdminByToken(token);
-  if (!adminUser) {
+  // Verify admin session token
+  const session = await store.getSession(token);
+  if (!session) {
+    return res.status(401).json({ error: 'Invalid session' });
+  }
+  
+  const user = await store.getUser(session.userId);
+  if (!user || user.email !== process.env.ADMIN_EMAIL) {
     return res.status(403).json({ error: 'Admin access required' });
   }
 
-  req.adminId = adminUser.userId;
+  req.adminId = user.userId;
   next();
 }
 
