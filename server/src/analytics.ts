@@ -1,5 +1,5 @@
 import express from 'express';
-import { query } from './db';
+import { query } from './database';
 import { store } from './store';
 
 const router = express.Router();
