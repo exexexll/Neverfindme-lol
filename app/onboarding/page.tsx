@@ -217,7 +217,7 @@ function OnboardingPageContent() {
     };
   }, [onboardingComplete]);
   
-  // Check for referral code and invite code in URL
+  // Check for referral code and invite code in URL - RUN FIRST
   useEffect(() => {
     const ref = searchParams.get('ref');
     const invite = searchParams.get('inviteCode');
@@ -226,47 +226,43 @@ function OnboardingPageContent() {
     console.log('[Onboarding] Full URL:', window.location.href);
     console.log('[Onboarding] ref:', ref);
     console.log('[Onboarding] inviteCode from URL:', invite);
-    console.log('[Onboarding] Current inviteCode state:', inviteCode);
     
     // IMPORTANT: Extract invite code FIRST before any session checks
-    // This ensures QR code links work even if user has an existing session
     if (invite) {
       console.log('[Onboarding] ✅ Setting inviteCode state to:', invite);
       setInviteCode(invite);
       
-      // Store in sessionStorage immediately so it persists
+      // Store in sessionStorage immediately
       sessionStorage.setItem('onboarding_invite_code', invite);
       
-      // CRITICAL FIX: Check if this is an admin code (requires USC email)
-      // We need to know BEFORE user submits form so we can show email input
+      // CRITICAL: Check if admin code SYNCHRONOUSLY by checking known format
+      // Admin codes start with specific prefix (TCZIOIXWDZLEFQZC)
+      const isAdminCode = invite.startsWith('TCZIOIXWDZLEFQZC');
+      
+      if (isAdminCode) {
+        console.log('[Onboarding] ✅✅✅ ADMIN CODE DETECTED - Bypassing regular flow');
+        console.log('[Onboarding] Setting step to usc-welcome IMMEDIATELY');
+        setNeedsUSCCard(true);
+        setNeedsUSCEmail(false);
+        setStep('usc-welcome'); // Show USC welcome IMMEDIATELY
+      } else {
+        console.log('[Onboarding] Regular invite code - normal flow');
+      }
+      
+      // Still validate in background for logging
       fetch(`${process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3001'}/payment/validate-code`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code: invite }),
       })
-        .then(res => {
-          if (!res.ok) {
-            console.error('[Onboarding] Code validation failed with status:', res.status);
-            return null;
-          }
-          return res.json();
-        })
+        .then(res => res.ok ? res.json() : null)
         .then(data => {
-          if (data && data.valid && data.type === 'admin') {
-            console.log('[Onboarding] ✅ Admin code detected - showing USC welcome and card scanner');
-            setNeedsUSCCard(true);
-            setNeedsUSCEmail(false); // CRITICAL: Turn OFF email requirement for card path
-            setStep('usc-welcome'); // Show Trojan welcome popup first
-          } else if (data && data.valid) {
-            console.log('[Onboarding] Regular invite code detected');
-            // Regular flow - start with name/gender
-          } else {
-            console.warn('[Onboarding] Invalid invite code:', invite);
+          if (data && data.valid) {
+            console.log('[Onboarding] ✅ Code validated on server:', data.type);
           }
         })
         .catch(err => {
-          console.error('[Onboarding] Failed to validate code:', err);
-          // Not critical - will be caught during signup
+          console.error('[Onboarding] Validation error:', err);
         });
     }
     
