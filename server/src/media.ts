@@ -290,6 +290,18 @@ async function processVideoInBackground(
   try {
     console.log(`[Upload] 🔄 Starting background processing for user ${userId.substring(0, 8)}`);
     
+    // Delete old video if exists (not the temp local one we just uploaded)
+    const user = await store.getUser(userId);
+    const currentVideoUrl = user?.videoUrl;
+    if (currentVideoUrl && currentVideoUrl.includes('cloudinary.com')) {
+      try {
+        await deleteFromCloudinary(currentVideoUrl);
+        console.log('[Upload] Deleted old video from Cloudinary');
+      } catch (err) {
+        console.warn('[Upload] Could not delete old video:', err);
+      }
+    }
+    
     // Upload to Cloudinary with optimized settings
     const result = await cloudinary.uploader.upload(localPath, {
       folder: 'bumpin/videos',
