@@ -1,32 +1,8 @@
 import express from 'express';
 import { query } from './database';
-import { store } from './store';
+import { requireAdmin } from './admin-auth';
 
 const router = express.Router();
-
-/**
- * Middleware to verify admin access
- */
-async function requireAdmin(req: any, res: any, next: any) {
-  const token = req.headers.authorization?.replace('Bearer ', '');
-  if (!token) {
-    return res.status(401).json({ error: 'Authorization required' });
-  }
-
-  // Verify admin session token
-  const session = await store.getSession(token);
-  if (!session) {
-    return res.status(401).json({ error: 'Invalid session' });
-  }
-  
-  const user = await store.getUser(session.userId);
-  if (!user || user.email !== process.env.ADMIN_EMAIL) {
-    return res.status(403).json({ error: 'Admin access required' });
-  }
-
-  req.adminId = user.userId;
-  next();
-}
 
 /**
  * GET /analytics/overview
