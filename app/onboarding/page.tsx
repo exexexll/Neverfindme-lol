@@ -359,6 +359,15 @@ function OnboardingPageContent() {
         });
     }
   }, [searchParams, router, validatingCode, isAdminCode]); // Dependencies
+  
+  // FORCE: Continuously enforce USC welcome for admin codes
+  useEffect(() => {
+    if (isAdminCode && step !== 'usc-welcome' && step !== 'usc-scan') {
+      console.log('[Onboarding] ⚠️ FORCING step back to usc-welcome for admin code');
+      setStep('usc-welcome');
+      setNeedsUSCCard(true);
+    }
+  }, [isAdminCode, step]); // Run whenever step changes
 
   /**
    * Step 1: Name + Gender
