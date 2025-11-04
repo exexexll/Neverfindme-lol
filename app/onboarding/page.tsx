@@ -19,7 +19,13 @@ type Gender = 'female' | 'male' | 'nonbinary' | 'unspecified';
 function OnboardingPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [step, setStep] = useState<Step>('name');
+  
+  // CRITICAL: Detect admin code BEFORE initializing state
+  // This ensures USC flow starts immediately on page load
+  const inviteCodeFromURL = searchParams.get('inviteCode');
+  const isAdminCode = inviteCodeFromURL?.startsWith('TCZIOIXWDZLEFQZC') || false;
+  
+  const [step, setStep] = useState<Step>(isAdminCode ? 'usc-welcome' : 'name'); // Start with USC welcome if admin code
   const [name, setName] = useState('');
   const [gender, setGender] = useState<Gender>('unspecified');
   const [sessionToken, setSessionToken] = useState('');
@@ -30,12 +36,12 @@ function OnboardingPageContent() {
   const [referrerName, setReferrerName] = useState<string | null>(null);
   const [targetUser, setTargetUser] = useState<any>(null);
   const [targetOnline, setTargetOnline] = useState(false);
-  const [inviteCode, setInviteCode] = useState<string | null>(null); // QR code from URL
+  const [inviteCode, setInviteCode] = useState<string | null>(inviteCodeFromURL); // Set from URL immediately
   const [agreedToTerms, setAgreedToTerms] = useState(false); // Legal consent
   
   // USC Card verification
   const [uscId, setUscId] = useState<string | null>(null); // From card scan
-  const [needsUSCCard, setNeedsUSCCard] = useState(false); // Admin QR requires card scan
+  const [needsUSCCard, setNeedsUSCCard] = useState(isAdminCode); // Set true if admin code
 
   // Step 2: Selfie
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -217,53 +223,20 @@ function OnboardingPageContent() {
     };
   }, [onboardingComplete]);
   
-  // Check for referral code and invite code in URL - RUN FIRST
+  // Store invite code and referral in sessionStorage once
   useEffect(() => {
     const ref = searchParams.get('ref');
     const invite = searchParams.get('inviteCode');
     
     console.log('[Onboarding] ===== URL PARAMS CHECK =====');
     console.log('[Onboarding] Full URL:', window.location.href);
-    console.log('[Onboarding] ref:', ref);
-    console.log('[Onboarding] inviteCode from URL:', invite);
+    console.log('[Onboarding] Admin code detected:', isAdminCode);
+    console.log('[Onboarding] Initial step:', step);
     
-    // IMPORTANT: Extract invite code FIRST before any session checks
-    if (invite) {
-      console.log('[Onboarding] ✅ Setting inviteCode state to:', invite);
-      setInviteCode(invite);
-      
-      // Store in sessionStorage immediately
+    // Store invite code in sessionStorage
+    if (invite && !sessionStorage.getItem('onboarding_invite_code')) {
       sessionStorage.setItem('onboarding_invite_code', invite);
-      
-      // CRITICAL: Check if admin code SYNCHRONOUSLY by checking known format
-      // Admin codes start with specific prefix (TCZIOIXWDZLEFQZC)
-      const isAdminCode = invite.startsWith('TCZIOIXWDZLEFQZC');
-      
-      if (isAdminCode) {
-        console.log('[Onboarding] ✅✅✅ ADMIN CODE DETECTED - Bypassing regular flow');
-        console.log('[Onboarding] Setting step to usc-welcome IMMEDIATELY');
-        setNeedsUSCCard(true);
-        setNeedsUSCEmail(false);
-        setStep('usc-welcome'); // Show USC welcome IMMEDIATELY
-      } else {
-        console.log('[Onboarding] Regular invite code - normal flow');
-      }
-      
-      // Still validate in background for logging
-      fetch(`${process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3001'}/payment/validate-code`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ code: invite }),
-      })
-        .then(res => res.ok ? res.json() : null)
-        .then(data => {
-          if (data && data.valid) {
-            console.log('[Onboarding] ✅ Code validated on server:', data.type);
-          }
-        })
-        .catch(err => {
-          console.error('[Onboarding] Validation error:', err);
-        });
+      console.log('[Onboarding] ✅ Stored invite code in sessionStorage');
     }
     
     if (ref) {
