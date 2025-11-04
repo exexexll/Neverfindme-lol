@@ -234,6 +234,9 @@ function OnboardingPageContent() {
       console.log('[Onboarding] ✅ Setting inviteCode state to:', invite);
       setInviteCode(invite);
       
+      // Store in sessionStorage immediately so it persists
+      sessionStorage.setItem('onboarding_invite_code', invite);
+      
       // CRITICAL FIX: Check if this is an admin code (requires USC email)
       // We need to know BEFORE user submits form so we can show email input
       fetch(`${process.env.NEXT_PUBLIC_API_BASE || 'http://localhost:3001'}/payment/validate-code`, {
@@ -241,13 +244,24 @@ function OnboardingPageContent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code: invite }),
       })
-        .then(res => res.json())
+        .then(res => {
+          if (!res.ok) {
+            console.error('[Onboarding] Code validation failed with status:', res.status);
+            return null;
+          }
+          return res.json();
+        })
         .then(data => {
-          if (data.valid && data.type === 'admin') {
-            console.log('[Onboarding] Admin code detected - USC card scan required');
+          if (data && data.valid && data.type === 'admin') {
+            console.log('[Onboarding] ✅ Admin code detected - showing USC welcome and card scanner');
             setNeedsUSCCard(true);
             setNeedsUSCEmail(false); // CRITICAL: Turn OFF email requirement for card path
-            setStep('usc-welcome'); // Show welcome popup first
+            setStep('usc-welcome'); // Show Trojan welcome popup first
+          } else if (data && data.valid) {
+            console.log('[Onboarding] Regular invite code detected');
+            // Regular flow - start with name/gender
+          } else {
+            console.warn('[Onboarding] Invalid invite code:', invite);
           }
         })
         .catch(err => {
