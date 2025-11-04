@@ -74,7 +74,7 @@ const storage = multer.diskStorage({
 const upload = multer({
   storage,
   limits: {
-    fileSize: 50 * 1024 * 1024, // 50MB max for 60-second videos
+    fileSize: 100 * 1024 * 1024, // 100MB max with compression
   },
   fileFilter: (req, file, cb) => {
     console.log(`[Upload] Attempt - Field: ${file.fieldname}, MIME: ${file.mimetype}, Size: ${(file.size / 1024 / 1024).toFixed(2)}MB`);
@@ -167,7 +167,8 @@ router.post('/selfie', requireAuth, (req: any, res) => {
           format: 'jpg',
           transformation: [
             { width: 800, height: 800, crop: 'limit' },
-            { quality: 'auto:good' }
+            { quality: 'auto:low' }, // More aggressive compression
+            { fetch_format: 'auto' } // Auto WebP for browsers that support it
           ]
         });
         selfieUrl = result.secure_url;
@@ -307,11 +308,14 @@ async function processVideoInBackground(
       folder: 'bumpin/videos',
       resource_type: 'video',
       format: 'mp4',
-      // OPTIMIZED: Faster processing with eager transformation
-      eager: [
-        { width: 1280, height: 720, crop: 'limit', quality: 'auto:good' }
+      // AGGRESSIVE COMPRESSION: Reduce file size significantly
+      transformation: [
+        { width: 1280, height: 720, crop: 'limit' },
+        { quality: 'auto:low' }, // More compression
+        { video_codec: 'h264', audio_codec: 'aac' }, // Efficient codecs
+        { bit_rate: '1m' } // Limit bitrate to 1 Mbps
       ],
-      eager_async: false, // Process immediately for faster availability
+      eager_async: false, // Process immediately
     });
     
     const finalUrl = result.secure_url;
