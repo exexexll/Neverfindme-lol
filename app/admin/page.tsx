@@ -53,8 +53,12 @@ export default function AdminPage() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [selectedUser, setSelectedUser] = useState<BanRecord | null>(null);
   const [reviewing, setReviewing] = useState(false);
-  const [activeTab, setActiveTab] = useState<'pending' | 'reports' | 'qrcodes' | 'event'>('pending');
+  const [activeTab, setActiveTab] = useState<'pending' | 'reports' | 'qrcodes' | 'event' | 'analytics'>('pending');
   const [qrCodes, setQrCodes] = useState<any[]>([]);
+  
+  // Analytics state
+  const [analyticsData, setAnalyticsData] = useState<any>(null);
+  const [loadingAnalytics, setLoadingAnalytics] = useState(false);
   const [generatingQR, setGeneratingQR] = useState(false);
   const [qrLabel, setQrLabel] = useState('');
   
@@ -113,6 +117,35 @@ export default function AdminPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router]); // loadData is called on demand, not needed in deps
 
+  const loadAnalytics = async () => {
+    const adminToken = localStorage.getItem('bumpin_admin_token');
+    if (!adminToken) return;
+    
+    setLoadingAnalytics(true);
+    try {
+      const [overview, signups, routes, engagement] = await Promise.all([
+        fetch(`${API_BASE}/analytics/overview`, {
+          headers: { 'Authorization': `Bearer ${adminToken}` },
+        }).then(r => r.json()),
+        fetch(`${API_BASE}/analytics/signups?period=30d`, {
+          headers: { 'Authorization': `Bearer ${adminToken}` },
+        }).then(r => r.json()),
+        fetch(`${API_BASE}/analytics/onboarding-routes`, {
+          headers: { 'Authorization': `Bearer ${adminToken}` },
+        }).then(r => r.json()),
+        fetch(`${API_BASE}/analytics/engagement`, {
+          headers: { 'Authorization': `Bearer ${adminToken}` },
+        }).then(r => r.json()),
+      ]);
+      
+      setAnalyticsData({ overview, signups, routes, engagement });
+    } catch (error) {
+      console.error('[Admin] Failed to load analytics:', error);
+    } finally {
+      setLoadingAnalytics(false);
+    }
+  };
+  
   const loadData = async () => {
     // Use admin token for all admin API calls
     const adminToken = localStorage.getItem('bumpin_admin_token');
@@ -427,6 +460,20 @@ export default function AdminPage() {
           }`}
         >
           Event Settings {eventModeEnabled && '🎉'}
+        </button>
+        
+        <button
+          onClick={() => {
+            setActiveTab('analytics');
+            loadAnalytics();
+          }}
+          className={`px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap ${
+            activeTab === 'analytics'
+              ? 'border-b-2 border-[#ffc46a] text-[#ffc46a]'
+              : 'text-[#eaeaf0]/50 hover:text-[#eaeaf0]/70'
+          }`}
+        >
+          📊 Analytics
         </button>
       </div>
 
