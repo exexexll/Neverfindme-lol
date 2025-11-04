@@ -73,20 +73,25 @@ export function GlobalCallHandler() {
     };
 
     // Setup listeners immediately (socket might connect later)
-    socket.off('call:notify');
-    socket.off('call:start');
+    // CRITICAL: Only remove/add if not already set up to avoid breaking active listeners
+    socket.off('call:notify', handleCallNotify); // Remove this specific handler if exists
+    socket.off('call:start', handleCallStart); // Remove this specific handler if exists
     socket.on('call:notify', handleCallNotify);
     socket.on('call:start', handleCallStart);
     
     // Initialize background queue immediately with socket
     // Socket doesn't need to be connected yet for storing the reference
-    backgroundQueue.init(socket);
-    console.log('[GlobalCallHandler] Background queue initialized with socket (will connect soon)');
+    if (!backgroundQueue.isInitialized()) {
+      backgroundQueue.init(socket);
+      console.log('[GlobalCallHandler] Background queue initialized with socket');
+    }
 
     return () => {
-      // Keep listeners active - don't remove
-      // They need to persist across page navigation for background queue
-      console.log('[GlobalCallHandler] Component unmounting but keeping listeners active');
+      // CRITICAL: Don't remove listeners on unmount!
+      // GlobalCallHandler should never unmount, but if it does,
+      // keep listeners active for background queue to work
+      console.log('[GlobalCallHandler] Cleanup called but keeping listeners active');
+      // DON'T do: socket.off('call:notify') or socket.off('call:start')
     };
   }, []); // Empty deps - set up once, never tear down
 
