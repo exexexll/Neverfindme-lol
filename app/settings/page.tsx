@@ -68,16 +68,43 @@ export default function SettingsPage() {
     router.push('/');
   };
 
-  const handleDeleteAccount = () => {
-    if (confirm('Are you sure you want to delete your account? This cannot be undone.')) {
-      // Clear local data
-      clearSession();
-      localStorage.removeItem('bumpin_history');
-      localStorage.removeItem('bumpin_socials');
-      localStorage.removeItem('bumpin_timer_total');
+  const handleDeleteAccount = async () => {
+    if (!confirm('⚠️ DELETE ACCOUNT?\n\nThis will permanently delete:\n• Your profile (name, photo, video)\n• All chat history\n• Social media handles\n• USC card registration (if any)\n\nThis CANNOT be undone!\n\nAre you absolutely sure?')) {
+      return;
+    }
+    
+    try {
+      const session = getSession();
+      if (!session) {
+        router.push('/');
+        return;
+      }
       
-      // In production: call DELETE /user/me to clear server data
+      // Call server to delete account
+      const response = await fetch(`${API_BASE}/user/me`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${session.sessionToken}`,
+        },
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        alert('Failed to delete account: ' + error.error);
+        return;
+      }
+      
+      // Clear all local data
+      clearSession();
+      localStorage.clear();
+      sessionStorage.clear();
+      
+      alert('✅ Account deleted successfully');
       router.push('/');
+      
+    } catch (error) {
+      console.error('[Settings] Delete account error:', error);
+      alert('Failed to delete account. Please try again.');
     }
   };
 

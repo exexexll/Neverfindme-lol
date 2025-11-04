@@ -85,5 +85,55 @@ router.put('/me', requireAuth, async (req: any, res) => {
   });
 });
 
+/**
+ * DELETE /user/me
+ * Delete user account and all related data
+ */
+router.delete('/me', requireAuth, async (req: any, res) => {
+  const userId = req.userId;
+  
+  try {
+    console.log(`[User] Deleting account for user ${userId.substring(0, 8)}`);
+    
+    const user = await store.getUser(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    // Delete from Cloudinary (photos/videos)
+    if (user.selfieUrl) {
+      try {
+        await deleteFromCloudinary(user.selfieUrl);
+        console.log(`[User] Deleted selfie from Cloudinary`);
+      } catch (err) {
+        console.warn(`[User] Failed to delete selfie:`, err);
+      }
+    }
+    
+    if (user.videoUrl) {
+      try {
+        await deleteFromCloudinary(user.videoUrl);
+        console.log(`[User] Deleted video from Cloudinary`);
+      } catch (err) {
+        console.warn(`[User] Failed to delete video:`, err);
+      }
+    }
+    
+    // Delete user from database (CASCADE will handle related records)
+    await query('DELETE FROM users WHERE user_id = $1', [userId]);
+    
+    console.log(`[User] ✅ Account deleted: ${user.name}`);
+    
+    res.json({ 
+      success: true, 
+      message: 'Account deleted successfully' 
+    });
+    
+  } catch (error: any) {
+    console.error('[User] Delete account failed:', error);
+    res.status(500).json({ error: 'Failed to delete account' });
+  }
+});
+
 export default router;
 
